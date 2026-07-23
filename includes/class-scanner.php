@@ -312,10 +312,10 @@ final class Scanner {
 
 			$finding_counts = Scan_Findings::process( $run_id, $observations );
 			$summary        = array(
-				'findings'    => $finding_counts['actionable'],
+				'findings'       => $finding_counts['actionable'],
 				'finding_counts' => $finding_counts,
-				'warnings'    => $warnings,
-				'limitations' => array(
+				'warnings'       => $warnings,
+				'limitations'    => array(
 					'The scan covers only the configured public same-origin pages.',
 					'Browser observations depend on the connected authenticated runner.',
 					'Authenticated, personalised and geographically varied journeys are not exhaustive.',
@@ -459,11 +459,11 @@ final class Scanner {
 	 * @return array<string, string>|null
 	 */
 	private static function normalize_observation( array $observation ): ?array {
-		$type        = sanitize_key( (string) ( $observation['type'] ?? '' ) );
-		$storage_key = substr( sanitize_text_field( (string) ( $observation['storage_key'] ?? $observation['name'] ?? '' ) ), 0, 191 );
-		$domain      = strtolower( substr( sanitize_text_field( (string) ( $observation['domain'] ?? '' ) ), 0, 191 ) );
-		$source_url        = esc_url_raw( (string) ( $observation['source_url'] ?? '' ) );
-		$duration          = substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 );
+		$type               = sanitize_key( (string) ( $observation['type'] ?? '' ) );
+		$storage_key        = substr( sanitize_text_field( (string) ( $observation['storage_key'] ?? $observation['name'] ?? '' ) ), 0, 191 );
+		$domain             = strtolower( substr( sanitize_text_field( (string) ( $observation['domain'] ?? '' ) ), 0, 191 ) );
+		$source_url         = esc_url_raw( (string) ( $observation['source_url'] ?? '' ) );
+		$duration           = substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 );
 		$category_candidate = sanitize_key( (string) ( $observation['category_candidate'] ?? '' ) );
 
 		if ( ! in_array( $category_candidate, array( 'necessary', 'functional', 'analytics', 'marketing' ), true ) ) {
@@ -475,13 +475,13 @@ final class Scanner {
 		}
 
 		return array(
-			'type'         => $type,
-			'storage_key'  => $storage_key,
-			'domain'       => $domain,
-			'source_url'   => $source_url,
-			'duration'     => $duration,
-			'storage_type'      => in_array( $type, array( 'cookie', 'local_storage' ), true ) ? $type : 'other',
-			'method'            => 'browser',
+			'type'               => $type,
+			'storage_key'        => $storage_key,
+			'domain'             => $domain,
+			'source_url'         => $source_url,
+			'duration'           => $duration,
+			'storage_type'       => in_array( $type, array( 'cookie', 'local_storage' ), true ) ? $type : 'other',
+			'method'             => 'browser',
 			'category_candidate' => $category_candidate,
 		);
 	}
