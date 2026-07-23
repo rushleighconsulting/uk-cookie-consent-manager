@@ -132,8 +132,10 @@ final class Consent_Receipts {
 			'created_at'      => $occurred_at,
 		);
 		$row['integrity_hash'] = self::integrity_hash( $row );
-		$table                 = Database::table_names()['consents'];
-		$stored                = $wpdb->insert(
+
+		$table  = Database::table_names()['consents'];
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Append-only write to the plugin-owned receipt table.
+		$stored = $wpdb->insert(
 			$table,
 			$row,
 			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
@@ -153,6 +155,8 @@ final class Consent_Receipts {
 
 	/**
 	 * Public REST callback for creating a receipt.
+	 *
+	 * @param \WP_REST_Request $request Receipt creation request.
 	 */
 	public static function create_response( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$result = self::record( $request->get_json_params() );
@@ -161,6 +165,8 @@ final class Consent_Receipts {
 
 	/**
 	 * Capability-gated REST callback for masked receipt listings.
+	 *
+	 * @param \WP_REST_Request $request Receipt listing request.
 	 */
 	public static function list_response( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$limit   = max( 1, min( 200, (int) $request->get_param( 'per_page' ) ) );
@@ -170,6 +176,8 @@ final class Consent_Receipts {
 
 	/**
 	 * Capability-gated REST callback for evidence exports without complete IPs.
+	 *
+	 * @param \WP_REST_Request $request Receipt export request.
 	 */
 	public static function export_response( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		unset( $request );
@@ -186,6 +194,8 @@ final class Consent_Receipts {
 
 	/**
 	 * Capability-gated REST callback for revealing one encrypted complete IP.
+	 *
+	 * @param \WP_REST_Request $request Complete-IP reveal request.
 	 */
 	public static function reveal_response( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$result = self::reveal_ip( (int) $request->get_param( 'id' ) );
@@ -195,6 +205,9 @@ final class Consent_Receipts {
 	/**
 	 * List or export bounded receipt evidence after an explicit capability check.
 	 *
+	 * @param string $capability        Required capability.
+	 * @param int    $limit             Maximum records to return.
+	 * @param bool   $include_integrity Whether integrity evidence is included.
 	 * @return array<int, array<string, mixed>>|\WP_Error
 	 */
 	public static function records( string $capability, int $limit, bool $include_integrity ): array|\WP_Error {
@@ -213,24 +226,28 @@ final class Consent_Receipts {
 		}
 
 		$query = $wpdb->prepare( "SELECT {$fields} FROM {$table} ORDER BY id DESC LIMIT %d", $limit ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and field names are plugin-owned constants.
-		$rows  = $wpdb->get_results( $query, ARRAY_A );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared, bounded read from the plugin-owned receipt table.
+		$rows = $wpdb->get_results( $query, ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**
 	 * Reveal a complete encrypted IP only to consent-record viewers.
 	 *
+	 * @param int $record_id Consent receipt database ID.
 	 * @return string|\WP_Error
 	 */
 	public static function reveal_ip( int $record_id ): string|\WP_Error {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'view_uccm_consents' ) ) {
 			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to reveal complete IP addresses.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
 
 		$table      = Database::table_names()['consents'];
 		$query      = $wpdb->prepare( "SELECT ip_ciphertext FROM {$table} WHERE id = %d", $record_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is plugin-owned.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared lookup in the plugin-owned receipt table.
 		$ciphertext = $wpdb->get_var( $query );
 
 		if ( ! is_string( $ciphertext ) || '' === $ciphertext ) {
@@ -256,7 +273,8 @@ final class Consent_Receipts {
 		$cutoff         = gmdate( 'Y-m-d H:i:s', time() - ( $retention_days * DAY_IN_SECONDS ) );
 		$table          = Database::table_names()['consents'];
 		$query          = $wpdb->prepare( "DELETE FROM {$table} WHERE occurred_at < %s", $cutoff ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is plugin-owned.
-		$deleted        = $wpdb->query( $query );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared retention cleanup in the plugin-owned receipt table.
+		$deleted = $wpdb->query( $query );
 
 		return false === $deleted ? 0 : (int) $deleted;
 	}
@@ -265,6 +283,7 @@ final class Consent_Receipts {
 	 * Check the consent-record viewing capability.
 	 */
 	public static function can_view(): bool {
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		return current_user_can( 'view_uccm_consents' );
 	}
 
@@ -272,6 +291,7 @@ final class Consent_Receipts {
 	 * Check the consent-record export capability.
 	 */
 	public static function can_export(): bool {
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		return current_user_can( 'export_uccm_consents' );
 	}
 
