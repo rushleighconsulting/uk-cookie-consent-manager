@@ -132,13 +132,35 @@ final class ScannerTest extends TestCase {
 		self::assertArrayNotHasKey( 'consents', $payload );
 	}
 
-	public function test_invalid_target_is_rejected_before_a_scan_run_is_created(): void {
+	public function test_invalid_target_is_rejected_and_recorded_as_a_failed_scan(): void {
 		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
 
 		$result = Scanner::run( true, array( 'http://127.0.0.1/' ) );
 
 		self::assertSame( 'uccm_scan_disallowed_target', $result->get_error_code() );
-		self::assertCount( 0, $GLOBALS['wpdb']->inserts );
+		self::assertCount( 1, $GLOBALS['wpdb']->inserts );
+		self::assertSame( 'wp_uccm_scan_runs', $GLOBALS['wpdb']->inserts[0]['table'] );
+		self::assertSame( 'failed', $GLOBALS['wpdb']->inserts[0]['data']['status'] );
+		self::assertSame( 'uccm_scan_disallowed_target', $GLOBALS['wpdb']->inserts[0]['data']['error_code'] );
+
+		$summary = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['summary'], true );
+		self::assertSame( 'http://127.0.0.1/', $summary['warnings'][0]['url'] );
+	}
+
+	public function test_scheduled_scan_records_invalid_legacy_configuration(): void {
+		$GLOBALS['uccm_test_options'][ Settings::OPTION_NAME ] = Settings::sanitize(
+			array( 'scan_urls' => array( 'https://tracker.test/pixel' ) ),
+			array()
+		);
+
+		Scanner::run_scheduled();
+
+		self::assertCount( 1, $GLOBALS['wpdb']->inserts );
+		self::assertSame( 'failed', $GLOBALS['wpdb']->inserts[0]['data']['status'] );
+		self::assertSame( 'uccm_scan_disallowed_target', $GLOBALS['wpdb']->inserts[0]['data']['error_code'] );
+
+		$summary = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['summary'], true );
+		self::assertSame( 'https://tracker.test/pixel', $summary['warnings'][0]['url'] );
 	}
 
 	public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
