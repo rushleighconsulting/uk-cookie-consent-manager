@@ -28,8 +28,11 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-ip-privacy.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-receipts.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-settings.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-resource-rules.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-cookie-inventory.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-interface.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-admin.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
 
 register_activation_hook( UCCM_PLUGIN_FILE, array( 'UCCM\\Activator', 'activate' ) );

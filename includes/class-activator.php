@@ -39,10 +39,12 @@ final class Activator {
 		add_option(
 			'uccm_settings',
 			array(
-				'retention_days'      => 365,
-				'store_full_ip'       => false,
-				'trust_proxy_headers' => false,
-				'trusted_proxy_ips'   => array(),
+				'consent_lifetime_days'  => 180,
+				'consent_policy_version' => Consent_State::POLICY_VERSION,
+				'retention_days'         => 365,
+				'store_full_ip'          => false,
+				'trust_proxy_headers'    => false,
+				'trusted_proxy_ips'      => array(),
 			),
 			'',
 			false

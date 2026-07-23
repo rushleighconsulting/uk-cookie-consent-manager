@@ -48,6 +48,10 @@ final class Plugin {
 		Resource_Rules::register();
 		Consent_Interface::register();
 
+		if ( is_admin() ) {
+			Admin::register();
+		}
+
 		if ( is_multisite() ) {
 			add_action( 'wp_initialize_site', array( Activator::class, 'initialize_site' ), 100 );
 		}

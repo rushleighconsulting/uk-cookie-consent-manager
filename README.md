@@ -9,7 +9,7 @@ honouring cookie consent under UK GDPR and PECR.
 ## Status
 
 Release 1 is in development. The repository contains the database and lifecycle
-foundation, visitor consent, explicit prior blocking and privacy-preserving consent receipts. It is not production ready.
+foundation, visitor consent, prior blocking, privacy-preserving receipts and administration inventory management. It is not production ready.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
@@ -128,9 +128,22 @@ The settings `trust_proxy_headers` and `trusted_proxy_ips` must both be
 configured before `X-Forwarded-For` is considered. Never enable proxy trust
 without an exact allowlist of the site's reverse proxies.
 
+UCCM-6 adds:
+
+- A top-level Cookie Consent menu with Overview, Banner, Categories, Script
+  Blocking, Cookie Inventory, Scans, Consent Records, Privacy and Advanced
+  screens.
+- Validated banner, retention, IP/privacy, proxy and uninstall settings.
+- Capability-gated cookie inventory creation and review with strict category,
+  party, storage-type and status allowlists.
+- Search, category/status filters and bounded 20-item pagination.
+- Filter-preserving CSV export with spreadsheet formula-injection protection.
+- Masked consent-record presentation restricted to the dedicated consent
+  capability, plus explicit empty and future-scan states.
+
 ## Planned Release 1 capabilities
 
-- Curated cookie inventory and hybrid detection.
+- Hybrid cookie detection.
 - Manual and monthly scans with administrator review.
 - WordPress privacy-tool integration.
 - Integrity-checked private repository updates.

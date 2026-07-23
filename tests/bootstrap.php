@@ -32,6 +32,8 @@ $GLOBALS['uccm_test_rest_routes']      = array();
 $GLOBALS['uccm_test_db_rows']          = array();
 $GLOBALS['uccm_test_db_var']           = null;
 $GLOBALS['uccm_test_db_query_result']  = 0;
+$GLOBALS['uccm_test_admin_menus']       = array();
+$GLOBALS['uccm_test_admin_submenus']    = array();
 
 /**
  * Minimal wpdb test double.
@@ -45,6 +47,9 @@ class wpdb {
 
 	/** @var string[] */
 	public array $queries = array();
+
+	/** @var array<int, array{table: string, data: array<string, mixed>, where: array<string, mixed>}> */
+	public array $updates = array();
 
 	public function get_charset_collate(): string {
 		return 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
@@ -60,8 +65,21 @@ class wpdb {
 		return 1;
 	}
 
+	/**
+	 * @param array<string, mixed> $data
+	 * @param array<string, mixed> $where
+	 */
+	public function update( string $table, array $data, array $where ): int|false {
+		$this->updates[] = compact( 'table', 'data', 'where' );
+		return 1;
+	}
+
 	public function prepare( string $query, mixed ...$arguments ): string {
 		return $query . ' -- ' . wp_json_encode( $arguments );
+	}
+
+	public function esc_like( string $text ): string {
+		return addcslashes( $text, '_%\\' );
 	}
 
 	/** @return array<int, array<string, mixed>> */
@@ -119,6 +137,10 @@ class WP_Error {
 
 	public function get_error_code(): string {
 		return $this->code;
+	}
+
+	public function get_error_message(): string {
+		return $this->message;
 	}
 }
 
@@ -329,6 +351,14 @@ function sanitize_text_field( string $text ): string {
 	return trim( strip_tags( $text ) );
 }
 
+function sanitize_textarea_field( string $text ): string {
+	return trim( strip_tags( $text ) );
+}
+
+function sanitize_key( string $key ): string {
+	return strtolower( (string) preg_replace( '/[^a-z0-9_\-]/', '', $key ) );
+}
+
 function __( string $text, string $domain = 'default' ): string {
 	unset( $domain );
 	return $text;
@@ -343,11 +373,24 @@ function esc_attr_e( string $text, string $domain = 'default' ): void {
 	esc_html_e( $text, $domain );
 }
 
+function add_menu_page( string $page_title, string $menu_title, string $capability, string $menu_slug, callable $callback, string $icon_url = '', int|float|null $position = null ): string {
+	$GLOBALS['uccm_test_admin_menus'][] = compact( 'page_title', 'menu_title', 'capability', 'menu_slug', 'callback', 'icon_url', 'position' );
+	return 'toplevel_page_' . $menu_slug;
+}
+
+function add_submenu_page( string $parent_slug, string $page_title, string $menu_title, string $capability, string $menu_slug, callable $callback ): string {
+	$GLOBALS['uccm_test_admin_submenus'][] = compact( 'parent_slug', 'page_title', 'menu_title', 'capability', 'menu_slug', 'callback' );
+	return $parent_slug . '_page_' . $menu_slug;
+}
+
 require_once dirname( __DIR__ ) . '/includes/class-database.php';
 require_once dirname( __DIR__ ) . '/includes/class-capabilities.php';
 require_once dirname( __DIR__ ) . '/includes/class-ip-privacy.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-receipts.php';
 require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
+require_once dirname( __DIR__ ) . '/includes/class-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
+require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';
+require_once dirname( __DIR__ ) . '/includes/class-admin.php';
