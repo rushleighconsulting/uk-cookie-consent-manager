@@ -55,17 +55,21 @@ final class Secure_Updater {
 			return $transient;
 		}
 
-		$plugin                  = plugin_basename( UCCM_PLUGIN_FILE );
-		$transient->response     = isset( $transient->response ) && is_array( $transient->response ) ? $transient->response : array();
+		$plugin = plugin_basename( UCCM_PLUGIN_FILE );
+
+		if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
+			$transient->response = array();
+		}
+
 		$transient->response[ $plugin ] = (object) array(
-			'id'          => self::SLUG,
-			'slug'        => self::SLUG,
-			'plugin'      => $plugin,
-			'new_version' => $manifest['version'],
-			'package'     => $manifest['package_url'],
-			'url'         => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager',
-			'requires'    => $manifest['requires_wp'],
-			'requires_php'=> $manifest['requires_php'],
+			'id'           => self::SLUG,
+			'slug'         => self::SLUG,
+			'plugin'       => $plugin,
+			'new_version'  => $manifest['version'],
+			'package'      => $manifest['package_url'],
+			'url'          => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager',
+			'requires'     => $manifest['requires_wp'],
+			'requires_php' => $manifest['requires_php'],
 		);
 
 		return $transient;
@@ -207,8 +211,10 @@ final class Secure_Updater {
 			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest contains invalid release data.', 'uk-cookie-consent-manager' ) );
 		}
 
-		$signature = base64_decode( $validated['signature'], true );
-		$settings  = Settings::current();
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented signature wire format.
+		$signature  = base64_decode( $validated['signature'], true );
+		$settings   = Settings::current();
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented public-key wire format.
 		$public_key = base64_decode( (string) ( $settings['update_public_key'] ?? '' ), true );
 		$payload    = self::canonical_payload( $validated );
 
@@ -248,6 +254,9 @@ final class Secure_Updater {
 
 	/**
 	 * Verify a package file against a lowercase SHA-256 digest.
+	 *
+	 * @param string $filename Package file path.
+	 * @param string $expected Expected SHA-256 digest.
 	 */
 	public static function verify_file( string $filename, string $expected ): bool {
 		return is_file( $filename ) && 1 === preg_match( '/^[a-f0-9]{64}$/', $expected ) && hash_equals( $expected, hash_file( 'sha256', $filename ) );
@@ -256,6 +265,7 @@ final class Secure_Updater {
 	/**
 	 * Encrypt and persist a site-specific download credential.
 	 *
+	 * @param string $credential Site-specific repository credential.
 	 * @return true|\WP_Error
 	 */
 	public static function save_credential( string $credential ): bool|\WP_Error {
@@ -277,6 +287,7 @@ final class Secure_Updater {
 			return new \WP_Error( 'uccm_update_credential_failed', __( 'The update credential could not be protected.', 'uk-cookie-consent-manager' ) );
 		}
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary encrypted storage requires a text-safe representation.
 		update_option( self::CREDENTIAL_OPTION, base64_encode( $nonce . $tag . $ciphertext ), false );
 		return true;
 	}
@@ -379,6 +390,7 @@ final class Secure_Updater {
 			return '';
 		}
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented encrypted option format.
 		$stored = base64_decode( $encoded, true );
 
 		if ( false === $stored || 29 > strlen( $stored ) ) {
