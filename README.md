@@ -14,6 +14,7 @@ foundation, visitor consent, prior blocking, privacy-preserving receipts and adm
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
 - [Release 1 Epic](https://rushleighconsulting.atlassian.net/browse/UCCM-1)
+- [Installation and operating guide](docs/OPERATING-GUIDE.md)
 
 ## Current foundation
 
@@ -170,10 +171,17 @@ UCCM-8 adds:
 - Bounded findings filtering by scan and explicit pending/reviewed status
   presentation in the Scans administration screen.
 
-## Planned Release 1 capabilities
-- WordPress privacy-tool integration.
-- Integrity-checked private repository updates.
-- WordPress 6.8–7.0 and PHP 8.2–8.5 compatibility.
+## Release 1 verification
+
+UCCM-11 adds independently reported source-quality, unit/integration, browser,
+package and release gates. Consent, withdrawal, prior-blocking and
+accessibility-critical flows run in Chromium at desktop and mobile sizes. The
+generated plugin ZIP is installed and activated against supported combinations
+spanning WordPress 6.8–7.0 and PHP 8.2–8.5.
+
+Operational installation, configuration, scanning, privacy, update and
+database-aware rollback procedures are maintained in the
+[operating guide](docs/OPERATING-GUIDE.md).
 
 ## Development
 
