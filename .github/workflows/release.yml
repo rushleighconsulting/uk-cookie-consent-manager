@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build signed release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+          extensions: sodium
+
+      - name: Validate tag and plugin version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          header_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' uk-cookie-consent-manager.php)"
+          constant_version="$(sed -n "s/^define( 'UCCM_VERSION', '\([^']*\)' );$/\1/p" uk-cookie-consent-manager.php)"
+          test "${version}" = "${header_version}"
+          test "${version}" = "${constant_version}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build deterministic plugin archive
+        run: scripts/build-package.sh "${{ steps.version.outputs.version }}"
+
+      - name: Verify clean installable archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="dist/uk-cookie-consent-manager-${{ steps.version.outputs.version }}.zip"
+          unzip -t "${archive}"
+          unzip -l "${archive}" > dist/archive-contents.txt
+          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|php(unit|stan)|phpcs' dist/archive-contents.txt; then
+            echo "Development-only content was found in the release archive." >&2
+            exit 1
+          fi
+          if unzip -p "${archive}" | grep -E 'UCCM_MANIFEST_PRIVATE_KEY|ghp_[A-Za-z0-9]+'; then
+            echo "A secret-like value was found in the release archive." >&2
+            exit 1
+          fi
+
+      - name: Create signed update manifest
+        env:
+          UCCM_MANIFEST_PRIVATE_KEY: ${{ secrets.UCCM_MANIFEST_PRIVATE_KEY }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          package_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/uk-cookie-consent-manager-${version}.zip"
+          checksum="$(cut -d ' ' -f 1 dist/SHA256SUMS)"
+          php scripts/create-manifest.php "${version}" "${package_url}" "${checksum}" dist/update-manifest.json
+
+      - name: Publish immutable GitHub Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "Release ${GITHUB_REF_NAME} already exists; refusing to replace immutable assets." >&2
+            exit 1
+          fi
+          gh release create "${GITHUB_REF_NAME}"             "dist/uk-cookie-consent-manager-${version}.zip"             "dist/SHA256SUMS"             "dist/update-manifest.json"             --verify-tag             --generate-notes             --title "UK Cookie Consent Manager ${version}"
