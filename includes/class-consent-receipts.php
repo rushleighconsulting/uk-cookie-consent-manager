@@ -24,7 +24,7 @@ final class Consent_Receipts {
 	 */
 	public static function register(): void {
 		add_action( 'rest_api_init', array( self::class, 'register_routes' ) );
-		add_action( 'uccm_retention_cleanup', array( self::class, 'cleanup_expired' ) );
+		add_action( 'uccm_retention_cleanup', array( self::class, 'run_cleanup' ) );
 		self::schedule_cleanup();
 	}
 
@@ -258,6 +258,13 @@ final class Consent_Receipts {
 		return '' === $ip
 			? new \WP_Error( 'uccm_ip_decryption_failed', __( 'The stored IP address could not be decrypted.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) )
 			: $ip;
+	}
+
+	/**
+	 * Run scheduled retention cleanup without returning a value to WordPress.
+	 */
+	public static function run_cleanup(): void {
+		self::cleanup_expired();
 	}
 
 	/**
