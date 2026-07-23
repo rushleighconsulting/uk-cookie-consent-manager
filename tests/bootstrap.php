@@ -29,6 +29,7 @@ $GLOBALS['uccm_test_localized']        = array();
 $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
+$GLOBALS['uccm_test_spawn_cron_calls'] = array();
 $GLOBALS['uccm_test_transients']       = array();
 $GLOBALS['uccm_test_site_transients']  = array();
 $GLOBALS['uccm_test_http_validity']    = true;
@@ -316,6 +317,11 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $argument
 		'hook'       => $hook,
 		'arguments'  => $arguments,
 	);
+	return true;
+}
+
+function spawn_cron( int $gmt_time = 0 ): bool {
+	$GLOBALS['uccm_test_spawn_cron_calls'][] = $gmt_time;
 	return true;
 }
 
