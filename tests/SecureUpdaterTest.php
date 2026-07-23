@@ -79,14 +79,19 @@ final class SecureUpdaterTest extends TestCase {
 		self::assertFalse( Secure_Updater::has_credential() );
 	}
 
-	public function test_auto_update_requires_explicit_opt_in(): void {
-		$item = (object) array( 'plugin' => 'uk-cookie-consent-manager/uk-cookie-consent-manager.php' );
+	public function test_auto_update_accepts_nullable_wordpress_value_and_requires_explicit_opt_in(): void {
+		$item       = (object) array( 'plugin' => 'uk-cookie-consent-manager/uk-cookie-consent-manager.php' );
+		$other_item = (object) array( 'plugin' => 'other/plugin.php' );
 
+		self::assertFalse( Secure_Updater::allow_auto_update( null, $item ) );
 		self::assertFalse( Secure_Updater::allow_auto_update( false, $item ) );
+		self::assertNull( Secure_Updater::allow_auto_update( null, $other_item ) );
+		self::assertFalse( Secure_Updater::allow_auto_update( false, $other_item ) );
+		self::assertTrue( Secure_Updater::allow_auto_update( true, $other_item ) );
 
 		Settings::update( array( 'auto_update' => true ) );
+		self::assertTrue( Secure_Updater::allow_auto_update( null, $item ) );
 		self::assertTrue( Secure_Updater::allow_auto_update( false, $item ) );
-		self::assertTrue( Secure_Updater::allow_auto_update( true, (object) array( 'plugin' => 'other/plugin.php' ) ) );
 	}
 
 	/**
