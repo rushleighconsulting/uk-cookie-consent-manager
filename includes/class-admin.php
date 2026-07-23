@@ -408,10 +408,10 @@ final class Admin {
 			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Pages', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 			foreach ( $runs as $run ) {
-				$summary = json_decode( (string) $run['summary'], true );
-				$pages   = json_decode( (string) $run['pages_visited'], true );
-				$summary = is_array( $summary ) ? $summary : array();
-				$pages   = is_array( $pages ) ? $pages : array();
+				$summary  = json_decode( (string) $run['summary'], true );
+				$pages    = json_decode( (string) $run['pages_visited'], true );
+				$summary  = is_array( $summary ) ? $summary : array();
+				$pages    = is_array( $pages ) ? $pages : array();
 				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
 				echo '<tr><td>' . esc_html( (string) $run['id'] ) . '</td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
 			}
