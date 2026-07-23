@@ -109,7 +109,7 @@ final class Settings {
 	}
 
 	/**
-	 * Return unique, canonical proxy IP addresses.
+	 * Return unique, bounded scan URLs.
 	 *
 	 * @param mixed $value Newline-delimited string or value list.
 	 * @return string[]
