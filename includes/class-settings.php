@@ -33,6 +33,9 @@ final class Settings {
 			'trust_proxy_headers'    => false,
 			'trusted_proxy_ips'      => array(),
 			'scan_urls'              => array(),
+			'update_manifest_url'    => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
+			'update_public_key'      => '',
+			'auto_update'            => false,
 		);
 	}
 
@@ -70,7 +73,7 @@ final class Settings {
 			$settings['retention_days'] = max( 1, min( 3650, (int) $input['retention_days'] ) );
 		}
 
-		foreach ( array( 'store_full_ip', 'trust_proxy_headers' ) as $flag ) {
+		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'auto_update' ) as $flag ) {
 			if ( array_key_exists( $flag, $input ) ) {
 				$settings[ $flag ] = self::boolean( $input[ $flag ] );
 			}
@@ -82,6 +85,17 @@ final class Settings {
 
 		if ( array_key_exists( 'scan_urls', $input ) ) {
 			$settings['scan_urls'] = self::scan_urls( $input['scan_urls'] );
+		}
+
+		if ( array_key_exists( 'update_manifest_url', $input ) ) {
+			$url = esc_url_raw( trim( (string) $input['update_manifest_url'] ) );
+			$settings['update_manifest_url'] = 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? $url : '';
+		}
+
+		if ( array_key_exists( 'update_public_key', $input ) ) {
+			$key = trim( (string) $input['update_public_key'] );
+			$decoded = base64_decode( $key, true );
+			$settings['update_public_key'] = false !== $decoded && 32 === strlen( $decoded ) ? $key : '';
 		}
 
 		return $settings;
