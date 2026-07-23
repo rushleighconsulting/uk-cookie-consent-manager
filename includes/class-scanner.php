@@ -20,6 +20,11 @@ final class Scanner {
 	public const HOOK = 'uccm_monthly_scan';
 
 	/**
+	 * Resumable crawl batch hook.
+	 */
+	public const BATCH_HOOK = 'uccm_scan_batch';
+
+	/**
 	 * Custom monthly recurrence.
 	 */
 	public const RECURRENCE = 'uccm_monthly';
@@ -37,6 +42,16 @@ final class Scanner {
 	public const MAX_FINDINGS = 500;
 
 	/**
+	 * Default pages processed in one background request.
+	 */
+	public const DEFAULT_BATCH_SIZE = 5;
+
+	/**
+	 * Maximum pages inspected by one administrator browser session.
+	 */
+	public const BROWSER_MAX_TARGETS = 100;
+
+	/**
 	 * Maximum authenticated runner submissions per minute.
 	 */
 	private const RUNNER_RATE_LIMIT = 30;
@@ -47,6 +62,7 @@ final class Scanner {
 	public static function register(): void {
 		add_filter( 'cron_schedules', array( self::class, 'cron_schedules' ) );
 		add_action( self::HOOK, array( self::class, 'run_scheduled' ) );
+		add_action( self::BATCH_HOOK, array( self::class, 'process_batch' ), 10, 1 );
 		self::schedule();
 	}
 
@@ -78,7 +94,7 @@ final class Scanner {
 	 * Run the scheduled scan without an interactive capability check.
 	 */
 	public static function run_scheduled(): void {
-		self::run( false );
+		self::start( false );
 	}
 
 	/**
@@ -201,6 +217,347 @@ final class Scanner {
 		}
 
 		return $targets;
+	}
+
+	/**
+	 * Create a resumable crawl and queue its first bounded batch.
+	 *
+	 * @param bool $require_capability Whether to enforce the scan capability.
+	 * @return int|\WP_Error Scan run ID or error.
+	 */
+	public static function start( bool $require_capability = true ): int|\WP_Error {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
+		if ( $require_capability && ! current_user_can( 'run_uccm_scans' ) ) {
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+		}
+
+		$targets = self::targets();
+
+		if ( is_wp_error( $targets ) ) {
+			self::record_failed_run( $targets );
+			return $targets;
+		}
+
+		$settings   = Settings::current();
+		$max_pages  = max( 1, min( self::MAX_TARGETS, (int) ( $settings['scan_page_limit'] ?? self::MAX_TARGETS ) ) );
+		$batch_size = max( 1, min( 25, (int) ( $settings['scan_batch_size'] ?? self::DEFAULT_BATCH_SIZE ) ) );
+		$targets    = array_slice( $targets, 0, $max_pages );
+		$methods    = array( 'same-origin-set-cookie', 'administrator-browser-observations' );
+		$now        = gmdate( 'Y-m-d H:i:s' );
+		$coverage   = array(
+			'target_count'             => count( $targets ),
+			'discovered_count'         => count( $targets ),
+			'visited_count'            => 0,
+			'remaining_count'          => count( $targets ),
+			'max_pages'                => $max_pages,
+			'batch_size'               => $batch_size,
+			'frontier'                 => $targets,
+			'seen'                     => $targets,
+			'browser_status'           => 'not-run',
+			'browser_observation_count' => 0,
+		);
+		$summary    = array(
+			'findings'       => 0,
+			'finding_counts' => self::empty_finding_counts(),
+			'warnings'       => array(),
+			'limitations'    => array(
+				'Only same-origin public links discovered from eligible HTML responses are crawled.',
+				'Browser observations require an administrator to run the packaged browser pass.',
+				'Authenticated, personalised and geographically varied journeys are not exhaustive.',
+			),
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Creates a bounded plugin-owned scan run.
+		$created = $wpdb->insert(
+			Database::table_names()['scan_runs'],
+			array(
+				'status'        => 'queued',
+				'methods'       => wp_json_encode( $methods ),
+				'coverage'      => wp_json_encode( $coverage ),
+				'pages_visited' => wp_json_encode( array() ),
+				'summary'       => wp_json_encode( $summary ),
+				'error_code'    => '',
+				'started_at'    => $now,
+				'completed_at'  => null,
+				'created_at'    => $now,
+			)
+		);
+
+		if ( false === $created ) {
+			return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+		}
+
+		$run_id = (int) $wpdb->insert_id;
+		self::schedule_batch( $run_id );
+		return $run_id;
+	}
+
+	/**
+	 * Process one persisted crawl batch and queue the next when work remains.
+	 *
+	 * @param int                                                   $run_id  Scan run identifier.
+	 * @param callable(string, array<string, mixed>): mixed|null    $fetcher Optional safe-HTTP replacement.
+	 * @return bool|\WP_Error
+	 */
+	public static function process_batch( int $run_id, ?callable $fetcher = null ): bool|\WP_Error {
+		global $wpdb;
+
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) ) {
+			return $run;
+		}
+
+		if ( ! in_array( (string) $run['status'], array( 'queued', 'running' ), true ) ) {
+			return true;
+		}
+
+		$lock_key = 'uccm_scan_batch_' . $run_id;
+
+		if ( get_transient( $lock_key ) ) {
+			return new \WP_Error( 'uccm_scan_batch_busy', __( 'This scan batch is already running.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+		}
+
+		set_transient( $lock_key, '1', 2 * MINUTE_IN_SECONDS );
+
+		try {
+			$coverage   = self::decoded_array( $run['coverage'] ?? '' );
+			$visited    = self::decoded_array( $run['pages_visited'] ?? '' );
+			$summary    = self::decoded_array( $run['summary'] ?? '' );
+			$frontier   = is_array( $coverage['frontier'] ?? null ) ? array_values( $coverage['frontier'] ) : array();
+			$seen_urls  = is_array( $coverage['seen'] ?? null ) ? array_values( $coverage['seen'] ) : array();
+			$seen       = array_fill_keys( $seen_urls, true );
+			$max_pages  = max( 1, min( self::MAX_TARGETS, (int) ( $coverage['max_pages'] ?? self::MAX_TARGETS ) ) );
+			$batch_size = max( 1, min( 25, (int) ( $coverage['batch_size'] ?? self::DEFAULT_BATCH_SIZE ) ) );
+			$batch      = array_splice( $frontier, 0, $batch_size );
+			$warnings   = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
+			$fetcher    = $fetcher ?? array( self::class, 'safe_fetch' );
+			$settings   = Settings::current();
+			$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
+			$observations = array();
+
+			foreach ( $batch as $target ) {
+				$validated = self::validate_target( (string) $target );
+
+				if ( is_wp_error( $validated ) || Crawler::is_excluded( (string) $target, $excluded ) ) {
+					$warnings[] = array(
+						'url'  => (string) $target,
+						'code' => is_wp_error( $validated ) ? sanitize_key( $validated->get_error_code() ) : 'uccm_scan_excluded_target',
+					);
+					continue;
+				}
+
+				$response = $fetcher( $validated, self::request_arguments() );
+
+				if ( is_wp_error( $response ) ) {
+					$warnings[] = array( 'url' => $validated, 'code' => sanitize_key( $response->get_error_code() ) );
+					$visited[]  = array( 'url' => $validated, 'status' => 0, 'method' => 'server' );
+					continue;
+				}
+
+				$status    = wp_remote_retrieve_response_code( $response );
+				$visited[] = array( 'url' => $validated, 'status' => $status, 'method' => 'server' );
+
+				if ( 200 > $status || 399 < $status ) {
+					$warnings[] = array( 'url' => $validated, 'code' => 'http_' . $status );
+					continue;
+				}
+
+				foreach ( self::set_cookie_headers( $response ) as $header ) {
+					$cookie = self::parse_set_cookie( $header, $validated );
+
+					if ( null !== $cookie ) {
+						$observations[] = $cookie;
+					}
+				}
+
+				$content_type = strtolower( (string) wp_remote_retrieve_header( $response, 'content-type' ) );
+
+				if ( '' === $content_type || str_contains( $content_type, 'text/html' ) ) {
+					foreach ( Crawler::discover( wp_remote_retrieve_body( $response ), $validated, $excluded ) as $discovered ) {
+						if ( count( $seen ) >= $max_pages ) {
+							break;
+						}
+
+						if ( isset( $seen[ $discovered ] ) ) {
+							continue;
+						}
+
+						$seen[ $discovered ] = true;
+						$frontier[]           = $discovered;
+					}
+				}
+			}
+
+			$counts                    = Scan_Findings::process( $run_id, $observations );
+			$summary['finding_counts'] = self::merge_finding_counts( self::decoded_counts( $summary['finding_counts'] ?? array() ), $counts );
+			$summary['findings']       = $summary['finding_counts']['actionable'];
+			$summary['warnings']       = array_slice( $warnings, 0, self::MAX_FINDINGS );
+			$coverage['frontier']      = array_values( $frontier );
+			$coverage['seen']          = array_keys( $seen );
+			$coverage['discovered_count'] = count( $seen );
+			$coverage['visited_count'] = count( $visited );
+			$coverage['remaining_count'] = count( $frontier );
+			$status                    = array() === $frontier ? 'completed' : 'running';
+			$completed_at              = 'completed' === $status ? gmdate( 'Y-m-d H:i:s' ) : null;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Persists resumable plugin-owned scan state.
+			$updated = $wpdb->update(
+				Database::table_names()['scan_runs'],
+				array(
+					'status'        => $status,
+					'coverage'      => wp_json_encode( $coverage ),
+					'pages_visited' => wp_json_encode( array_slice( $visited, 0, self::MAX_TARGETS ) ),
+					'summary'       => wp_json_encode( $summary ),
+					'error_code'    => '',
+					'completed_at'  => $completed_at,
+				),
+				array( 'id' => $run_id )
+			);
+
+			if ( false === $updated ) {
+				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+			}
+
+			if ( 'running' === $status ) {
+				self::schedule_batch( $run_id );
+			}
+
+			return true;
+		} catch ( \Throwable $throwable ) {
+			unset( $throwable );
+			self::fail_run( $run_id, 'uccm_scan_batch_failed' );
+			return new \WP_Error( 'uccm_scan_batch_failed', __( 'The scan batch failed and can be resumed after review.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+		} finally {
+			delete_transient( $lock_key );
+		}
+	}
+
+	/**
+	 * Cancel a queued or running scan without deleting its evidence.
+	 */
+	public static function cancel( int $run_id ): bool|\WP_Error {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
+		if ( ! current_user_can( 'run_uccm_scans' ) ) {
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to cancel cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+		}
+
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) ) {
+			return $run;
+		}
+
+		if ( ! in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
+			return new \WP_Error( 'uccm_scan_not_cancellable', __( 'This scan is not cancellable.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
+		return false !== $wpdb->update(
+			Database::table_names()['scan_runs'],
+			array(
+				'status'       => 'cancelled',
+				'error_code'   => 'uccm_scan_cancelled',
+				'completed_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $run_id )
+		);
+	}
+
+	/**
+	 * Requeue an interrupted scan from its persisted frontier.
+	 */
+	public static function resume( int $run_id ): bool|\WP_Error {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
+		if ( ! current_user_can( 'run_uccm_scans' ) ) {
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to resume cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+		}
+
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) ) {
+			return $run;
+		}
+
+		if ( ! in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
+			return new \WP_Error( 'uccm_scan_not_resumable', __( 'This scan is not resumable.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
+		$updated = $wpdb->update(
+			Database::table_names()['scan_runs'],
+			array( 'status' => 'queued', 'error_code' => '', 'completed_at' => null ),
+			array( 'id' => $run_id )
+		);
+
+		if ( false === $updated ) {
+			return new \WP_Error( 'uccm_scan_not_resumed', __( 'The scan could not be resumed.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+		}
+
+		self::schedule_batch( $run_id );
+		return true;
+	}
+
+	/**
+	 * Attach observations from the packaged administrator browser runner.
+	 *
+	 * @param int                  $run_id  Completed scan run.
+	 * @param array<string, mixed> $payload Browser observation payload.
+	 * @return array<string, int>|\WP_Error
+	 */
+	public static function record_browser_observations( int $run_id, array $payload ): array|\WP_Error {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
+		if ( ! current_user_can( 'run_uccm_scans' ) ) {
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to add browser observations.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+		}
+
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) ) {
+			return $run;
+		}
+
+		if ( 'completed' !== (string) $run['status'] ) {
+			return new \WP_Error( 'uccm_browser_scan_not_ready', __( 'The server crawl must complete before browser observations are added.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+		}
+
+		$payload['token'] = self::runner_token();
+		$accepted         = self::accept_browser_observations( $payload, self::runner_token() );
+
+		if ( is_wp_error( $accepted ) ) {
+			return $accepted;
+		}
+
+		$counts   = Scan_Findings::process( $run_id, $accepted );
+		$coverage = self::decoded_array( $run['coverage'] ?? '' );
+		$summary  = self::decoded_array( $run['summary'] ?? '' );
+		$current  = self::decoded_counts( $summary['finding_counts'] ?? array() );
+		$merged   = self::merge_finding_counts( $current, $counts );
+
+		$coverage['browser_status']            = 'completed';
+		$coverage['browser_observation_count'] = count( $accepted );
+		$coverage['browser_target_count']      = max( 0, (int) ( $payload['target_count'] ?? 0 ) );
+		$summary['finding_counts']             = $merged;
+		$summary['findings']                   = $merged['actionable'];
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Adds reviewed browser evidence to a plugin-owned run.
+		$updated = $wpdb->update(
+			Database::table_names()['scan_runs'],
+			array( 'coverage' => wp_json_encode( $coverage ), 'summary' => wp_json_encode( $summary ) ),
+			array( 'id' => $run_id )
+		);
+
+		return false === $updated
+			? new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) )
+			: $counts;
 	}
 
 	/**
@@ -416,6 +773,104 @@ final class Scanner {
 				'created_at'    => $now,
 			)
 		);
+	}
+
+	/**
+	 * Queue one unique near-term batch event.
+	 */
+	private static function schedule_batch( int $run_id ): void {
+		$args = array( $run_id );
+
+		if ( false === wp_next_scheduled( self::BATCH_HOOK, $args ) ) {
+			wp_schedule_single_event( time() + 5, self::BATCH_HOOK, $args );
+		}
+	}
+
+	/**
+	 * Return one scan run for resumable operations.
+	 *
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private static function run_record( int $run_id ): array|\WP_Error {
+		global $wpdb;
+
+		$table = Database::table_names()['scan_runs'];
+		$sql   = $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d LIMIT 1", $run_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared plugin-owned lookup.
+		$row = $wpdb->get_row( $sql, ARRAY_A );
+
+		return is_array( $row )
+			? $row
+			: new \WP_Error( 'uccm_scan_not_found', __( 'The scan run was not found.', 'uk-cookie-consent-manager' ), array( 'status' => 404 ) );
+	}
+
+	/**
+	 * Mark an interrupted batch as failed without discarding its frontier.
+	 */
+	private static function fail_run( int $run_id, string $error_code ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Preserves plugin-owned failure evidence.
+		$wpdb->update(
+			Database::table_names()['scan_runs'],
+			array( 'status' => 'failed', 'error_code' => sanitize_key( $error_code ), 'completed_at' => gmdate( 'Y-m-d H:i:s' ) ),
+			array( 'id' => $run_id )
+		);
+	}
+
+	/**
+	 * Decode one stored JSON object safely.
+	 *
+	 * @param mixed $value Stored JSON.
+	 * @return array<string, mixed>
+	 */
+	private static function decoded_array( mixed $value ): array {
+		$decoded = json_decode( (string) $value, true );
+		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * Return a complete zeroed finding counter.
+	 *
+	 * @return array<string, int>
+	 */
+	private static function empty_finding_counts(): array {
+		return array( 'actionable' => 0, 'new' => 0, 'changed' => 0, 'duplicates' => 0, 'unchanged' => 0 );
+	}
+
+	/**
+	 * Normalise stored finding counters.
+	 *
+	 * @param mixed $counts Candidate counters.
+	 * @return array<string, int>
+	 */
+	private static function decoded_counts( mixed $counts ): array {
+		$normalized = self::empty_finding_counts();
+
+		if ( is_array( $counts ) ) {
+			foreach ( $normalized as $key => $value ) {
+				unset( $value );
+				$normalized[ $key ] = max( 0, (int) ( $counts[ $key ] ?? 0 ) );
+			}
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * Add one batch's finding counters to the persisted totals.
+	 *
+	 * @param array<string, int> $current Persisted totals.
+	 * @param array<string, int> $additional Batch totals.
+	 * @return array<string, int>
+	 */
+	private static function merge_finding_counts( array $current, array $additional ): array {
+		foreach ( self::empty_finding_counts() as $key => $value ) {
+			unset( $value );
+			$current[ $key ] = max( 0, (int) ( $current[ $key ] ?? 0 ) ) + max( 0, (int) ( $additional[ $key ] ?? 0 ) );
+		}
+
+		return $current;
 	}
 
 	/**
