@@ -124,9 +124,9 @@ final class Secure_Updater {
 	/**
 	 * Download this plugin's package over HTTPS and verify its signed checksum.
 	 *
-	 * @param mixed  $reply      Existing short-circuit value.
-	 * @param string $package    Package URL.
-	 * @param mixed  $upgrader   WordPress upgrader.
+	 * @param mixed                $reply      Existing short-circuit value.
+	 * @param string               $package    Package URL.
+	 * @param mixed                $upgrader   WordPress upgrader.
 	 * @param array<string, mixed> $hook_extra Upgrade context.
 	 * @return mixed
 	 */
