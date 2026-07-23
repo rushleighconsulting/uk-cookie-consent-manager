@@ -27,7 +27,7 @@ final class IP_Privacy {
 			$server = $_SERVER; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Values are validated as IP addresses below.
 		}
 
-		$remote = isset( $server['REMOTE_ADDR'] ) ? self::valid_ip( (string) $server['REMOTE_ADDR'] ) : '';
+		$remote   = isset( $server['REMOTE_ADDR'] ) ? self::valid_ip( (string) $server['REMOTE_ADDR'] ) : '';
 		$settings = self::settings();
 		$trusted  = isset( $settings['trusted_proxy_ips'] ) && is_array( $settings['trusted_proxy_ips'] )
 			? array_filter( array_map( array( self::class, 'valid_ip' ), $settings['trusted_proxy_ips'] ) )
@@ -53,6 +53,7 @@ final class IP_Privacy {
 	/**
 	 * Produce the default privacy-safe representation of an address.
 	 *
+	 * @param string $ip Complete IP address.
 	 * @return array{masked: string, fingerprint: string, ciphertext: string|null}
 	 */
 	public static function protect( string $ip ): array {
@@ -78,6 +79,8 @@ final class IP_Privacy {
 
 	/**
 	 * Mask an IPv4 address to /24 and an IPv6 address to /48.
+	 *
+	 * @param string $ip Complete IP address.
 	 */
 	public static function mask( string $ip ): string {
 		$ip = self::valid_ip( $ip );
@@ -108,12 +111,15 @@ final class IP_Privacy {
 
 	/**
 	 * Decrypt a stored full address for an already-authorised caller.
+	 *
+	 * @param string $payload Authenticated encrypted payload.
 	 */
 	public static function decrypt( string $payload ): string {
 		if ( ! str_starts_with( $payload, 'v1.' ) || ! function_exists( 'openssl_decrypt' ) ) {
 			return '';
 		}
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes an authenticated ciphertext envelope, not executable code.
 		$decoded = base64_decode( substr( $payload, 3 ), true );
 
 		if ( false === $decoded || strlen( $decoded ) < 29 ) {
@@ -138,6 +144,8 @@ final class IP_Privacy {
 
 	/**
 	 * Encrypt a complete address with site-held key material.
+	 *
+	 * @param string $ip Complete IP address.
 	 */
 	private static function encrypt( string $ip ): string {
 		if ( ! function_exists( 'openssl_encrypt' ) ) {
@@ -168,11 +176,14 @@ final class IP_Privacy {
 			return '';
 		}
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encodes binary ciphertext for storage, not obfuscation.
 		return 'v1.' . base64_encode( $nonce . $tag . $ciphertext );
 	}
 
 	/**
 	 * Derive purpose-specific binary key material from the site salts.
+	 *
+	 * @param string $purpose Key-derivation purpose.
 	 */
 	private static function key( string $purpose ): string {
 		return hash_hmac( 'sha256', 'uccm|' . $purpose, wp_salt( 'auth' ), true );
@@ -190,6 +201,8 @@ final class IP_Privacy {
 
 	/**
 	 * Return a canonical IP address or an empty string.
+	 *
+	 * @param string $ip Candidate IP address.
 	 */
 	private static function valid_ip( string $ip ): string {
 		$validated = filter_var( $ip, FILTER_VALIDATE_IP );
