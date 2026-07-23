@@ -521,7 +521,7 @@ final class Admin {
 				}
 			}
 
-			wp_enqueue_script( 'uccm-scan-runner', UCCM_PLUGIN_URL . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
+			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
 			wp_localize_script(
 				'uccm-scan-runner',
 				'UCCMScanRunner',
