@@ -560,6 +560,10 @@ function __( string $text, string $domain = 'default' ): string {
 	return $text;
 }
 
+function esc_html( string $text ): string {
+	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+}
+
 function esc_html_e( string $text, string $domain = 'default' ): void {
 	unset( $domain );
 	echo htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
