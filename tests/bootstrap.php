@@ -155,6 +155,19 @@ class UCCM_Test_Role {
 $GLOBALS['uccm_test_role'] = new UCCM_Test_Role();
 
 /**
+ * Minimal REST request test double.
+ */
+class WP_REST_Request {
+	/** @param array<string, string> $headers */
+	public function __construct( private array $headers = array() ) {
+	}
+
+	public function get_header( string $name ): string {
+		return $this->headers[ strtolower( $name ) ] ?? '';
+	}
+}
+
+/**
  * Minimal WordPress error test double.
  */
 class WP_Error {
