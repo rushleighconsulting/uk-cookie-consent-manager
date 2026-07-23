@@ -42,7 +42,10 @@ jobs:
       - name: Check PHP syntax
         run: composer lint
 
-      - name: Run foundation tests
+      - name: Check browser script syntax
+        run: node --check assets/js/consent.js
+
+      - name: Run unit tests
         run: composer test
 
       - name: Check WordPress coding standards
