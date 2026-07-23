@@ -25,6 +25,7 @@ final class Consent_Receipts {
 	public static function register(): void {
 		add_action( 'rest_api_init', array( self::class, 'register_routes' ) );
 		add_action( 'uccm_retention_cleanup', array( self::class, 'cleanup_expired' ) );
+		self::schedule_cleanup();
 	}
 
 	/**
