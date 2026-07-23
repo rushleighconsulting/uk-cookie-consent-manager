@@ -142,6 +142,24 @@ final class Admin {
 				)
 			);
 		} elseif ( 'advanced' === $section ) {
+			Settings::update(
+				array(
+					'update_manifest_url' => $submitted['update_manifest_url'] ?? '',
+					'update_public_key'   => $submitted['update_public_key'] ?? '',
+					'auto_update'         => $submitted['auto_update'] ?? false,
+				)
+			);
+
+			if ( ! empty( $submitted['clear_update_credential'] ) ) {
+				Secure_Updater::clear_credential();
+			} elseif ( isset( $submitted['update_credential'] ) && '' !== trim( (string) $submitted['update_credential'] ) ) {
+				$credential_result = Secure_Updater::save_credential( (string) $submitted['update_credential'] );
+
+				if ( is_wp_error( $credential_result ) ) {
+					wp_die( esc_html( $credential_result->get_error_message() ), '', array( 'response' => 400 ) );
+				}
+			}
+
 			update_option( 'uccm_delete_data_on_uninstall', ! empty( $submitted['delete_data_on_uninstall'] ), false );
 		} else {
 			wp_die( esc_html__( 'The settings section is invalid.', 'uk-cookie-consent-manager' ), '', array( 'response' => 400 ) );
@@ -552,10 +570,19 @@ final class Admin {
 	 */
 	public static function render_advanced(): void {
 		self::require_capability( 'manage_uccm_settings' );
+		$settings = Settings::current();
 		self::open_page( __( 'Advanced', 'uk-cookie-consent-manager' ) );
 		self::saved_notice();
 		self::form_open( 'uccm_save_settings', 'uccm_save_advanced' );
 		echo '<input type="hidden" name="section" value="advanced">';
+		echo '<h2>' . esc_html__( 'Secure private-repository updates', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Updates are offered only when an HTTPS manifest has a valid Ed25519 signature and the downloaded ZIP matches its SHA-256 checksum.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p><label for="uccm-update-manifest"><strong>' . esc_html__( 'Manifest URL', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-manifest" class="large-text code" type="url" required name="uccm[update_manifest_url]" value="' . esc_attr( (string) $settings['update_manifest_url'] ) . '"></p>';
+		echo '<p><label for="uccm-update-key"><strong>' . esc_html__( 'Ed25519 public key (base64)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-key" class="large-text code" type="text" autocomplete="off" name="uccm[update_public_key]" value="' . esc_attr( (string) $settings['update_public_key'] ) . '"></p>';
+		echo '<p><label for="uccm-update-credential"><strong>' . esc_html__( 'Site-specific download credential', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-credential" class="regular-text" type="password" autocomplete="new-password" name="uccm[update_credential]" value="" placeholder="' . esc_attr__( 'Leave blank to keep the stored credential', 'uk-cookie-consent-manager' ) . '"><br><small>' . esc_html( Secure_Updater::has_credential() ? __( 'An encrypted credential is configured.', 'uk-cookie-consent-manager' ) : __( 'No credential is configured.', 'uk-cookie-consent-manager' ) ) . '</small></p>';
+		self::checkbox_field( 'clear_update_credential', __( 'Remove the stored update credential', 'uk-cookie-consent-manager' ), false, __( 'The credential is never displayed after saving.', 'uk-cookie-consent-manager' ) );
+		self::checkbox_field( 'auto_update', __( 'Automatically install authenticated UCCM updates', 'uk-cookie-consent-manager' ), ! empty( $settings['auto_update'] ), __( 'Opt in only after testing your backup and recovery process.', 'uk-cookie-consent-manager' ) );
+		echo '<hr>';
 		self::checkbox_field( 'delete_data_on_uninstall', __( 'Delete all UCCM data when the plugin is uninstalled', 'uk-cookie-consent-manager' ), true === get_option( 'uccm_delete_data_on_uninstall', false ), __( 'Leave disabled to retain settings and evidence by default.', 'uk-cookie-consent-manager' ) );
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
