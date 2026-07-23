@@ -34,6 +34,7 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertFalse( $configuration['categories']['marketing']['required'] );
 		self::assertSame( 180, $configuration['lifetimeDays'] );
 		self::assertSame( '1', $configuration['policyVersion'] );
+		self::assertSame( 'https://example.test/wp-json/uccm/v1/consents', $configuration['receiptEndpoint'] );
 	}
 
 	public function test_configuration_bounds_lifetime_and_sanitises_policy_version(): void {
