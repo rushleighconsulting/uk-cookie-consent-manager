@@ -26,6 +26,7 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-database.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-capabilities.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-resource-rules.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-interface.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
 
