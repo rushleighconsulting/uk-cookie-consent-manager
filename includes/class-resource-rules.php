@@ -189,12 +189,15 @@ final class Resource_Rules {
 		$rule = $rules[ $id ];
 
 		if ( 'script' === $rule['type'] ) {
-			return sprintf(
+			// phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Deliberately inert until explicit consent.
+			$placeholder = sprintf(
 				'<script type="text/plain" data-uccm-blocked="script" data-uccm-rule="%1$s" data-uccm-category="%2$s" data-uccm-src="%3$s"></script>',
 				esc_attr( $rule['id'] ),
 				esc_attr( $rule['category'] ),
 				esc_url( $rule['source'] )
 			);
+			// phpcs:enable WordPress.WP.EnqueuedResources.NonEnqueuedScript
+			return $placeholder;
 		}
 
 		if ( 'pixel' === $rule['type'] ) {
@@ -232,6 +235,7 @@ final class Resource_Rules {
 	/**
 	 * Find a validated script rule by WordPress handle.
 	 *
+	 * @param string $handle WordPress script handle.
 	 * @return array{id: string, type: string, category: string, handle: string, source: string, title: string}|null
 	 */
 	private static function rule_for_handle( string $handle ): ?array {
@@ -246,6 +250,8 @@ final class Resource_Rules {
 
 	/**
 	 * Protect common WordPress, security and commerce dependencies by default.
+	 *
+	 * @param string $handle WordPress script handle.
 	 */
 	private static function is_protected_handle( string $handle ): bool {
 		$protected = array(
@@ -277,9 +283,11 @@ final class Resource_Rules {
 	/**
 	 * Report invalid or unknown resources without guessing their category.
 	 *
-	 * @param mixed $resource Original resource value.
+	 * @param string $id          Sanitised rule identifier.
+	 * @param string $reason      Stable diagnostic reason.
+	 * @param mixed  $declaration Original resource declaration.
 	 */
-	private static function report_unknown( string $id, string $reason, mixed $resource ): void {
+	private static function report_unknown( string $id, string $reason, mixed $declaration ): void {
 		/**
 		 * Fires when a blocking declaration cannot be safely classified.
 		 *
@@ -287,11 +295,13 @@ final class Resource_Rules {
 		 * @param string $reason   Stable diagnostic reason.
 		 * @param mixed  $resource Original declaration.
 		 */
-		do_action( 'uccm_unknown_resource', $id, $reason, $resource );
+		do_action( 'uccm_unknown_resource', $id, $reason, $declaration );
 	}
 
 	/**
 	 * Sanitise a stable identifier without relying on display text.
+	 *
+	 * @param string $value Untrusted identifier.
 	 */
 	private static function sanitize_identifier( string $value ): string {
 		$value = strtolower( $value );
