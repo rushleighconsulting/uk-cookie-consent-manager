@@ -1171,7 +1171,7 @@ final class Scanner {
 			return null;
 		}
 
-		$source_urls        = array_values(
+		$source_urls    = array_values(
 			array_slice(
 				array_unique(
 					array_filter(
