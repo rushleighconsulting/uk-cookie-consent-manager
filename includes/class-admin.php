@@ -589,13 +589,15 @@ final class Admin {
 		} elseif ( array() === $runs ) {
 			echo '<p>' . esc_html__( 'No scan runs have been recorded yet.', 'uk-cookie-consent-manager' ) . '</p>';
 		} else {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Pages', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Crawl progress', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Browser', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 			foreach ( $runs as $run ) {
 				$summary  = json_decode( (string) $run['summary'], true );
 				$pages    = json_decode( (string) $run['pages_visited'], true );
+				$coverage = json_decode( (string) $run['coverage'], true );
 				$summary  = is_array( $summary ) ? $summary : array();
 				$pages    = is_array( $pages ) ? $pages : array();
+				$coverage = is_array( $coverage ) ? $coverage : array();
 				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
 				$run_url  = add_query_arg(
 					array(
@@ -604,10 +606,45 @@ final class Admin {
 					),
 					admin_url( 'admin.php' )
 				);
-				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
+				$visited_count    = (int) ( $coverage['visited_count'] ?? count( $pages ) );
+				$discovered_count = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
+				$remaining_count  = (int) ( $coverage['remaining_count'] ?? 0 );
+				$browser_status   = (string) ( $coverage['browser_status'] ?? 'not-run' );
+				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td>';
+				echo '<td>' . esc_html( sprintf( __( '%1$d visited / %2$d discovered; %3$d remaining', 'uk-cookie-consent-manager' ), $visited_count, $discovered_count, $remaining_count ) ) . '</td>';
+				echo '<td>' . esc_html( $browser_status ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td><td>';
+
+				if ( in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
+					if ( 'failed' === (string) $run['status'] ) {
+						self::form_open( 'uccm_resume_scan', 'uccm_resume_scan' );
+						echo '<input type="hidden" name="scan_id" value="' . esc_attr( (string) $run['id'] ) . '">';
+						submit_button( __( 'Resume', 'uk-cookie-consent-manager' ), 'secondary small', '', false );
+						self::form_close();
+					}
+
+					self::form_open( 'uccm_cancel_scan', 'uccm_cancel_scan' );
+					echo '<input type="hidden" name="scan_id" value="' . esc_attr( (string) $run['id'] ) . '">';
+					submit_button( __( 'Cancel', 'uk-cookie-consent-manager' ), 'secondary small', '', false );
+					self::form_close();
+				} else {
+					echo '&mdash;';
+				}
+
+				echo '</td></tr>';
 			}
 
 			echo '</tbody></table>';
+		}
+
+		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
+			$runner_coverage = json_decode( (string) $runner_run['coverage'], true );
+			$runner_coverage = is_array( $runner_coverage ) ? $runner_coverage : array();
+			echo '<h2>' . esc_html__( 'Browser observations for scan ', 'uk-cookie-consent-manager' ) . esc_html( (string) $scan_id ) . '</h2>';
+			echo '<p>' . esc_html__( 'This administrator-run pass opens up to 100 successfully crawled same-origin pages in hidden frames and observes accessible cookie names, local-storage keys, scripts, iframes and pixels. It cannot read HttpOnly cookie values and may be limited by page framing policy.', 'uk-cookie-consent-manager' ) . '</p>';
+			echo '<p><strong>' . esc_html__( 'Browser status:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( (string) ( $runner_coverage['browser_status'] ?? 'not-run' ) ) . '</p>';
+			echo '<button type="button" class="button button-secondary" id="uccm-run-browser-observations">' . esc_html__( 'Run browser observations', 'uk-cookie-consent-manager' ) . '</button>';
+			echo '<p id="uccm-browser-observation-status" aria-live="polite"></p>';
+			echo '<div id="uccm-browser-observation-frames" hidden></div>';
 		}
 
 		echo '<h2>' . esc_html__( 'Scan findings requiring human review', 'uk-cookie-consent-manager' ) . '</h2>';
