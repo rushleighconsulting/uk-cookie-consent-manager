@@ -12,6 +12,9 @@ define( 'UCCM_VERSION', '0.1.0-dev' );
 define( 'UCCM_PLUGIN_FILE', dirname( __DIR__ ) . '/uk-cookie-consent-manager.php' );
 define( 'UCCM_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
 define( 'UCCM_PLUGIN_URL', 'https://example.test/wp-content/plugins/uk-cookie-consent-manager/' );
+define( 'HOUR_IN_SECONDS', 3600 );
+define( 'DAY_IN_SECONDS', 86400 );
+define( 'ARRAY_A', 'ARRAY_A' );
 
 $GLOBALS['uccm_test_options']          = array();
 $GLOBALS['uccm_test_dbdelta_calls']    = array();
@@ -23,15 +26,59 @@ $GLOBALS['uccm_test_enqueued_styles']  = array();
 $GLOBALS['uccm_test_enqueued_scripts'] = array();
 $GLOBALS['uccm_test_localized']        = array();
 $GLOBALS['uccm_test_is_admin']         = false;
+$GLOBALS['uccm_test_scheduled_hooks']  = array();
+$GLOBALS['uccm_test_capabilities']     = array();
+$GLOBALS['uccm_test_rest_routes']      = array();
+$GLOBALS['uccm_test_db_rows']          = array();
+$GLOBALS['uccm_test_db_var']           = null;
+$GLOBALS['uccm_test_db_query_result']  = 0;
 
 /**
  * Minimal wpdb test double.
  */
 class wpdb {
 	public string $prefix = 'wp_';
+	public int $insert_id = 0;
+
+	/** @var array<int, array{table: string, data: array<string, mixed>, formats: array<int, string>}> */
+	public array $inserts = array();
+
+	/** @var string[] */
+	public array $queries = array();
 
 	public function get_charset_collate(): string {
 		return 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
+	}
+
+	/**
+	 * @param array<string, mixed> $data
+	 * @param string[]             $formats
+	 */
+	public function insert( string $table, array $data, array $formats = array() ): int|false {
+		$this->inserts[] = compact( 'table', 'data', 'formats' );
+		++$this->insert_id;
+		return 1;
+	}
+
+	public function prepare( string $query, mixed ...$arguments ): string {
+		return $query . ' -- ' . wp_json_encode( $arguments );
+	}
+
+	/** @return array<int, array<string, mixed>> */
+	public function get_results( string $query, string $output = ARRAY_A ): array {
+		unset( $output );
+		$this->queries[] = $query;
+		return $GLOBALS['uccm_test_db_rows'];
+	}
+
+	public function get_var( string $query ): mixed {
+		$this->queries[] = $query;
+		return $GLOBALS['uccm_test_db_var'];
+	}
+
+	public function query( string $query ): int|false {
+		$this->queries[] = $query;
+		return $GLOBALS['uccm_test_db_query_result'];
 	}
 }
 
@@ -58,6 +105,27 @@ class UCCM_Test_Role {
 }
 
 $GLOBALS['uccm_test_role'] = new UCCM_Test_Role();
+
+/**
+ * Minimal WordPress error test double.
+ */
+class WP_Error {
+	public function __construct(
+		public string $code = '',
+		public string $message = '',
+		public mixed $data = null
+	) {
+	}
+
+	public function get_error_code(): string {
+		return $this->code;
+	}
+}
+
+function is_wp_error( mixed $value ): bool {
+	return $value instanceof WP_Error;
+}
+
 
 function get_option( string $name, mixed $default = false ): mixed {
 	return $GLOBALS['uccm_test_options'][ $name ] ?? $default;
@@ -108,6 +176,16 @@ function is_multisite(): bool {
 function wp_clear_scheduled_hook( string $hook ): int {
 	$GLOBALS['uccm_test_cleared_hooks'][] = $hook;
 	return 1;
+}
+
+function wp_next_scheduled( string $hook ): int|false {
+	return $GLOBALS['uccm_test_scheduled_hooks'][ $hook ] ?? false;
+}
+
+function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
+	unset( $recurrence );
+	$GLOBALS['uccm_test_scheduled_hooks'][ $hook ] = $timestamp;
+	return true;
 }
 
 function get_sites( array $arguments = array() ): array {
@@ -174,6 +252,39 @@ function is_admin(): bool {
 	return $GLOBALS['uccm_test_is_admin'];
 }
 
+function current_user_can( string $capability ): bool {
+	return true === ( $GLOBALS['uccm_test_capabilities'][ $capability ] ?? false );
+}
+
+function get_current_user_id(): int {
+	return 0;
+}
+
+function get_current_blog_id(): int {
+	return 1;
+}
+
+function home_url( string $path = '' ): string {
+	return 'https://example.test' . $path;
+}
+
+function wp_salt( string $scheme = 'auth' ): string {
+	return 'test-site-secret-' . $scheme;
+}
+
+function wp_json_encode( mixed $value ): string|false {
+	return json_encode( $value );
+}
+
+function rest_url( string $path = '' ): string {
+	return 'https://example.test/wp-json/' . ltrim( $path, '/' );
+}
+
+function register_rest_route( string $namespace, string $route, array $arguments ): bool {
+	$GLOBALS['uccm_test_rest_routes'][ $namespace . $route ] = $arguments;
+	return true;
+}
+
 function plugin_dir_url( string $file ): string {
 	unset( $file );
 	return UCCM_PLUGIN_URL;
@@ -234,6 +345,8 @@ function esc_attr_e( string $text, string $domain = 'default' ): void {
 
 require_once dirname( __DIR__ ) . '/includes/class-database.php';
 require_once dirname( __DIR__ ) . '/includes/class-capabilities.php';
+require_once dirname( __DIR__ ) . '/includes/class-ip-privacy.php';
+require_once dirname( __DIR__ ) . '/includes/class-consent-receipts.php';
 require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
