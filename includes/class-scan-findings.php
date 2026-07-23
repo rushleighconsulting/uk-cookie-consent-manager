@@ -378,7 +378,7 @@ final class Scan_Findings {
 		 * @param int      $run_id     Scan run identifier.
 		 */
 		$recipients = apply_filters( 'uccm_scan_notification_recipients', $recipients, $run_id );
-		$recipients = is_array( $recipients ) ? array_slice( array_unique( array_filter( array_map( 'sanitize_email', $recipients ) ) ), 0, 50 ) : array();
+		$recipients = array_slice( array_unique( array_filter( array_map( 'sanitize_email', $recipients ) ) ), 0, 50 );
 
 		if ( array() === $recipients ) {
 			return;
