@@ -116,7 +116,7 @@ final class Consent_Receipts {
 			return new \WP_Error( 'uccm_invalid_choices', __( 'The consent choices could not be encoded.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
 		}
 
-		$row = array(
+		$row                   = array(
 			'receipt_id'      => $receipt_id,
 			'occurred_at'     => $occurred_at,
 			'action'          => $action,
@@ -133,7 +133,7 @@ final class Consent_Receipts {
 		);
 		$row['integrity_hash'] = self::integrity_hash( $row );
 
-		$table  = Database::table_names()['consents'];
+		$table = Database::table_names()['consents'];
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Append-only write to the plugin-owned receipt table.
 		$stored = $wpdb->insert(
 			$table,
@@ -245,8 +245,8 @@ final class Consent_Receipts {
 			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to reveal complete IP addresses.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
 
-		$table      = Database::table_names()['consents'];
-		$query      = $wpdb->prepare( "SELECT ip_ciphertext FROM {$table} WHERE id = %d", $record_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is plugin-owned.
+		$table = Database::table_names()['consents'];
+		$query = $wpdb->prepare( "SELECT ip_ciphertext FROM {$table} WHERE id = %d", $record_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is plugin-owned.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared lookup in the plugin-owned receipt table.
 		$ciphertext = $wpdb->get_var( $query );
 
