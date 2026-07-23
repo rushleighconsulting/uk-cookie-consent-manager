@@ -31,6 +31,7 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-settings.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-resource-rules.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-cookie-inventory.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-scanner.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-interface.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-admin.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
