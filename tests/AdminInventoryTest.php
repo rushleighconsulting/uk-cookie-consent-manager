@@ -34,6 +34,7 @@ final class AdminInventoryTest extends TestCase {
 		self::assertSame( 'manage_uccm_inventory', $screens['uccm-inventory']['capability'] );
 		self::assertSame( 'view_uccm_consents', $screens['uccm-consents']['capability'] );
 		self::assertSame( 'run_uccm_scans', $screens['uccm-scans']['capability'] );
+		self::assertSame( 'View Categories', $screens['uccm-categories']['title'] );
 
 		Admin::register_menu();
 		self::assertCount( 1, $GLOBALS['uccm_test_admin_menus'] );
@@ -59,6 +60,18 @@ final class AdminInventoryTest extends TestCase {
 		self::assertTrue( $settings['store_full_ip'] );
 		self::assertTrue( $settings['trust_proxy_headers'] );
 		self::assertSame( array( '192.0.2.10', '2001:db8::1' ), $settings['trusted_proxy_ips'] );
+	}
+
+	public function test_scan_url_settings_reject_cross_origin_entries_before_save(): void {
+		$valid = Settings::validate_scan_urls( "https://example.test/privacy\nhttps://example.test/contact" );
+
+		self::assertSame( array( 'https://example.test/privacy', 'https://example.test/contact' ), $valid );
+
+		$invalid = Settings::validate_scan_urls( "https://example.test/privacy\nhttps://tracker.test/pixel" );
+
+		self::assertInstanceOf( WP_Error::class, $invalid );
+		self::assertSame( 'uccm_scan_disallowed_target', $invalid->get_error_code() );
+		self::assertSame( 'https://tracker.test/pixel', $invalid->get_error_data()['url'] );
 	}
 
 	public function test_inventory_rejects_invalid_category_and_storage_type(): void {

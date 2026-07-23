@@ -25,9 +25,11 @@ final class Scanner {
 	public const RECURRENCE = 'uccm_monthly';
 
 	/**
-	 * Maximum targets per scan.
+	 * Temporary hard ceiling for targets per scan.
+	 *
+	 * The current scanner is synchronous; asynchronous crawling is tracked separately.
 	 */
-	public const MAX_TARGETS = 20;
+	public const MAX_TARGETS = 1024;
 
 	/**
 	 * Maximum findings stored per scan.
@@ -192,7 +194,7 @@ final class Scanner {
 			$validated = self::validate_target( (string) $candidate );
 
 			if ( is_wp_error( $validated ) ) {
-				return $validated;
+				return self::target_error( $validated, (string) $candidate );
 			}
 
 			$targets[] = $validated;
@@ -230,6 +232,7 @@ final class Scanner {
 		$targets = null === $targets ? self::targets() : self::validate_targets( $targets );
 
 		if ( is_wp_error( $targets ) ) {
+			self::record_failed_run( $targets );
 			return $targets;
 		}
 
@@ -361,6 +364,61 @@ final class Scanner {
 	}
 
 	/**
+	 * Attach the rejected target to a validation error for safe evidence and feedback.
+	 *
+	 * @param \WP_Error $error  Validation error.
+	 * @param string    $target Rejected target.
+	 */
+	private static function target_error( \WP_Error $error, string $target ): \WP_Error {
+		$data              = $error->get_error_data();
+		$error_data        = is_array( $data ) ? $data : array();
+		$error_data['url'] = substr( sanitize_text_field( $target ), 0, 2048 );
+
+		return new \WP_Error( $error->get_error_code(), $error->get_error_message(), $error_data );
+	}
+
+	/**
+	 * Preserve evidence when target validation prevents a scan from starting.
+	 *
+	 * @param \WP_Error $error Validation error.
+	 */
+	private static function record_failed_run( \WP_Error $error ): void {
+		global $wpdb;
+
+		$data    = $error->get_error_data();
+		$url     = is_array( $data ) ? (string) ( $data['url'] ?? '' ) : '';
+		$now     = gmdate( 'Y-m-d H:i:s' );
+		$methods = array( 'same-origin-set-cookie', 'authenticated-browser-observations' );
+		$table   = Database::table_names()['scan_runs'];
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Preserves a bounded plugin-owned failed-run audit record.
+		$wpdb->insert(
+			$table,
+			array(
+				'status'        => 'failed',
+				'methods'       => wp_json_encode( $methods ),
+				'coverage'      => wp_json_encode( array( 'target_count' => 0 ) ),
+				'pages_visited' => wp_json_encode( array() ),
+				'summary'       => wp_json_encode(
+					array(
+						'findings' => 0,
+						'warnings' => array(
+							array(
+								'url'  => $url,
+								'code' => sanitize_key( $error->get_error_code() ),
+							),
+						),
+					)
+				),
+				'error_code'    => sanitize_key( $error->get_error_code() ),
+				'started_at'    => $now,
+				'completed_at'  => $now,
+				'created_at'    => $now,
+			)
+		);
+	}
+
+	/**
 	 * Return recent scan summaries for the administration screen.
 	 *
 	 * @param int $limit Maximum rows.
@@ -454,7 +512,7 @@ final class Scanner {
 			$validated = self::validate_target( (string) $target );
 
 			if ( is_wp_error( $validated ) ) {
-				return $validated;
+				return self::target_error( $validated, (string) $target );
 			}
 
 			$validated_targets[] = $validated;

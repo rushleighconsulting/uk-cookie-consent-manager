@@ -28,8 +28,9 @@ the versioned plugin ZIP produced by the Release workflow.
 - **Banner:** review visitor-facing wording and the consent-policy version.
   Increment the policy version whenever a material policy change requires a new
   decision.
-- **Categories:** document Necessary, Functional, Analytics and Marketing
-  purposes. Necessary is always enabled; optional categories default to denied.
+- **View Categories:** review the fixed Necessary, Functional, Analytics and
+  Marketing definitions. Necessary is always enabled; optional categories default
+  to denied.
 - **Script Blocking:** explicitly map every optional script, iframe, embed or
   pixel. Test both denial and grant. UCCM does not guess a category or rewrite
   arbitrary HTML.
@@ -50,8 +51,11 @@ decision.
 
 Run a manual scan after installation and after material theme, plugin, tag
 manager or content changes. The scheduled scan runs every 30 days and checks the
-homepage plus up to 19 configured same-origin public URLs. Review new and changed
-findings, then mark them reviewed, ignored or resolved as appropriate.
+homepage plus up to 1,023 configured same-origin public URLs. Cross-origin, private,
+credential-bearing and fragment-bearing URLs are rejected when settings are saved. If an
+invalid legacy or externally written setting reaches a manual or scheduled run, the scan
+fails closed and records visible failure evidence. Review new and changed findings, then
+mark them reviewed, ignored or resolved as appropriate.
 
 ### Scan limitations
 
@@ -63,6 +67,10 @@ interaction-triggered, blocked, consent-dependent or third-party behaviour. It
 does not capture consent records, cookie values, form values or page content.
 Repeat representative manual journeys and use browser developer tools alongside
 the scanner.
+
+The current scanner does not crawl links and runs configured URLs synchronously.
+The 1,024-page total is a temporary hard ceiling; use only a practical test set
+until asynchronous crawling is delivered.
 
 ## Consent records and privacy requests
 
