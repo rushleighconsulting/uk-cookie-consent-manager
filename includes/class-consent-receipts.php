@@ -340,6 +340,7 @@ final class Consent_Receipts {
 	/**
 	 * Apply a bounded per-source receipt creation limit.
 	 *
+	 * @param string $ip Validated source IP.
 	 * @return true|\WP_Error
 	 */
 	private static function consume_rate_limit( string $ip ): bool|\WP_Error {
