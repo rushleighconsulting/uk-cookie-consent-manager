@@ -225,7 +225,7 @@ invalidates the encrypted credential, which must then be saved again.
 
 ### Release procedure
 
-A semantic tag such as `v0.1.0` starts the Release workflow. The tag must match
+A semantic tag such as `v0.1.0-rc.1` starts the Release workflow. The tag must match
 both plugin version declarations. The workflow builds a reproducible archive from
 the tagged Git tree, excludes tests and development dependencies, emits
 `SHA256SUMS`, creates a signed `update-manifest.json`, and publishes those
