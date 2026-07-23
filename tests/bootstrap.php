@@ -348,7 +348,8 @@ function restore_current_blog(): bool {
 	return true;
 }
 
-function add_action( string $hook, callable $callback, int $priority = 10 ): void {
+function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_arguments = 1 ): void {
+	unset( $accepted_arguments );
 	$GLOBALS['uccm_test_actions'][ $hook ][] = array(
 		'callback' => $callback,
 		'priority' => $priority,
