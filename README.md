@@ -193,3 +193,36 @@ composer phpstan
 ```
 
 Do not install or enable this development version on a production site.
+
+
+## Secure private-repository updates
+
+UCCM-9 adds an opt-in update channel designed for a private GitHub repository:
+
+- Update metadata is fetched over HTTPS and must carry a valid Ed25519 signature.
+- The release ZIP is accepted only when its SHA-256 checksum matches the signed
+  metadata. Any missing key, invalid signature, metadata mismatch, incompatible
+  version, failed request or checksum mismatch blocks the update.
+- A site-specific download credential can be stored from **Cookie Consent →
+  Advanced**. It is encrypted with a key derived from the site's WordPress salts,
+  is never displayed after saving, and is not included in release packages or
+  visitor-facing output.
+- Automatic updates are disabled until an administrator explicitly opts in.
+
+Before enabling the channel, configure the release public key and manifest URL in
+the Advanced screen. For a private repository, supply a least-privilege,
+site-specific credential that can read release assets. Rotating WordPress salts
+invalidates the encrypted credential, which must then be saved again.
+
+### Release procedure
+
+A semantic tag such as `v0.1.0` starts the Release workflow. The tag must match
+both plugin version declarations. The workflow builds a reproducible archive from
+the tagged Git tree, excludes tests and development dependencies, emits
+`SHA256SUMS`, creates a signed `update-manifest.json`, and publishes those
+assets in a new GitHub Release. Existing releases are never replaced.
+
+Repository administrators must configure `UCCM_MANIFEST_PRIVATE_KEY` as a
+GitHub Actions secret containing a base64 Ed25519 seed (32 bytes) or secret key
+(64 bytes). The corresponding base64 public key is configured on each WordPress
+site. The private key must never be committed or placed in the plugin ZIP.

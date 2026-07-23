@@ -33,6 +33,9 @@ final class Settings {
 			'trust_proxy_headers'    => false,
 			'trusted_proxy_ips'      => array(),
 			'scan_urls'              => array(),
+			'update_manifest_url'    => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
+			'update_public_key'      => '',
+			'auto_update'            => false,
 		);
 	}
 
@@ -70,7 +73,7 @@ final class Settings {
 			$settings['retention_days'] = max( 1, min( 3650, (int) $input['retention_days'] ) );
 		}
 
-		foreach ( array( 'store_full_ip', 'trust_proxy_headers' ) as $flag ) {
+		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'auto_update' ) as $flag ) {
 			if ( array_key_exists( $flag, $input ) ) {
 				$settings[ $flag ] = self::boolean( $input[ $flag ] );
 			}
@@ -82,6 +85,14 @@ final class Settings {
 
 		if ( array_key_exists( 'scan_urls', $input ) ) {
 			$settings['scan_urls'] = self::scan_urls( $input['scan_urls'] );
+		}
+
+		if ( array_key_exists( 'update_manifest_url', $input ) ) {
+			$settings['update_manifest_url'] = self::update_manifest_url( $input['update_manifest_url'] );
+		}
+
+		if ( array_key_exists( 'update_public_key', $input ) ) {
+			$settings['update_public_key'] = self::update_public_key( $input['update_public_key'] );
 		}
 
 		return $settings;
@@ -106,6 +117,28 @@ final class Settings {
 	 */
 	private static function boolean( mixed $value ): bool {
 		return true === $value || 1 === $value || '1' === $value || 'yes' === $value || 'on' === $value;
+	}
+
+	/**
+	 * Return an HTTPS update manifest URL or fail closed.
+	 *
+	 * @param mixed $value Candidate URL.
+	 */
+	private static function update_manifest_url( mixed $value ): string {
+		$url = esc_url_raw( trim( (string) $value ) );
+		return 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? $url : '';
+	}
+
+	/**
+	 * Return a canonical base64 Ed25519 public key or fail closed.
+	 *
+	 * @param mixed $value Candidate public key.
+	 */
+	private static function update_public_key( mixed $value ): string {
+		$key = trim( (string) $value );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented public-key wire format.
+		$decoded = base64_decode( $key, true );
+		return false !== $decoded && 32 === strlen( $decoded ) ? $key : '';
 	}
 
 	/**
