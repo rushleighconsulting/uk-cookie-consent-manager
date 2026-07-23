@@ -810,7 +810,7 @@ final class Admin {
 		}
 
 		if ( array() !== $source_urls ) {
-			$links          = array_map(
+			$links   = array_map(
 				static fn ( mixed $url ): string => '<a href="' . esc_url( (string) $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( (string) $url ) . '</a>',
 				$source_urls
 			);
