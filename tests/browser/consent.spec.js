@@ -98,10 +98,19 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 	await expect( banner ).toBeVisible();
 	await expect( actions ).toHaveCount( 3 );
 	await expect( page.locator( '[data-uccm-rule="analytics-inline"] + script' ) ).toHaveCount( 0 );
-	await expect( page.evaluate( () => window.analyticsExecutions || 0 ) ).resolves.toBe( 0 );
+	expect( await page.evaluate( () => window.analyticsExecutions || 0 ) ).toBe( 0 );
 
-	const widths = await actions.evaluateAll( ( buttons ) => buttons.map( ( button ) => button.getBoundingClientRect().width ) );
-	expect( Math.max( ...widths ) - Math.min( ...widths ) ).toBeLessThan( 80 );
+	const actionStyles = await actions.evaluateAll( ( buttons ) => buttons.map( ( button ) => {
+		const style = getComputedStyle( button );
+		return {
+			visible: button.getBoundingClientRect().height >= 44,
+			background: style.backgroundColor,
+			fontWeight: style.fontWeight,
+		};
+	} ) );
+	expect( actionStyles.every( ( style ) => style.visible ) ).toBe( true );
+	expect( new Set( actionStyles.map( ( style ) => style.background ) ).size ).toBe( 1 );
+	expect( new Set( actionStyles.map( ( style ) => style.fontWeight ) ).size ).toBe( 1 );
 
 	await page.getByRole( 'button', { name: 'Accept all' } ).click();
 
