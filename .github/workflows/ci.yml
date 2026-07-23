@@ -42,6 +42,9 @@ jobs:
       - name: Check PHP syntax
         run: composer lint
 
+      - name: Run foundation tests
+        run: composer test
+
       - name: Check WordPress coding standards
         run: composer phpcs
 

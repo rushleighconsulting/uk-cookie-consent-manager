@@ -22,6 +22,8 @@ define( 'UCCM_PLUGIN_FILE', __FILE__ );
 define( 'UCCM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UCCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+require_once UCCM_PLUGIN_DIR . 'includes/class-database.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-capabilities.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
 

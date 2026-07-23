@@ -8,12 +8,26 @@ honouring cookie consent under UK GDPR and PECR.
 
 ## Status
 
-Release 1 is in development. The current branch is an architectural scaffold,
-not a production-ready consent solution.
+Release 1 is in development. The repository now contains the UCCM-2 foundation,
+but not a production-ready consent interface.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
 - [Release 1 Epic](https://rushleighconsulting.atlassian.net/browse/UCCM-1)
+
+## Foundation
+
+UCCM-2 establishes:
+
+- Versioned, per-site database tables for consent events, cookie inventory,
+  scan runs and scan findings.
+- Idempotent activation and runtime schema upgrade checks.
+- Dedicated settings, inventory, scanning and consent-record capabilities.
+- Privacy-preserving defaults: full IP storage is disabled and consent-record
+  retention defaults to 365 days.
+- Multisite activation, deactivation and new-site initialization.
+- Retain-by-default uninstall behaviour with explicit full cleanup.
+- Focused PHPUnit tests for schema and lifecycle invariants.
 
 ## Planned Release 1 capabilities
 
@@ -38,8 +52,9 @@ Run the current quality checks:
 
 ```sh
 composer lint
+composer test
 composer phpcs
 composer phpstan
 ```
 
-Do not install or enable this development scaffold on a production site.
+Do not install or enable this development version on a production site.
