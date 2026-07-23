@@ -493,13 +493,13 @@ final class Admin {
 		$runs           = Scanner::recent_runs( 20 );
 		$next           = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
-		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
+		$scan_id        = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
-		$notice = self::request_value( $_GET, 'uccm_notice' );
+		$notice         = self::request_value( $_GET, 'uccm_notice' );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only value is escaped before display.
-		$rejected_url = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
-		$findings   = Scan_Findings::records( $scan_id, 100 );
-		$runner_run = null;
+		$rejected_url   = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
+		$findings       = Scan_Findings::records( $scan_id, 100 );
+		$runner_run     = null;
 
 		if ( is_array( $runs ) && 0 < $scan_id ) {
 			foreach ( $runs as $candidate_run ) {
@@ -594,14 +594,14 @@ final class Admin {
 			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Crawl progress', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Browser', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 			foreach ( $runs as $run ) {
-				$summary  = json_decode( (string) $run['summary'], true );
-				$pages    = json_decode( (string) $run['pages_visited'], true );
-				$coverage = json_decode( (string) $run['coverage'], true );
-				$summary  = is_array( $summary ) ? $summary : array();
-				$pages    = is_array( $pages ) ? $pages : array();
-				$coverage = is_array( $coverage ) ? $coverage : array();
-				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
-				$run_url  = add_query_arg(
+				$summary   = json_decode( (string) $run['summary'], true );
+				$pages     = json_decode( (string) $run['pages_visited'], true );
+				$coverage  = json_decode( (string) $run['coverage'], true );
+				$summary   = is_array( $summary ) ? $summary : array();
+				$pages     = is_array( $pages ) ? $pages : array();
+				$coverage  = is_array( $coverage ) ? $coverage : array();
+				$warnings  = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
+				$run_url   = add_query_arg(
 					array(
 						'page'    => 'uccm-scans',
 						'scan_id' => (int) $run['id'],
@@ -613,6 +613,7 @@ final class Admin {
 				$remaining_count  = (int) ( $coverage['remaining_count'] ?? 0 );
 				$browser_status   = (string) ( $coverage['browser_status'] ?? 'not-run' );
 				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td>';
+				/* translators: 1: visited pages, 2: discovered pages, 3: remaining pages. */
 				echo '<td>' . esc_html( sprintf( __( '%1$d visited / %2$d discovered; %3$d remaining', 'uk-cookie-consent-manager' ), $visited_count, $discovered_count, $remaining_count ) ) . '</td>';
 				echo '<td>' . esc_html( $browser_status ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td><td>';
 
