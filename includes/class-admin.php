@@ -229,7 +229,25 @@ final class Admin {
 		self::require_capability( 'run_uccm_scans' );
 		check_admin_referer( 'uccm_save_scan_settings' );
 		$submitted = isset( $_POST['uccm'] ) && is_array( $_POST['uccm'] ) ? wp_unslash( $_POST['uccm'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Settings validates every URL.
-		Settings::update( array( 'scan_urls' => $submitted['scan_urls'] ?? '' ) );
+		$urls      = Settings::validate_scan_urls( $submitted['scan_urls'] ?? '' );
+
+		if ( is_wp_error( $urls ) ) {
+			$data = $urls->get_error_data();
+			$url  = is_array( $data ) ? (string) ( $data['url'] ?? '' ) : '';
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'              => 'uccm-scans',
+						'uccm_notice'       => 'scan-url-error',
+						'uccm_rejected_url' => substr( $url, 0, 200 ),
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		Settings::update( array( 'scan_urls' => $urls ) );
 		self::redirect( 'uccm-scans', 'saved' );
 	}
 
@@ -410,8 +428,10 @@ final class Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
-		$notice   = self::request_value( $_GET, 'uccm_notice' );
-		$findings = Scan_Findings::records( $scan_id, 100 );
+		$notice = self::request_value( $_GET, 'uccm_notice' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only value is escaped before display.
+		$rejected_url = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
+		$findings     = Scan_Findings::records( $scan_id, 100 );
 
 		self::open_page( __( 'Scans', 'uk-cookie-consent-manager' ) );
 
@@ -430,7 +450,20 @@ final class Admin {
 		self::form_open( 'uccm_save_scan_settings', 'uccm_save_scan_settings' );
 		echo '<h2>' . esc_html__( 'Public scan URLs', 'uk-cookie-consent-manager' ) . '</h2>';
 		echo '<p>' . esc_html__( 'The homepage is always scanned. Add up to 1,023 same-origin public URLs, one per line.', 'uk-cookie-consent-manager' ) . '</p>';
-		echo '<textarea class="large-text code" rows="7" name="uccm[scan_urls]">' . esc_textarea( $urls ) . '</textarea>';
+
+		if ( 'scan-url-error' === $notice ) {
+			$message = '' === $rejected_url
+				? __( 'The scan URLs were not saved. Enter only same-origin public URLs without credentials or fragments.', 'uk-cookie-consent-manager' )
+				: sprintf(
+					/* translators: %s: rejected scan URL. */
+					__( 'The scan URL “%s” was not saved. Enter only same-origin public URLs without credentials or fragments.', 'uk-cookie-consent-manager' ),
+					$rejected_url
+				);
+			echo '<div id="uccm-scan-url-error" class="notice notice-error inline"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		$textarea_attributes = 'scan-url-error' === $notice ? ' aria-invalid="true" aria-describedby="uccm-scan-url-error"' : '';
+		echo '<textarea id="uccm-scan-urls" class="large-text code" rows="7" name="uccm[scan_urls]"' . $textarea_attributes . '>' . esc_textarea( $urls ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attribute fragment is a fixed allowlisted string.
 		submit_button( __( 'Save scan URLs', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 
