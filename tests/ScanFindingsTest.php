@@ -47,8 +47,10 @@ final class ScanFindingsTest extends TestCase {
 		$GLOBALS['uccm_test_db_results_queue'] = array( array(), array() );
 		$GLOBALS['uccm_test_db_vars_queue']    = array( null, 17 );
 
-		$first  = Scan_Findings::process( 41, array( self::observation() ) );
-		$second = Scan_Findings::process( 42, array( self::observation() ) );
+		$first       = Scan_Findings::process( 41, array( self::observation() ) );
+		$observation = self::observation();
+		$observation['source_url'] = 'https://example.test/different-page';
+		$second      = Scan_Findings::process( 42, array( $observation ) );
 
 		self::assertSame( 1, $first['actionable'] );
 		self::assertSame( 0, $second['actionable'] );
@@ -56,7 +58,7 @@ final class ScanFindingsTest extends TestCase {
 		self::assertCount( 1, $GLOBALS['wpdb']->inserts );
 	}
 
-	public function test_duration_domain_source_and_category_candidate_are_visible_in_diff(): void {
+	public function test_duration_domain_and_category_candidate_are_visible_in_diff(): void {
 		$inventory = array(
 			'id'           => 9,
 			'storage_key'  => '_example',
@@ -75,10 +77,25 @@ final class ScanFindingsTest extends TestCase {
 		self::assertSame( '30 days', $comparison['after']['duration'] );
 		self::assertSame( 'old.example.test', $comparison['before']['domain'] );
 		self::assertSame( 'example.test', $comparison['after']['domain'] );
-		self::assertSame( 'https://example.test/old.js', $comparison['before']['source_url'] );
-		self::assertSame( 'https://example.test/new.js', $comparison['after']['source_url'] );
+		self::assertArrayNotHasKey( 'source_url', $comparison['before'] );
+		self::assertArrayNotHasKey( 'source_url', $comparison['after'] );
 		self::assertSame( 'functional', $comparison['before']['category'] );
 		self::assertSame( 'analytics', $comparison['after']['category'] );
+	}
+
+	public function test_source_page_alone_is_not_a_material_inventory_change(): void {
+		$observation = self::observation();
+		$inventory   = array(
+			'id'           => 9,
+			'storage_key'  => $observation['storage_key'],
+			'storage_type' => $observation['storage_type'],
+			'domain'       => $observation['domain'],
+			'duration'     => $observation['duration'],
+			'source_url'   => 'https://example.test/another-page',
+			'category'     => $observation['category_candidate'],
+		);
+
+		self::assertNull( Scan_Findings::compare( $observation, $inventory ) );
 	}
 
 	public function test_unchanged_inventory_observation_creates_no_finding(): void {
