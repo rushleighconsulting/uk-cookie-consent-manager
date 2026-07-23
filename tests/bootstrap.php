@@ -37,6 +37,9 @@ $GLOBALS['uccm_test_rest_routes']      = array();
 $GLOBALS['uccm_test_db_rows']          = array();
 $GLOBALS['uccm_test_db_var']           = null;
 $GLOBALS['uccm_test_db_query_result']  = 0;
+$GLOBALS['uccm_test_db_results_queue'] = array();
+$GLOBALS['uccm_test_db_vars_queue']    = array();
+$GLOBALS['uccm_test_mail']             = array();
 $GLOBALS['uccm_test_admin_menus']       = array();
 $GLOBALS['uccm_test_admin_submenus']    = array();
 
@@ -91,11 +94,21 @@ class wpdb {
 	public function get_results( string $query, string $output = ARRAY_A ): array {
 		unset( $output );
 		$this->queries[] = $query;
+
+		if ( array() !== $GLOBALS['uccm_test_db_results_queue'] ) {
+			return array_shift( $GLOBALS['uccm_test_db_results_queue'] );
+		}
+
 		return $GLOBALS['uccm_test_db_rows'];
 	}
 
 	public function get_var( string $query ): mixed {
 		$this->queries[] = $query;
+
+		if ( array() !== $GLOBALS['uccm_test_db_vars_queue'] ) {
+			return array_shift( $GLOBALS['uccm_test_db_vars_queue'] );
+		}
+
 		return $GLOBALS['uccm_test_db_var'];
 	}
 
@@ -156,6 +169,24 @@ function is_wp_error( mixed $value ): bool {
 
 function get_option( string $name, mixed $default = false ): mixed {
 	return $GLOBALS['uccm_test_options'][ $name ] ?? $default;
+}
+
+function sanitize_email( string $email ): string {
+	return false === filter_var( $email, FILTER_VALIDATE_EMAIL ) ? '' : $email;
+}
+
+/**
+ * Capture test mail without sending it.
+ *
+ * @param string|string[] $to Recipient addresses.
+ */
+function wp_mail( string|array $to, string $subject, string $message, string|array $headers = '', array $attachments = array() ): bool {
+	$GLOBALS['uccm_test_mail'][] = compact( 'to', 'subject', 'message', 'headers', 'attachments' );
+	return true;
+}
+
+function admin_url( string $path = '' ): string {
+	return 'https://example.test/wp-admin/' . ltrim( $path, '/' );
 }
 
 function update_option( string $name, mixed $value, mixed $autoload = null ): bool {
@@ -434,6 +465,7 @@ require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
+require_once dirname( __DIR__ ) . '/includes/class-scan-findings.php';
 require_once dirname( __DIR__ ) . '/includes/class-scanner.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';
 require_once dirname( __DIR__ ) . '/includes/class-admin.php';
