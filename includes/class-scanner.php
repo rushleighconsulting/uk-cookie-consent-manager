@@ -247,15 +247,15 @@ final class Scanner {
 		$methods    = array( 'same-origin-set-cookie', 'administrator-browser-observations' );
 		$now        = gmdate( 'Y-m-d H:i:s' );
 		$coverage   = array(
-			'target_count'             => count( $targets ),
-			'discovered_count'         => count( $targets ),
-			'visited_count'            => 0,
-			'remaining_count'          => count( $targets ),
-			'max_pages'                => $max_pages,
-			'batch_size'               => $batch_size,
-			'frontier'                 => $targets,
-			'seen'                     => $targets,
-			'browser_status'           => 'not-run',
+			'target_count'              => count( $targets ),
+			'discovered_count'          => count( $targets ),
+			'visited_count'             => 0,
+			'remaining_count'           => count( $targets ),
+			'max_pages'                 => $max_pages,
+			'batch_size'                => $batch_size,
+			'frontier'                  => $targets,
+			'seen'                      => $targets,
+			'browser_status'            => 'not-run',
 			'browser_observation_count' => 0,
 		);
 		$summary    = array(
@@ -297,8 +297,8 @@ final class Scanner {
 	/**
 	 * Process one persisted crawl batch and queue the next when work remains.
 	 *
-	 * @param int                                                   $run_id  Scan run identifier.
-	 * @param callable(string, array<string, mixed>): mixed|null    $fetcher Optional safe-HTTP replacement.
+	 * @param int                                                $run_id  Scan run identifier.
+	 * @param callable(string, array<string, mixed>): mixed|null $fetcher Optional safe-HTTP replacement.
 	 * @return bool|\WP_Error
 	 */
 	public static function process_batch( int $run_id, ?callable $fetcher = null ): bool|\WP_Error {
@@ -323,19 +323,19 @@ final class Scanner {
 		set_transient( $lock_key, '1', 2 * MINUTE_IN_SECONDS );
 
 		try {
-			$coverage   = self::decoded_array( $run['coverage'] ?? '' );
-			$visited    = self::decoded_array( $run['pages_visited'] ?? '' );
-			$summary    = self::decoded_array( $run['summary'] ?? '' );
-			$frontier   = is_array( $coverage['frontier'] ?? null ) ? array_values( $coverage['frontier'] ) : array();
-			$seen_urls  = is_array( $coverage['seen'] ?? null ) ? array_values( $coverage['seen'] ) : array();
-			$seen       = array_fill_keys( $seen_urls, true );
-			$max_pages  = max( 1, min( self::MAX_TARGETS, (int) ( $coverage['max_pages'] ?? self::MAX_TARGETS ) ) );
-			$batch_size = max( 1, min( 25, (int) ( $coverage['batch_size'] ?? self::DEFAULT_BATCH_SIZE ) ) );
-			$batch      = array_splice( $frontier, 0, $batch_size );
-			$warnings   = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
-			$fetcher    = $fetcher ?? array( self::class, 'safe_fetch' );
-			$settings   = Settings::current();
-			$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
+			$coverage     = self::decoded_array( $run['coverage'] ?? '' );
+			$visited      = self::decoded_array( $run['pages_visited'] ?? '' );
+			$summary      = self::decoded_array( $run['summary'] ?? '' );
+			$frontier     = is_array( $coverage['frontier'] ?? null ) ? array_values( $coverage['frontier'] ) : array();
+			$seen_urls    = is_array( $coverage['seen'] ?? null ) ? array_values( $coverage['seen'] ) : array();
+			$seen         = array_fill_keys( $seen_urls, true );
+			$max_pages    = max( 1, min( self::MAX_TARGETS, (int) ( $coverage['max_pages'] ?? self::MAX_TARGETS ) ) );
+			$batch_size   = max( 1, min( 25, (int) ( $coverage['batch_size'] ?? self::DEFAULT_BATCH_SIZE ) ) );
+			$batch        = array_splice( $frontier, 0, $batch_size );
+			$warnings     = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
+			$fetcher      = $fetcher ?? array( self::class, 'safe_fetch' );
+			$settings     = Settings::current();
+			$excluded     = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
 			$observations = array();
 
 			foreach ( $batch as $target ) {
@@ -352,16 +352,30 @@ final class Scanner {
 				$response = $fetcher( $validated, self::request_arguments() );
 
 				if ( is_wp_error( $response ) ) {
-					$warnings[] = array( 'url' => $validated, 'code' => sanitize_key( $response->get_error_code() ) );
-					$visited[]  = array( 'url' => $validated, 'status' => 0, 'method' => 'server' );
+					$warnings[] = array(
+						'url'  => $validated,
+						'code' => sanitize_key( $response->get_error_code() ),
+					);
+					$visited[]  = array(
+						'url'    => $validated,
+						'status' => 0,
+						'method' => 'server',
+					);
 					continue;
 				}
 
 				$status    = wp_remote_retrieve_response_code( $response );
-				$visited[] = array( 'url' => $validated, 'status' => $status, 'method' => 'server' );
+				$visited[] = array(
+					'url'    => $validated,
+					'status' => $status,
+					'method' => 'server',
+				);
 
 				if ( 200 > $status || 399 < $status ) {
-					$warnings[] = array( 'url' => $validated, 'code' => 'http_' . $status );
+					$warnings[] = array(
+						'url'  => $validated,
+						'code' => 'http_' . $status,
+					);
 					continue;
 				}
 
@@ -386,22 +400,22 @@ final class Scanner {
 						}
 
 						$seen[ $discovered ] = true;
-						$frontier[]           = $discovered;
+						$frontier[]          = $discovered;
 					}
 				}
 			}
 
-			$counts                    = Scan_Findings::process( $run_id, $observations );
-			$summary['finding_counts'] = self::merge_finding_counts( self::decoded_counts( $summary['finding_counts'] ?? array() ), $counts );
-			$summary['findings']       = $summary['finding_counts']['actionable'];
-			$summary['warnings']       = array_slice( $warnings, 0, self::MAX_FINDINGS );
-			$coverage['frontier']      = array_values( $frontier );
-			$coverage['seen']          = array_keys( $seen );
+			$counts                       = Scan_Findings::process( $run_id, $observations );
+			$summary['finding_counts']    = self::merge_finding_counts( self::decoded_counts( $summary['finding_counts'] ?? array() ), $counts );
+			$summary['findings']          = $summary['finding_counts']['actionable'];
+			$summary['warnings']          = array_slice( $warnings, 0, self::MAX_FINDINGS );
+			$coverage['frontier']         = array_values( $frontier );
+			$coverage['seen']             = array_keys( $seen );
 			$coverage['discovered_count'] = count( $seen );
-			$coverage['visited_count'] = count( $visited );
-			$coverage['remaining_count'] = count( $frontier );
-			$status                    = array() === $frontier ? 'completed' : 'running';
-			$completed_at              = 'completed' === $status ? gmdate( 'Y-m-d H:i:s' ) : null;
+			$coverage['visited_count']    = count( $visited );
+			$coverage['remaining_count']  = count( $frontier );
+			$status                       = array() === $frontier ? 'completed' : 'running';
+			$completed_at                 = 'completed' === $status ? gmdate( 'Y-m-d H:i:s' ) : null;
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Persists resumable plugin-owned scan state.
 			$updated = $wpdb->update(
@@ -438,6 +452,8 @@ final class Scanner {
 
 	/**
 	 * Cancel a queued or running scan without deleting its evidence.
+	 *
+	 * @param int $run_id Scan run identifier.
 	 */
 	public static function cancel( int $run_id ): bool|\WP_Error {
 		global $wpdb;
@@ -471,6 +487,8 @@ final class Scanner {
 
 	/**
 	 * Requeue an interrupted scan from its persisted frontier.
+	 *
+	 * @param int $run_id Scan run identifier.
 	 */
 	public static function resume( int $run_id ): bool|\WP_Error {
 		global $wpdb;
@@ -493,7 +511,11 @@ final class Scanner {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
 		$updated = $wpdb->update(
 			Database::table_names()['scan_runs'],
-			array( 'status' => 'queued', 'error_code' => '', 'completed_at' => null ),
+			array(
+				'status'       => 'queued',
+				'error_code'   => '',
+				'completed_at' => null,
+			),
 			array( 'id' => $run_id )
 		);
 
@@ -552,7 +574,10 @@ final class Scanner {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Adds reviewed browser evidence to a plugin-owned run.
 		$updated = $wpdb->update(
 			Database::table_names()['scan_runs'],
-			array( 'coverage' => wp_json_encode( $coverage ), 'summary' => wp_json_encode( $summary ) ),
+			array(
+				'coverage' => wp_json_encode( $coverage ),
+				'summary'  => wp_json_encode( $summary ),
+			),
 			array( 'id' => $run_id )
 		);
 
@@ -778,6 +803,8 @@ final class Scanner {
 
 	/**
 	 * Queue one unique near-term batch event.
+	 *
+	 * @param int $run_id Scan run identifier.
 	 */
 	private static function schedule_batch( int $run_id ): void {
 		$args = array( $run_id );
@@ -790,6 +817,7 @@ final class Scanner {
 	/**
 	 * Return one scan run for resumable operations.
 	 *
+	 * @param int $run_id Scan run identifier.
 	 * @return array<string, mixed>|\WP_Error
 	 */
 	private static function run_record( int $run_id ): array|\WP_Error {
@@ -807,6 +835,9 @@ final class Scanner {
 
 	/**
 	 * Mark an interrupted batch as failed without discarding its frontier.
+	 *
+	 * @param int    $run_id     Scan run identifier.
+	 * @param string $error_code Stable failure code.
 	 */
 	private static function fail_run( int $run_id, string $error_code ): void {
 		global $wpdb;
@@ -814,7 +845,11 @@ final class Scanner {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Preserves plugin-owned failure evidence.
 		$wpdb->update(
 			Database::table_names()['scan_runs'],
-			array( 'status' => 'failed', 'error_code' => sanitize_key( $error_code ), 'completed_at' => gmdate( 'Y-m-d H:i:s' ) ),
+			array(
+				'status'       => 'failed',
+				'error_code'   => sanitize_key( $error_code ),
+				'completed_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
 			array( 'id' => $run_id )
 		);
 	}
@@ -836,7 +871,13 @@ final class Scanner {
 	 * @return array<string, int>
 	 */
 	private static function empty_finding_counts(): array {
-		return array( 'actionable' => 0, 'new' => 0, 'changed' => 0, 'duplicates' => 0, 'unchanged' => 0 );
+		return array(
+			'actionable' => 0,
+			'new'        => 0,
+			'changed'    => 0,
+			'duplicates' => 0,
+			'unchanged'  => 0,
+		);
 	}
 
 	/**
