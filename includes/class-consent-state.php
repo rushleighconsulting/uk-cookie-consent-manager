@@ -84,7 +84,9 @@ final class Consent_State {
 
 		return array(
 			'cookieName'    => self::COOKIE_NAME,
+			'cookiePath'    => defined( 'COOKIEPATH' ) ? COOKIEPATH : '/',
 			'policyVersion' => $policy_version,
+			'pluginVersion' => UCCM_VERSION,
 			'lifetimeDays'  => $lifetime_days,
 			'categories'    => self::categories(),
 			'messages'      => array(
