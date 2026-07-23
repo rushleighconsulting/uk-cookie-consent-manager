@@ -88,14 +88,11 @@ final class Settings {
 		}
 
 		if ( array_key_exists( 'update_manifest_url', $input ) ) {
-			$url = esc_url_raw( trim( (string) $input['update_manifest_url'] ) );
-			$settings['update_manifest_url'] = 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? $url : '';
+			$settings['update_manifest_url'] = self::update_manifest_url( $input['update_manifest_url'] );
 		}
 
 		if ( array_key_exists( 'update_public_key', $input ) ) {
-			$key = trim( (string) $input['update_public_key'] );
-			$decoded = base64_decode( $key, true );
-			$settings['update_public_key'] = false !== $decoded && 32 === strlen( $decoded ) ? $key : '';
+			$settings['update_public_key'] = self::update_public_key( $input['update_public_key'] );
 		}
 
 		return $settings;
@@ -120,6 +117,28 @@ final class Settings {
 	 */
 	private static function boolean( mixed $value ): bool {
 		return true === $value || 1 === $value || '1' === $value || 'yes' === $value || 'on' === $value;
+	}
+
+	/**
+	 * Return an HTTPS update manifest URL or fail closed.
+	 *
+	 * @param mixed $value Candidate URL.
+	 */
+	private static function update_manifest_url( mixed $value ): string {
+		$url = esc_url_raw( trim( (string) $value ) );
+		return 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? $url : '';
+	}
+
+	/**
+	 * Return a canonical base64 Ed25519 public key or fail closed.
+	 *
+	 * @param mixed $value Candidate public key.
+	 */
+	private static function update_public_key( mixed $value ): string {
+		$key = trim( (string) $value );
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented public-key wire format.
+		$decoded = base64_decode( $key, true );
+		return false !== $decoded && 32 === strlen( $decoded ) ? $key : '';
 	}
 
 	/**
