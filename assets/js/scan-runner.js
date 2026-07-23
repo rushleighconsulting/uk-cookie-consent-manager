@@ -180,7 +180,13 @@
 
 	button.addEventListener( 'click', async function () {
 		button.disabled = true;
-		var targets = config.targets.slice( 0, Number( config.maxTargets ) || 100 );
+		var targets = config.targets.filter( function ( target ) {
+			try {
+				return new URL( target, window.location.href ).origin === window.location.origin;
+			} catch ( error ) {
+				return false;
+			}
+		} ).slice( 0, Number( config.maxTargets ) || 100 );
 		var observations = [];
 
 		try {
