@@ -186,7 +186,7 @@
 	border: 0;
 }
 
-[hidden] {
+.uccm-consent [hidden] {
 	display: none !important;
 }
 
