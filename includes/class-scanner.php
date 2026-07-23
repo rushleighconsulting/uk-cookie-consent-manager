@@ -149,12 +149,37 @@ final class Scanner {
 
 			$normalized = self::normalize_observation( $observation );
 
-			if ( null !== $normalized ) {
-				$accepted[] = $normalized;
+			if ( null === $normalized ) {
+				continue;
 			}
+
+			$identity = hash( 'sha256', strtolower( $normalized['type'] . '|' . $normalized['storage_key'] . '|' . $normalized['domain'] ) );
+
+			if ( ! isset( $accepted[ $identity ] ) ) {
+				$accepted[ $identity ] = $normalized;
+				continue;
+			}
+
+			$existing_urls  = is_array( $accepted[ $identity ]['source_urls'] ?? null ) ? $accepted[ $identity ]['source_urls'] : array();
+			$incoming_urls  = is_array( $normalized['source_urls'] ?? null ) ? $normalized['source_urls'] : array();
+			$existing_states = is_array( $accepted[ $identity ]['consent_states'] ?? null ) ? $accepted[ $identity ]['consent_states'] : array();
+			$incoming_states = is_array( $normalized['consent_states'] ?? null ) ? $normalized['consent_states'] : array();
+			$all_urls       = array_values( array_unique( array_merge( $existing_urls, $incoming_urls ) ) );
+
+			$accepted[ $identity ]['source_urls']    = array_slice( $all_urls, 0, 20 );
+			$accepted[ $identity ]['source_url']     = $accepted[ $identity ]['source_urls'][0] ?? '';
+			$accepted[ $identity ]['source_count']   = min(
+				self::BROWSER_MAX_TARGETS,
+				max(
+					count( $all_urls ),
+					(int) ( $accepted[ $identity ]['source_count'] ?? 0 ),
+					(int) ( $normalized['source_count'] ?? 0 )
+				)
+			);
+			$accepted[ $identity ]['consent_states'] = array_values( array_unique( array_merge( $existing_states, $incoming_states ) ) );
 		}
 
-		return $accepted;
+		return array_values( $accepted );
 	}
 
 	/**
