@@ -25,10 +25,10 @@ final class ScanFindingsTest extends TestCase {
 		$GLOBALS['uccm_test_db_results_queue'] = array();
 		$GLOBALS['uccm_test_db_vars_queue']    = array();
 		$GLOBALS['uccm_test_mail']             = array();
+		$GLOBALS['uccm_test_users']            = array();
 	}
 
 	public function test_new_observation_creates_one_actionable_finding(): void {
-		$GLOBALS['uccm_test_options']['admin_email'] = 'privacy@example.test';
 		$GLOBALS['uccm_test_db_results_queue']       = array( array() );
 		$GLOBALS['uccm_test_db_vars_queue']          = array( null );
 
@@ -105,7 +105,6 @@ final class ScanFindingsTest extends TestCase {
 		$GLOBALS['uccm_test_db_query_result']                       = 1;
 		self::assertTrue( Scan_Findings::review( 4, 'ignored' ) );
 		self::assertStringContainsString( 'status = %s', $GLOBALS['wpdb']->queries[0] );
-		self::assertStringContainsString( 'status = %s', $GLOBALS['wpdb']->queries[0] );
 		self::assertStringContainsString( 'pending', $GLOBALS['wpdb']->queries[0] );
 
 		$invalid = Scan_Findings::review( 4, 'published' );
@@ -114,8 +113,10 @@ final class ScanFindingsTest extends TestCase {
 	}
 
 	public function test_notification_contains_only_summary_and_scan_link(): void {
-		$GLOBALS['uccm_test_options']['admin_email'] = 'privacy@example.test';
-		$GLOBALS['uccm_test_db_results_queue']       = array( array() );
+		$GLOBALS['uccm_test_users'] = array(
+			(object) array( 'user_email' => 'privacy@example.test' ),
+		);
+		$GLOBALS['uccm_test_db_results_queue'] = array( array() );
 		$GLOBALS['uccm_test_db_vars_queue']          = array( null );
 
 		Scan_Findings::process( 73, array( self::observation() ) );
