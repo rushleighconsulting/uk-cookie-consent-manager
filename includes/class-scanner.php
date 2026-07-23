@@ -191,10 +191,10 @@ final class Scanner {
 	/**
 	 * Run a bounded hybrid scan.
 	 *
-	 * @param bool                                      $require_capability Whether to enforce the scan capability.
-	 * @param string[]|null                             $targets            Optional explicit targets for testing.
-	 * @param callable(string, array<string, mixed>): mixed|null $fetcher   Optional safe-HTTP replacement.
-	 * @param array<string, mixed>|null                 $browser_payload    Optional authenticated runner payload.
+	 * @param bool                                               $require_capability Whether to enforce the scan capability.
+	 * @param string[]|null                                      $targets            Optional explicit targets for testing.
+	 * @param callable(string, array<string, mixed>): mixed|null $fetcher            Optional safe-HTTP replacement.
+	 * @param array<string, mixed>|null                          $browser_payload     Optional authenticated runner payload.
 	 * @return int|\WP_Error Scan run ID or error.
 	 */
 	public static function run(
@@ -205,6 +205,7 @@ final class Scanner {
 	): int|\WP_Error {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( $require_capability && ! current_user_can( 'run_uccm_scans' ) ) {
 			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
@@ -225,6 +226,7 @@ final class Scanner {
 			$tables  = Database::table_names();
 			$now     = gmdate( 'Y-m-d H:i:s' );
 			$methods = array( 'same-origin-set-cookie', 'authenticated-browser-observations' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Creates a bounded plugin-owned scan run.
 			$created = $wpdb->insert(
 				$tables['scan_runs'],
 				array(
@@ -232,7 +234,12 @@ final class Scanner {
 					'methods'       => wp_json_encode( $methods ),
 					'coverage'      => wp_json_encode( array( 'target_count' => count( $targets ) ) ),
 					'pages_visited' => wp_json_encode( array() ),
-					'summary'       => wp_json_encode( array( 'findings' => 0, 'warnings' => array() ) ),
+					'summary'       => wp_json_encode(
+						array(
+							'findings' => 0,
+							'warnings' => array(),
+						)
+					),
 					'error_code'    => '',
 					'started_at'    => $now,
 					'completed_at'  => null,
@@ -258,15 +265,24 @@ final class Scanner {
 						'url'  => $target,
 						'code' => sanitize_key( $response->get_error_code() ),
 					);
-					$visited[] = array( 'url' => $target, 'status' => 0 );
+					$visited[] = array(
+						'url'    => $target,
+						'status' => 0,
+					);
 					continue;
 				}
 
 				$status    = wp_remote_retrieve_response_code( $response );
-				$visited[] = array( 'url' => $target, 'status' => $status );
+				$visited[] = array(
+					'url'    => $target,
+					'status' => $status,
+				);
 
 				if ( 200 > $status || 399 < $status ) {
-					$warnings[] = array( 'url' => $target, 'code' => 'http_' . $status );
+					$warnings[] = array(
+						'url'  => $target,
+						'code' => 'http_' . $status,
+					);
 					continue;
 				}
 
@@ -286,7 +302,10 @@ final class Scanner {
 			);
 
 			if ( is_wp_error( $browser ) ) {
-				$warnings[] = array( 'url' => '', 'code' => $browser->get_error_code() );
+				$warnings[] = array(
+					'url'  => '',
+					'code' => $browser->get_error_code(),
+				);
 			} else {
 				$observations = array_merge( $observations, $browser );
 			}
@@ -309,7 +328,7 @@ final class Scanner {
 					'status'        => 'completed',
 					'coverage'      => wp_json_encode(
 						array(
-							'target_count' => count( $targets ),
+							'target_count'  => count( $targets ),
 							'visited_count' => count( $visited ),
 							'methods'       => $methods,
 						)
@@ -336,6 +355,7 @@ final class Scanner {
 	public static function recent_runs( int $limit = 20 ): array|\WP_Error {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
 			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to view scan runs.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
@@ -343,6 +363,7 @@ final class Scanner {
 		$table = Database::table_names()['scan_runs'];
 		$limit = max( 1, min( 100, $limit ) );
 		$sql   = "SELECT id, status, methods, coverage, pages_visited, summary, error_code, started_at, completed_at FROM {$table} ORDER BY id DESC LIMIT %d"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query structure is internal and the bounded limit uses a placeholder.
 		$query = $wpdb->prepare( $sql, $limit );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared bounded administration listing.
@@ -433,9 +454,9 @@ final class Scanner {
 	/**
 	 * Store deduplicated, bounded observations as pending review findings.
 	 *
-	 * @param int                              $run_id       Scan run ID.
+	 * @param int                               $run_id       Scan run ID.
 	 * @param array<int, array<string, string>> $observations Normalised observations.
-	 * @param string                           $table        Findings table.
+	 * @param string                            $table        Findings table.
 	 */
 	private static function store_findings( int $run_id, array $observations, string $table ): int {
 		global $wpdb;
@@ -462,13 +483,13 @@ final class Scanner {
 					'inventory_id' => null,
 					'finding_type' => 'observed',
 					'storage_key'  => $observation['storage_key'],
-					'domain'      => $observation['domain'],
-					'before_data' => '{}',
-					'after_data'  => false === $after_data ? '{}' : $after_data,
-					'fingerprint' => $fingerprint,
-					'status'      => 'pending',
-					'created_at'  => $now,
-					'reviewed_at' => null,
+					'domain'       => $observation['domain'],
+					'before_data'  => '{}',
+					'after_data'   => false === $after_data ? '{}' : $after_data,
+					'fingerprint'  => $fingerprint,
+					'status'       => 'pending',
+					'created_at'   => $now,
+					'reviewed_at'  => null,
 				)
 			);
 
