@@ -32,7 +32,7 @@ final class Scanner {
 	/**
 	 * Temporary hard ceiling for targets per scan.
 	 *
-	 * The current scanner is synchronous; asynchronous crawling is tracked separately.
+	 * Each asynchronous run persists its frontier and never exceeds this ceiling.
 	 */
 	public const MAX_TARGETS = 1024;
 
@@ -418,7 +418,8 @@ final class Scanner {
 			);
 
 			if ( false === $updated ) {
-				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+				self::fail_run( $run_id, 'uccm_scan_progress_not_saved' );
+				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved and can be resumed after review.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 			}
 
 			if ( 'running' === $status ) {
@@ -544,7 +545,7 @@ final class Scanner {
 
 		$coverage['browser_status']            = 'completed';
 		$coverage['browser_observation_count'] = count( $accepted );
-		$coverage['browser_target_count']      = max( 0, (int) ( $payload['target_count'] ?? 0 ) );
+		$coverage['browser_target_count']      = min( self::BROWSER_MAX_TARGETS, max( 0, (int) ( $payload['target_count'] ?? 0 ) ) );
 		$summary['finding_counts']             = $merged;
 		$summary['findings']                   = $merged['actionable'];
 
