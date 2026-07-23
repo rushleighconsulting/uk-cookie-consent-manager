@@ -133,6 +133,11 @@ function is_admin(): bool {
 	return $GLOBALS['uccm_test_is_admin'];
 }
 
+function plugin_dir_url( string $file ): string {
+	unset( $file );
+	return UCCM_PLUGIN_URL;
+}
+
 function wp_enqueue_style( string $handle, string $source, array $dependencies = array(), string|bool|null $version = false ): void {
 	$GLOBALS['uccm_test_enqueued_styles'][ $handle ] = array(
 		'source'       => $source,
