@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.1
+Stable tag: 0.1.0-rc.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Privacy-by-design cookie consent and management for UK WordPress sites.
 
 == Description ==
 
-UK Cookie Consent Manager 0.1.0-rc.1 is a release candidate for controlled
+UK Cookie Consent Manager 0.1.0-rc.2 is a release candidate for controlled
 staging acceptance. It is not approved for production use.
 
 Release 1 provides an accessible consent banner, granular preferences, prior
@@ -36,8 +36,13 @@ Do not install GitHub's automatic Source code archives.
 
 == Changelog ==
 
+= 0.1.0-rc.2 =
+* Corrects the release archive credential check so documented configuration names do not produce false positives.
+* Adds regression checks that accept documentation and reject actual configured signing-key values and GitHub token patterns.
+* Preserves the Release 1 functionality prepared in 0.1.0-rc.1.
+
 = 0.1.0-rc.1 =
-* First Release 1 candidate for controlled WordPress acceptance testing.
+* First Release 1 candidate; its automated publication stopped safely before assets were published.
 * Adds accessible accept, reject, granular preference and withdrawal flows.
 * Adds explicit prior blocking for configured scripts, iframes, embeds and pixels.
 * Adds privacy-preserving consent receipts with configurable retention.
