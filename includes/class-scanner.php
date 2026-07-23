@@ -338,7 +338,7 @@ final class Scanner {
 	 * Process one persisted crawl batch and queue the next when work remains.
 	 *
 	 * @param int                                                $run_id  Scan run identifier.
-	 * @param callable(string, array<string, mixed>): mixed|null $fetcher      Optional safe-HTTP replacement.
+	 * @param callable(string, array<string, mixed>): mixed|null $fetcher       Optional safe-HTTP replacement.
 	 * @param bool                                                $schedule_next Whether to queue the next request.
 	 * @return bool|\WP_Error
 	 */
@@ -845,7 +845,8 @@ final class Scanner {
 	/**
 	 * Queue one unique near-term batch event.
 	 *
-	 * @param int $run_id Scan run identifier.
+	 * @param int  $run_id  Scan run identifier.
+	 * @param bool $dispatch Whether to start the WordPress cron runner immediately.
 	 */
 	private static function schedule_batch( int $run_id, bool $dispatch = false ): void {
 		$args = array( $run_id );
