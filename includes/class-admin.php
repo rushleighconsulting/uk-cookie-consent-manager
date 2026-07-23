@@ -511,19 +511,19 @@ final class Admin {
 		}
 
 		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
-			$runner_pages    = json_decode( (string) $runner_run['pages_visited'], true );
-			$runner_pages    = is_array( $runner_pages ) ? $runner_pages : array();
-			$runner_targets  = Scanner::browser_targets( $runner_pages );
-			$consent_config  = Consent_State::configuration();
+			$runner_pages   = json_decode( (string) $runner_run['pages_visited'], true );
+			$runner_pages   = is_array( $runner_pages ) ? $runner_pages : array();
+			$runner_targets = Scanner::browser_targets( $runner_pages );
+			$consent_config = Consent_State::configuration();
 
 			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
 			wp_localize_script(
 				'uccm-scan-runner',
 				'UCCMScanRunner',
 				array(
-					'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-					'nonce'      => wp_create_nonce( 'uccm_browser_scan' ),
-					'runId'      => $scan_id,
+					'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+					'nonce'         => wp_create_nonce( 'uccm_browser_scan' ),
+					'runId'         => $scan_id,
 					'targets'       => $runner_targets,
 					'maxTargets'    => Scanner::BROWSER_MAX_TARGETS,
 					'cookieName'    => (string) $consent_config['cookieName'],
@@ -810,7 +810,7 @@ final class Admin {
 		}
 
 		if ( array() !== $source_urls ) {
-			$links = array_map(
+			$links          = array_map(
 				static fn ( mixed $url ): string => '<a href="' . esc_url( (string) $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( (string) $url ) . '</a>',
 				$source_urls
 			);
