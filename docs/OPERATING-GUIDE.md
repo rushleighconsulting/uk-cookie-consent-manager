@@ -51,8 +51,11 @@ decision.
 
 Run a manual scan after installation and after material theme, plugin, tag
 manager or content changes. The scheduled scan runs every 30 days and checks the
-homepage plus up to 1,023 configured same-origin public URLs. Review new and changed
-findings, then mark them reviewed, ignored or resolved as appropriate.
+homepage plus up to 1,023 configured same-origin public URLs. Cross-origin, private,
+credential-bearing and fragment-bearing URLs are rejected when settings are saved. If an
+invalid legacy or externally written setting reaches a manual or scheduled run, the scan
+fails closed and records visible failure evidence. Review new and changed findings, then
+mark them reviewed, ignored or resolved as appropriate.
 
 ### Scan limitations
 
