@@ -226,3 +226,27 @@ Repository administrators must configure `UCCM_MANIFEST_PRIVATE_KEY` as a
 GitHub Actions secret containing a base64 Ed25519 seed (32 bytes) or secret key
 (64 bytes). The corresponding base64 public key is configured on each WordPress
 site. The private key must never be committed or placed in the plugin ZIP.
+
+
+## WordPress privacy tools and security boundaries
+
+UCCM-10 integrates consent evidence with **Tools → Export Personal Data** and
+**Tools → Erase Personal Data**. Only receipts linked to a logged-in WordPress
+account can be found from an email address. Exported evidence contains the
+recorded decision and masked IP, never an encrypted complete IP or repository
+credential.
+
+Erasure removes the WordPress user link, masked IP, keyed IP fingerprint and any
+encrypted complete IP. The remaining decision is no longer attributable through
+UCCM and is removed by the normal retention job (365 days by default). Anonymous
+receipts cannot be matched to an email address.
+
+Suggested disclosure text is registered with the WordPress privacy-policy guide.
+Site operators must review and adapt it for their actual cookies, purposes,
+retention period, lawful basis and third-party services.
+
+Security boundaries include same-origin and rate-limited consent submission,
+authenticated and rate-limited browser-runner observations, SSRF-resistant scan
+targets, capability-gated evidence access, explicit prior blocking, and signed,
+checksum-verified updates. See [SECURITY.md](SECURITY.md) for reporting, proxy,
+data-flow and retention details.

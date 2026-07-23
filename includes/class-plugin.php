@@ -49,6 +49,7 @@ final class Plugin {
 		Resource_Rules::register();
 		Consent_Interface::register();
 		Secure_Updater::register();
+		Privacy::register();
 
 		if ( is_admin() ) {
 			Admin::register();
