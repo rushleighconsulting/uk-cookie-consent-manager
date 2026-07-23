@@ -46,8 +46,10 @@ jobs:
         run: |
           node --check assets/js/consent.js
           node --check assets/js/blocker.js
+          node --check assets/js/scan-runner.js
           node --check playwright.config.js
           node --check tests/browser/consent.spec.js
+          node --check tests/browser/scan-runner.spec.js
 
       - name: Check WordPress coding standards
         run: composer phpcs
@@ -109,7 +111,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run consent, withdrawal and prior-blocking flows
+      - name: Run consent and operational scanner browser flows
         run: npm run test:browser -- --project=${{ matrix.project }}
 
   package-build:
