@@ -339,7 +339,7 @@ final class Scanner {
 	 *
 	 * @param int                                                $run_id  Scan run identifier.
 	 * @param callable(string, array<string, mixed>): mixed|null $fetcher       Optional safe-HTTP replacement.
-	 * @param bool                                                $schedule_next Whether to queue the next request.
+	 * @param bool                                               $schedule_next Whether to queue the next request.
 	 * @return bool|\WP_Error
 	 */
 	public static function process_batch( int $run_id, ?callable $fetcher = null, bool $schedule_next = true ): bool|\WP_Error {
