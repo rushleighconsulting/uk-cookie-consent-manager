@@ -275,7 +275,7 @@ final class Resource_Rules {
 		 * @param string[] $protected Protected handles.
 		 */
 		$protected = apply_filters( 'uccm_protected_script_handles', $protected );
-		$protected = is_array( $protected ) ? array_map( 'strval', $protected ) : array();
+		$protected = array_map( 'strval', $protected );
 
 		return in_array( $handle, $protected, true );
 	}
