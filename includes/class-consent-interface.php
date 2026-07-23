@@ -63,7 +63,7 @@ final class Consent_Interface {
 			__( 'We use one necessary cookie to remember your choice for a %d-day period. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing.', 'uk-cookie-consent-manager' ),
 			$lifetime_days
 		);
-		$cookie_copy   = sprintf(
+		$cookie_copy = sprintf(
 			/* translators: %d: configured consent lifetime in days. */
 			__( 'is a first-party necessary cookie. It remembers your saved choice for a %d-day period and is set when you accept, reject, save preferences or withdraw optional consent. Changing the lifetime setting affects your next saved choice; it does not extend an existing cookie.', 'uk-cookie-consent-manager' ),
 			$lifetime_days
