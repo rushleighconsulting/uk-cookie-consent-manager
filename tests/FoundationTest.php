@@ -75,7 +75,7 @@ final class FoundationTest extends TestCase {
 			array_fill_keys( Capabilities::all(), true ),
 			$GLOBALS['uccm_test_role']->capabilities
 		);
-		self::assertNotContains( 'manage_options', Capabilities::all(), true );
+		self::assertNotContains( 'manage_options', Capabilities::all() );
 	}
 
 	public function test_deactivation_only_clears_scheduled_work(): void {
