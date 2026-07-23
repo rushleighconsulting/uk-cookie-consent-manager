@@ -50,6 +50,17 @@ jobs:
       - name: Run unit tests
         run: composer test
 
+      - name: Smoke-test production package
+        if: matrix.php == '8.2'
+        shell: bash
+        run: |
+          bash scripts/build-package.sh 0.1.0-ci
+          unzip -t dist/uk-cookie-consent-manager-0.1.0-ci.zip
+          unzip -l dist/uk-cookie-consent-manager-0.1.0-ci.zip > dist/archive-contents.txt
+          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|php(unit|stan)|phpcs' dist/archive-contents.txt; then
+            exit 1
+          fi
+
       - name: Check WordPress coding standards
         run: composer phpcs
 
