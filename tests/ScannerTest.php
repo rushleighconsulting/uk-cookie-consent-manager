@@ -141,10 +141,12 @@ final class ScannerTest extends TestCase {
 		self::assertCount( 0, $GLOBALS['wpdb']->inserts );
 	}
 
-	public function test_configured_targets_are_sanitised_and_bounded(): void {
+	public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
 		$urls = array();
 
-		for ( $index = 0; $index < 30; ++$index ) {
+		self::assertSame( 1024, Scanner::MAX_TARGETS );
+
+		for ( $index = 0; $index < Scanner::MAX_TARGETS + 10; ++$index ) {
 			$urls[] = 'https://example.test/page-' . $index;
 		}
 

@@ -25,9 +25,11 @@ final class Scanner {
 	public const RECURRENCE = 'uccm_monthly';
 
 	/**
-	 * Maximum targets per scan.
+	 * Temporary hard ceiling for targets per scan.
+	 *
+	 * The current scanner is synchronous; asynchronous crawling is tracked separately.
 	 */
-	public const MAX_TARGETS = 20;
+	public const MAX_TARGETS = 1024;
 
 	/**
 	 * Maximum findings stored per scan.

@@ -34,6 +34,7 @@ final class AdminInventoryTest extends TestCase {
 		self::assertSame( 'manage_uccm_inventory', $screens['uccm-inventory']['capability'] );
 		self::assertSame( 'view_uccm_consents', $screens['uccm-consents']['capability'] );
 		self::assertSame( 'run_uccm_scans', $screens['uccm-scans']['capability'] );
+		self::assertSame( 'View Categories', $screens['uccm-categories']['title'] );
 
 		Admin::register_menu();
 		self::assertCount( 1, $GLOBALS['uccm_test_admin_menus'] );

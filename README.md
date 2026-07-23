@@ -9,7 +9,7 @@ honouring cookie consent under UK GDPR and PECR.
 ## Status
 
 Release 1 is at release-candidate stage for controlled staging acceptance.
-Version `0.1.0-rc.1` is not approved for production use.
+Version `0.1.0-rc.3` was rejected during observed WordPress acceptance and is not approved for production use.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
@@ -131,7 +131,7 @@ without an exact allowlist of the site's reverse proxies.
 
 UCCM-6 adds:
 
-- A top-level Cookie Consent menu with Overview, Banner, Categories, Script
+- A top-level Cookie Consent menu with Overview, Banner, View Categories, Script
   Blocking, Cookie Inventory, Scans, Consent Records, Privacy and Advanced
   screens.
 - Validated banner, retention, IP/privacy, proxy and uninstall settings.
@@ -144,7 +144,7 @@ UCCM-6 adds:
 
 UCCM-7 adds:
 
-- Manual and idempotently scheduled 30-day scans of the homepage and up to 19
+- Manual and idempotently scheduled 30-day scans of the homepage and up to 1,023
   configured same-origin public URLs.
 - Safe HTTP inspection of observable `Set-Cookie` responses, including
   HttpOnly cookies exposed in response headers.
@@ -156,6 +156,11 @@ UCCM-7 adds:
   and explicit non-exhaustive limitations.
 - A capability- and nonce-protected Scans screen for URL configuration, manual
   execution, schedule visibility and recent-run evidence.
+
+The 1,024-page total is a temporary hard ceiling, not a recommendation for the
+current synchronous scanner. It does not discover links; safe asynchronous
+same-origin crawling and an operational browser-observation runner are tracked
+for corrective delivery.
 
 UCCM-8 adds:
 

@@ -51,7 +51,7 @@ final class Admin {
 				'callback'   => array( self::class, 'render_banner' ),
 			),
 			'uccm-categories' => array(
-				'title'      => __( 'Categories', 'uk-cookie-consent-manager' ),
+				'title'      => __( 'View Categories', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_categories' ),
 			),
@@ -333,7 +333,7 @@ final class Admin {
 	 */
 	public static function render_categories(): void {
 		self::require_capability( 'manage_uccm_settings' );
-		self::open_page( __( 'Categories', 'uk-cookie-consent-manager' ) );
+		self::open_page( __( 'View Categories', 'uk-cookie-consent-manager' ) );
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Category', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Purpose', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Required', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 		foreach ( Consent_State::categories() as $category ) {
@@ -429,13 +429,13 @@ final class Admin {
 
 		self::form_open( 'uccm_save_scan_settings', 'uccm_save_scan_settings' );
 		echo '<h2>' . esc_html__( 'Public scan URLs', 'uk-cookie-consent-manager' ) . '</h2>';
-		echo '<p>' . esc_html__( 'The homepage is always scanned. Add up to 19 same-origin public URLs, one per line.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'The homepage is always scanned. Add up to 1,023 same-origin public URLs, one per line.', 'uk-cookie-consent-manager' ) . '</p>';
 		echo '<textarea class="large-text code" rows="7" name="uccm[scan_urls]">' . esc_textarea( $urls ) . '</textarea>';
 		submit_button( __( 'Save scan URLs', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 
 		self::form_open( 'uccm_run_scan', 'uccm_run_scan' );
-		echo '<p>' . esc_html__( 'Manual scans run synchronously; keep this page open until WordPress returns.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'Manual scans run synchronously; keep this page open until WordPress returns. Until asynchronous crawling is delivered, configure only a practical test set even though the temporary hard ceiling is 1,024 pages including the homepage.', 'uk-cookie-consent-manager' ) . '</p>';
 		submit_button( __( 'Run scan now', 'uk-cookie-consent-manager' ), 'primary' );
 		self::form_close();
 
