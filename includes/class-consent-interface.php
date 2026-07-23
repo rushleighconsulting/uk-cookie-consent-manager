@@ -30,15 +30,17 @@ final class Consent_Interface {
 			return;
 		}
 
+		$plugin_url = plugin_dir_url( UCCM_PLUGIN_FILE );
+
 		wp_enqueue_style(
 			'uccm-consent',
-			UCCM_PLUGIN_URL . 'assets/css/consent.css',
+			$plugin_url . 'assets/css/consent.css',
 			array(),
 			UCCM_VERSION
 		);
 		wp_enqueue_script(
 			'uccm-consent',
-			UCCM_PLUGIN_URL . 'assets/js/consent.js',
+			$plugin_url . 'assets/js/consent.js',
 			array(),
 			UCCM_VERSION,
 			true
