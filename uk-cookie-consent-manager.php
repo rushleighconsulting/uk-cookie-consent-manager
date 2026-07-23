@@ -34,6 +34,7 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-cookie-inventory.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-scan-findings.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-scanner.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-interface.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-secure-updater.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-admin.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
 
