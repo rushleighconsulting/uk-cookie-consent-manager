@@ -50,12 +50,19 @@ is evidence for human review, not an automatic publication or compliance
 decision.
 
 Run a manual scan after installation and after material theme, plugin, tag
-manager or content changes. The scheduled scan runs every 30 days and checks the
-homepage plus up to 1,023 configured same-origin public URLs. Cross-origin, private,
-credential-bearing and fragment-bearing URLs are rejected when settings are saved. If an
-invalid legacy or externally written setting reaches a manual or scheduled run, the scan
-fails closed and records visible failure evidence. Review new and changed findings, then
-mark them reviewed, ignored or resolved as appropriate.
+manager or content changes. Starting a scan returns immediately. WP-Cron resumes a
+persisted frontier in bounded batches, beginning with the homepage and any configured
+same-origin seeds and discovering eligible same-origin links up to the configured limit
+(maximum 1,024 unique URLs). Cross-origin, private, credential-bearing and unsafe URLs
+are rejected. Administration, login, REST and feed paths are always excluded; additional
+path patterns can be configured on the Scans screen.
+
+If a batch is interrupted, its saved progress remains visible and a failed run can be
+resumed. A queued or running scan can be cancelled without deleting its evidence. After
+the server crawl completes, open that run and choose **Run browser observations** to
+inspect up to 100 successfully visited pages for accessible cookie names, local-storage
+keys, scripts, iframes and pixels. Review new and changed findings, then mark them
+reviewed, ignored or resolved as appropriate.
 
 ### Scan limitations
 
@@ -68,9 +75,10 @@ does not capture consent records, cookie values, form values or page content.
 Repeat representative manual journeys and use browser developer tools alongside
 the scanner.
 
-The current scanner does not crawl links and runs configured URLs synchronously.
-The 1,024-page total is a temporary hard ceiling; use only a practical test set
-until asynchronous crawling is delivered.
+WP-Cron is traffic-dependent unless the site uses a real cron runner. Monitor queued and
+running scans and use the resume control if a batch reports failure. The 1,024-page total
+remains a hard ceiling rather than a completeness guarantee. The administrator browser
+pass is limited to 100 pages per session and can be prevented by a page's framing policy.
 
 ## Consent records and privacy requests
 
