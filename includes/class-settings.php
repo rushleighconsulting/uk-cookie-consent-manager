@@ -142,13 +142,55 @@ final class Settings {
 	}
 
 	/**
-	 * Return unique, bounded scan URLs.
+	 * Strictly validate administrator-supplied scan URLs.
+	 *
+	 * @param mixed $value Newline-delimited string or value list.
+	 * @return string[]|\\WP_Error
+	 */
+	public static function validate_scan_urls( mixed $value ): array|\\WP_Error {
+		$values = is_array( $value ) ? $value : preg_split( '/[\\r\\n]+/', (string) $value );
+		$values = is_array( $values ) ? $values : array();
+		$urls   = array();
+
+		foreach ( array_slice( $values, 0, Scanner::MAX_TARGETS - 1 ) as $candidate ) {
+			$candidate = trim( (string) $candidate );
+
+			if ( '' === $candidate ) {
+				continue;
+			}
+
+			$validated = Scanner::validate_target( $candidate );
+
+			if ( is_wp_error( $validated ) ) {
+				$data              = $validated->get_error_data();
+				$error_data        = is_array( $data ) ? $data : array();
+				$error_data['url'] = substr( sanitize_text_field( $candidate ), 0, 2048 );
+
+				return new \\WP_Error(
+					$validated->get_error_code(),
+					$validated->get_error_message(),
+					$error_data
+				);
+			}
+
+			$urls[] = $validated;
+		}
+
+		return array_values( array_unique( $urls ) );
+	}
+
+	/**
+	 * Return unique, bounded scan URLs for the internal settings contract.
+	 *
+	 * The administration save path calls validate_scan_urls() first. This
+	 * sanitiser remains tolerant so legacy settings can be loaded and rejected
+	 * by the scanner's independent runtime validation.
 	 *
 	 * @param mixed $value Newline-delimited string or value list.
 	 * @return string[]
 	 */
 	private static function scan_urls( mixed $value ): array {
-		$values = is_array( $value ) ? $value : preg_split( '/[\r\n]+/', (string) $value );
+		$values = is_array( $value ) ? $value : preg_split( '/[\\r\\n]+/', (string) $value );
 		$values = is_array( $values ) ? $values : array();
 		$urls   = array();
 
