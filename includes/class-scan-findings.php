@@ -33,7 +33,7 @@ final class Scan_Findings {
 	 *
 	 * @var string[]
 	 */
-	private const MATERIAL_FIELDS = array( 'duration', 'domain', 'source_url', 'category' );
+	private const MATERIAL_FIELDS = array( 'duration', 'domain', 'category' );
 
 	/**
 	 * Compare observations with curated inventory and store actionable findings.
@@ -58,7 +58,7 @@ final class Scan_Findings {
 
 		foreach ( array_slice( $observations, 0, Scanner::MAX_FINDINGS ) as $observation ) {
 			$observation = self::summary_fields( $observation );
-			$identity    = hash( 'sha256', strtolower( $observation['storage_key'] . '|' . $observation['storage_type'] . '|' . $observation['domain'] . '|' . $observation['source_url'] ) );
+			$identity    = hash( 'sha256', strtolower( $observation['storage_key'] . '|' . $observation['storage_type'] . '|' . $observation['domain'] ) );
 
 			if ( isset( $seen[ $identity ] ) ) {
 				++$counts['duplicates'];
@@ -327,12 +327,15 @@ final class Scan_Findings {
 	 * @param array<string, string>                                                            $observation Observation summary.
 	 */
 	private static function fingerprint( array $comparison, array $observation ): string {
+		$after = $comparison['after'];
+		unset( $after['source_url'], $after['source_urls'], $after['source_count'], $after['consent_states'] );
+
 		$data = array(
 			'type'         => $comparison['type'],
 			'storage_key'  => $observation['storage_key'],
 			'storage_type' => $observation['storage_type'],
 			'before'       => $comparison['before'],
-			'after'        => $comparison['after'],
+			'after'        => $after,
 		);
 
 		return hash( 'sha256', strtolower( (string) wp_json_encode( $data ) ) );
@@ -341,22 +344,42 @@ final class Scan_Findings {
 	/**
 	 * Keep only bounded, non-content observation metadata.
 	 *
-	 * @param array<string, string> $observation Observation.
-	 * @return array<string, string>
+	 * @param array<string, mixed> $observation Observation.
+	 * @return array<string, mixed>
 	 */
 	private static function summary_fields( array $observation ): array {
 		$category_candidate = sanitize_key( (string) ( $observation['category_candidate'] ?? '' ) );
+		$source_urls        = is_array( $observation['source_urls'] ?? null ) ? $observation['source_urls'] : array();
+		$consent_states     = is_array( $observation['consent_states'] ?? null ) ? $observation['consent_states'] : array();
+		$allowed_states     = array( 'pre-consent', 'reject', 'accept-all', 'functional', 'analytics', 'marketing' );
 
 		if ( ! in_array( $category_candidate, array( 'necessary', 'functional', 'analytics', 'marketing' ), true ) ) {
 			$category_candidate = '';
 		}
+
+		$source_urls = array_values(
+			array_slice(
+				array_unique( array_filter( array_map( 'esc_url_raw', $source_urls ) ) ),
+				0,
+				20
+			)
+		);
+		$consent_states = array_values(
+			array_filter(
+				array_unique( array_map( 'sanitize_key', $consent_states ) ),
+				static fn ( string $state ): bool => in_array( $state, $allowed_states, true )
+			)
+		);
 
 		return array(
 			'storage_key'        => substr( sanitize_text_field( (string) ( $observation['storage_key'] ?? '' ) ), 0, 191 ),
 			'domain'             => strtolower( substr( sanitize_text_field( (string) ( $observation['domain'] ?? '' ) ), 0, 191 ) ),
 			'storage_type'       => sanitize_key( (string) ( $observation['storage_type'] ?? 'other' ) ),
 			'duration'           => substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 ),
-			'source_url'         => esc_url_raw( (string) ( $observation['source_url'] ?? '' ) ),
+			'source_url'         => esc_url_raw( (string) ( $observation['source_url'] ?? ( $source_urls[0] ?? '' ) ) ),
+			'source_urls'        => $source_urls,
+			'source_count'       => min( Scanner::BROWSER_MAX_TARGETS, max( count( $source_urls ), (int) ( $observation['source_count'] ?? 0 ) ) ),
+			'consent_states'     => $consent_states,
 			'category_candidate' => $category_candidate,
 		);
 	}
