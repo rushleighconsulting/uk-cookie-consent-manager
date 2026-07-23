@@ -8,14 +8,14 @@ honouring cookie consent under UK GDPR and PECR.
 
 ## Status
 
-Release 1 is in development. The repository now contains the UCCM-2 foundation,
-but not a production-ready consent interface.
+Release 1 is in development. The repository contains the database and lifecycle
+foundation plus the UCCM-3 public consent interface. It is not production ready.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
 - [Release 1 Epic](https://rushleighconsulting.atlassian.net/browse/UCCM-1)
 
-## Foundation
+## Current foundation
 
 UCCM-2 establishes:
 
@@ -27,11 +27,26 @@ UCCM-2 establishes:
   retention defaults to 365 days.
 - Multisite activation, deactivation and new-site initialization.
 - Retain-by-default uninstall behaviour with explicit full cleanup.
-- Focused PHPUnit tests for schema and lifecycle invariants.
+
+UCCM-3 adds:
+
+- A cache-safe first-visit banner with equally prominent accept, reject and
+  preference actions.
+- Necessary, Functional, Analytics and Marketing choices, with optional
+  categories disabled by default.
+- A native accessible preferences dialog and persistent Cookie settings button.
+- A first-party, versioned browser cookie holding the current decision for up to
+  180 days by default.
+- A `uccm:consent-changed` browser event and document category-state attributes
+  for later script blocking and server-side receipt integration.
+- Responsive styles, visible keyboard focus and reduced-motion handling.
+
+The browser decision is the active interface state. Server-side evidential
+consent receipts, privacy-preserving IP processing and retention are delivered
+by UCCM-5.
 
 ## Planned Release 1 capabilities
 
-- Accessible first-visit banner and granular preference centre.
 - Prior blocking for configured non-essential scripts and embeds.
 - Privacy-preserving, versioned consent receipts.
 - Curated cookie inventory and hybrid detection.
