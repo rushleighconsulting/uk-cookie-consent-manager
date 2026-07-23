@@ -368,8 +368,22 @@ final class Scan_Findings {
 	 * @param array<string, int> $counts Finding counts.
 	 */
 	private static function notify_administrators( int $run_id, array $counts ): void {
-		$default_email = sanitize_email( (string) get_option( 'admin_email', '' ) );
-		$recipients    = '' === $default_email ? array() : array( $default_email );
+		$recipients = array();
+		$users      = get_users(
+			array(
+				'capability' => 'manage_uccm_inventory',
+				'fields'     => array( 'user_email' ),
+				'number'     => 50,
+			)
+		);
+
+		foreach ( $users as $user ) {
+			$email = sanitize_email( (string) $user->user_email );
+
+			if ( '' !== $email ) {
+				$recipients[] = $email;
+			}
+		}
 
 		/**
 		 * Filters administrator recipients for actionable scan summaries.
