@@ -107,10 +107,11 @@ final class Secure_Updater {
 	/**
 	 * Honour the explicit administrator opt-in for this plugin only.
 	 *
-	 * @param bool  $update Whether WordPress should update automatically.
-	 * @param mixed $item   Update item.
+	 * @param bool|null $update Whether WordPress should update automatically, or null when no callback has forced a decision.
+	 * @param mixed     $item   Update item.
+	 * @return bool|null
 	 */
-	public static function allow_auto_update( bool $update, mixed $item ): bool {
+	public static function allow_auto_update( ?bool $update, mixed $item ): ?bool {
 		$plugin = is_object( $item ) ? (string) ( $item->plugin ?? '' ) : '';
 
 		if ( plugin_basename( UCCM_PLUGIN_FILE ) !== $plugin ) {
