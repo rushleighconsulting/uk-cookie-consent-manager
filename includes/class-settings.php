@@ -33,6 +33,7 @@ final class Settings {
 			'trust_proxy_headers'    => false,
 			'trusted_proxy_ips'      => array(),
 			'scan_urls'              => array(),
+			'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
 			'update_manifest_url'    => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
 			'update_public_key'      => '',
 			'auto_update'            => false,
@@ -85,6 +86,10 @@ final class Settings {
 
 		if ( array_key_exists( 'scan_urls', $input ) ) {
 			$settings['scan_urls'] = self::scan_urls( $input['scan_urls'] );
+		}
+
+		if ( array_key_exists( 'scan_excluded_paths', $input ) ) {
+			$settings['scan_excluded_paths'] = self::scan_excluded_paths( $input['scan_excluded_paths'] );
 		}
 
 		if ( array_key_exists( 'update_manifest_url', $input ) ) {
@@ -203,6 +208,28 @@ final class Settings {
 		}
 
 		return array_values( array_unique( $urls ) );
+	}
+
+	/**
+	 * Return unique, bounded crawl-exclusion path patterns.
+	 *
+	 * @param mixed $value Newline-delimited string or value list.
+	 * @return string[]
+	 */
+	private static function scan_excluded_paths( mixed $value ): array {
+		$values   = is_array( $value ) ? $value : preg_split( '/[\\r\\n]+/', (string) $value );
+		$values   = is_array( $values ) ? $values : array();
+		$patterns = array();
+
+		foreach ( array_slice( $values, 0, 50 ) as $candidate ) {
+			$pattern = substr( sanitize_text_field( trim( (string) $candidate ) ), 0, 100 );
+
+			if ( '' !== $pattern && ( '/' === $pattern[0] || '*' === $pattern[0] ) ) {
+				$patterns[] = $pattern;
+			}
+		}
+
+		return array_values( array_unique( $patterns ) );
 	}
 
 	/**
