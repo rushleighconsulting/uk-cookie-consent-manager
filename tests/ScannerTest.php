@@ -93,9 +93,7 @@ final class ScannerTest extends TestCase {
 		$fetcher = static fn (): array => array(
 			'response' => array( 'code' => 200 ),
 			'headers'  => array(
-				'set-cookie' => array(
-					'server_id=abc; Path=/; HttpOnly; Max-Age=3600',
-				),
+				'set-cookie' => 'server_id=abc; Path=/; HttpOnly; Max-Age=3600',
 			),
 		);
 		$payload = array(
