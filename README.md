@@ -8,8 +8,8 @@ honouring cookie consent under UK GDPR and PECR.
 
 ## Status
 
-Release 1 is in development. The repository contains the database and lifecycle
-foundation, visitor consent, prior blocking, privacy-preserving receipts and administration inventory management. It is not production ready.
+Release 1 is at release-candidate stage for controlled staging acceptance.
+Version `0.1.0-rc.1` is not approved for production use.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
@@ -200,7 +200,8 @@ composer phpcs
 composer phpstan
 ```
 
-Do not install or enable this development version on a production site.
+Install only the named versioned ZIP from a matching GitHub Release, verify its
+published checksum, and use the release candidate on a staging site only.
 
 
 ## Secure private-repository updates
@@ -224,7 +225,7 @@ invalidates the encrypted credential, which must then be saved again.
 
 ### Release procedure
 
-A semantic tag such as `v0.1.0` starts the Release workflow. The tag must match
+A semantic tag such as `v0.1.0-rc.1` starts the Release workflow. The tag must match
 both plugin version declarations. The workflow builds a reproducible archive from
 the tagged Git tree, excludes tests and development dependencies, emits
 `SHA256SUMS`, creates a signed `update-manifest.json`, and publishes those

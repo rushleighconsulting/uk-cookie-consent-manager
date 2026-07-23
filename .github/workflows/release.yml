@@ -49,7 +49,7 @@ jobs:
           archive="dist/uk-cookie-consent-manager-${{ steps.version.outputs.version }}.zip"
           unzip -t "${archive}"
           unzip -l "${archive}" > dist/archive-contents.txt
-          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|php(unit|stan)|phpcs' dist/archive-contents.txt; then
+          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|package(-lock)?\.json|playwright\.config|php(unit|stan)|phpcs' dist/archive-contents.txt; then
             echo "Development-only content was found in the release archive." >&2
             exit 1
           fi
