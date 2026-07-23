@@ -35,6 +35,7 @@ final class Activator {
 		Database::install();
 		Capabilities::grant();
 		Consent_Receipts::schedule_cleanup();
+		// phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- Scanner supplies the bounded 30-day interval.
 		add_filter( 'cron_schedules', array( Scanner::class, 'cron_schedules' ) );
 		Scanner::schedule();
 
