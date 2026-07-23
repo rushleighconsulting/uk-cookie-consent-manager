@@ -47,6 +47,16 @@ final class Scanner {
 	public const DEFAULT_BATCH_SIZE = 5;
 
 	/**
+	 * Maximum persisted batches processed by one background request.
+	 */
+	private const MAX_BATCHES_PER_REQUEST = 4;
+
+	/**
+	 * Soft runtime budget for one background request.
+	 */
+	private const MAX_BATCH_RUNTIME_SECONDS = 20;
+
+	/**
 	 * Maximum pages inspected by one administrator browser session.
 	 */
 	public const BROWSER_MAX_TARGETS = 100;
@@ -290,7 +300,7 @@ final class Scanner {
 		}
 
 		$run_id = (int) $wpdb->insert_id;
-		self::schedule_batch( $run_id );
+		self::schedule_batch( $run_id, true );
 		return $run_id;
 	}
 
@@ -301,17 +311,38 @@ final class Scanner {
 	 * @param int $run_id Scan run identifier.
 	 */
 	public static function run_batch( int $run_id ): void {
-		self::process_batch( $run_id );
+		$started = microtime( true );
+
+		for ( $batch = 0; $batch < self::MAX_BATCHES_PER_REQUEST; ++$batch ) {
+			$result = self::process_batch( $run_id, null, false );
+
+			if ( is_wp_error( $result ) ) {
+				return;
+			}
+
+			$run = self::run_record( $run_id );
+
+			if ( is_wp_error( $run ) || 'running' !== (string) $run['status'] ) {
+				return;
+			}
+
+			if ( self::MAX_BATCH_RUNTIME_SECONDS <= microtime( true ) - $started ) {
+				break;
+			}
+		}
+
+		self::schedule_batch( $run_id, true );
 	}
 
 	/**
 	 * Process one persisted crawl batch and queue the next when work remains.
 	 *
 	 * @param int                                                $run_id  Scan run identifier.
-	 * @param callable(string, array<string, mixed>): mixed|null $fetcher Optional safe-HTTP replacement.
+	 * @param callable(string, array<string, mixed>): mixed|null $fetcher      Optional safe-HTTP replacement.
+	 * @param bool                                                $schedule_next Whether to queue the next request.
 	 * @return bool|\WP_Error
 	 */
-	public static function process_batch( int $run_id, ?callable $fetcher = null ): bool|\WP_Error {
+	public static function process_batch( int $run_id, ?callable $fetcher = null, bool $schedule_next = true ): bool|\WP_Error {
 		global $wpdb;
 
 		$run = self::run_record( $run_id );
@@ -446,7 +477,7 @@ final class Scanner {
 				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved and can be resumed after review.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 			}
 
-			if ( 'running' === $status ) {
+			if ( 'running' === $status && $schedule_next ) {
 				self::schedule_batch( $run_id );
 			}
 
@@ -816,11 +847,15 @@ final class Scanner {
 	 *
 	 * @param int $run_id Scan run identifier.
 	 */
-	private static function schedule_batch( int $run_id ): void {
+	private static function schedule_batch( int $run_id, bool $dispatch = false ): void {
 		$args = array( $run_id );
 
 		if ( false === wp_next_scheduled( self::BATCH_HOOK, $args ) ) {
-			wp_schedule_single_event( time() + 5, self::BATCH_HOOK, $args );
+			wp_schedule_single_event( time() + ( $dispatch ? 0 : 5 ), self::BATCH_HOOK, $args );
+		}
+
+		if ( $dispatch && function_exists( 'spawn_cron' ) ) {
+			spawn_cron( time() );
 		}
 	}
 
