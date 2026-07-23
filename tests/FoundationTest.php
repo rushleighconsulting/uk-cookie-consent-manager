@@ -25,6 +25,20 @@ final class FoundationTest extends TestCase {
 		$GLOBALS['uccm_test_scheduled_hooks'] = array();
 	}
 
+	public function test_release_version_metadata_agrees(): void {
+		$plugin = file_get_contents( dirname( __DIR__ ) . '/uk-cookie-consent-manager.php' );
+		$readme = file_get_contents( dirname( __DIR__ ) . '/readme.txt' );
+
+		self::assertIsString( $plugin );
+		self::assertIsString( $readme );
+		self::assertSame( 1, preg_match( '/^ \* Version:\\s*(\\S+)$/m', $plugin, $header ) );
+		self::assertSame( 1, preg_match( "/^define\\( 'UCCM_VERSION', '([^']+)' \\);$/m", $plugin, $constant ) );
+		self::assertSame( 1, preg_match( '/^Stable tag:\\s*(\\S+)$/m', $readme, $stable ) );
+		self::assertSame( '0.1.0-rc.1', $header[1] );
+		self::assertSame( $header[1], $constant[1] );
+		self::assertSame( $header[1], $stable[1] );
+	}
+
 	public function test_schema_defines_four_prefixed_tables(): void {
 		$schema = Database::schema( $GLOBALS['wpdb'] );
 
