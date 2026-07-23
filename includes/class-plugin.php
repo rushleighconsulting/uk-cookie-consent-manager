@@ -44,6 +44,7 @@ final class Plugin {
 	public function boot(): void {
 		Database::maybe_upgrade();
 		Capabilities::maybe_upgrade();
+		Consent_Interface::register();
 
 		if ( is_multisite() ) {
 			add_action( 'wp_initialize_site', array( Activator::class, 'initialize_site' ), 100 );
