@@ -87,14 +87,8 @@ jobs:
         run: composer test
 
   browser-consent:
-    name: Browser consent (${{ matrix.project }})
+    name: Browser consent (desktop and mobile)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - desktop
-          - mobile
 
     steps:
       - name: Check out source
@@ -112,7 +106,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run consent and operational scanner browser flows
-        run: npm run test:browser -- --project=${{ matrix.project }}
+        run: npm run test:browser
 
   package-build:
     name: Package checks
