@@ -187,13 +187,16 @@ final class ScannerTest extends TestCase {
 		$run     = array_merge( array( 'id' => $run_id ), $GLOBALS['wpdb']->inserts[0]['data'] );
 		$GLOBALS['uccm_test_db_rows'] = array( $run );
 		$GLOBALS['uccm_test_scheduled_hooks'] = array();
-		$fetcher = static fn ( string $url ): array => array(
-			'response' => array( 'code' => 200 ),
-			'headers'  => array( 'content-type' => 'text/html' ),
-			'body'     => 'https://example.test/' === $url
-				? '<a href="/about">About</a><a href="/#top">Home</a>'
-				: '<a href="/">Home</a>',
-		);
+		$fetcher = static function ( string $url, array $arguments ): array {
+			unset( $arguments );
+			return array(
+				'response' => array( 'code' => 200 ),
+				'headers'  => array( 'content-type' => 'text/html' ),
+				'body'     => 'https://example.test/' === $url
+					? '<a href="/about">About</a><a href="/#top">Home</a>'
+					: '<a href="/">Home</a>',
+			);
+		};
 
 		self::assertTrue( Scanner::process_batch( $run_id, $fetcher ) );
 		$first_update = $GLOBALS['wpdb']->updates[0]['data'];
