@@ -50,6 +50,8 @@ final class Activator {
 				'trusted_proxy_ips'      => array(),
 				'scan_urls'              => array(),
 				'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
+				'scan_page_limit'        => Scanner::MAX_TARGETS,
+				'scan_batch_size'        => Scanner::DEFAULT_BATCH_SIZE,
 			),
 			'',
 			false
