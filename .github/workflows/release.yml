@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  package:
-    name: Build signed release
+  release-checks:
+    name: Release checks and signed package
     runs-on: ubuntu-latest
 
     steps:
@@ -42,7 +42,7 @@ jobs:
       - name: Build deterministic plugin archive
         run: bash scripts/build-package.sh "${{ steps.version.outputs.version }}"
 
-      - name: Verify clean installable archive
+      - name: Release check - verify clean installable archive
         shell: bash
         run: |
           set -euo pipefail
@@ -58,7 +58,7 @@ jobs:
             exit 1
           fi
 
-      - name: Create signed update manifest
+      - name: Release check - create signed update manifest
         env:
           UCCM_MANIFEST_PRIVATE_KEY: ${{ secrets.UCCM_MANIFEST_PRIVATE_KEY }}
         run: |
@@ -67,7 +67,7 @@ jobs:
           checksum="$(cut -d ' ' -f 1 dist/SHA256SUMS)"
           php scripts/create-manifest.php "${version}" "${package_url}" "${checksum}" dist/update-manifest.json
 
-      - name: Publish immutable GitHub Release assets
+      - name: Release check - publish immutable GitHub Release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

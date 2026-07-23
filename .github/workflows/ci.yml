@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  php:
-    name: PHP ${{ matrix.php }}
+  source-quality:
+    name: Source quality (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -46,23 +46,175 @@ jobs:
         run: |
           node --check assets/js/consent.js
           node --check assets/js/blocker.js
-
-      - name: Run unit tests
-        run: composer test
-
-      - name: Smoke-test production package
-        if: matrix.php == '8.2'
-        shell: bash
-        run: |
-          bash scripts/build-package.sh 0.1.0-ci
-          unzip -t dist/uk-cookie-consent-manager-0.1.0-ci.zip
-          unzip -l dist/uk-cookie-consent-manager-0.1.0-ci.zip > dist/archive-contents.txt
-          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|php(unit|stan)|phpcs' dist/archive-contents.txt; then
-            exit 1
-          fi
+          node --check playwright.config.js
+          node --check tests/browser/consent.spec.js
 
       - name: Check WordPress coding standards
         run: composer phpcs
 
       - name: Run static analysis
         run: composer phpstan
+
+  unit-integration:
+    name: Unit and integration (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install development tools
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run unit and integration tests
+        run: composer test
+
+  browser-consent:
+    name: Browser consent (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - desktop
+          - mobile
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install browser test tools
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run consent, withdrawal and prior-blocking flows
+        run: npm run test:browser -- --project=${{ matrix.project }}
+
+  package-build:
+    name: Package checks
+    runs-on: ubuntu-latest
+    needs:
+      - source-quality
+      - unit-integration
+      - browser-consent
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build plugin ZIP
+        run: bash scripts/build-package.sh 0.1.0-ci
+
+      - name: Verify clean archive contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="dist/uk-cookie-consent-manager-0.1.0-ci.zip"
+          unzip -t "${archive}"
+          unzip -l "${archive}" > dist/archive-contents.txt
+          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|package(-lock)?\.json|playwright\.config|php(unit|stan)|phpcs' dist/archive-contents.txt; then
+            echo "Development-only content was found in the package." >&2
+            exit 1
+          fi
+
+      - name: Upload verified package
+        uses: actions/upload-artifact@v4
+        with:
+          name: uccm-ci-package
+          path: dist/uk-cookie-consent-manager-0.1.0-ci.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  package-install:
+    name: Package install (WordPress ${{ matrix.wordpress }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    needs:
+      - package-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wordpress: "6.8"
+            php: "8.2"
+          - wordpress: "6.8"
+            php: "8.3"
+          - wordpress: "6.9"
+            php: "8.4"
+          - wordpress: "7.0"
+            php: "8.5"
+
+    services:
+      database:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Download verified package
+        uses: actions/download-artifact@v4
+        with:
+          name: uccm-ci-package
+          path: dist
+
+      - name: Set up PHP and WP-CLI
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: mysqli
+          tools: wp-cli
+
+      - name: Install WordPress
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp core download --version="${{ matrix.wordpress }}" --path="${RUNNER_TEMP}/wordpress" --force
+          wp config create --path="${RUNNER_TEMP}/wordpress" --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1:3306
+          wp core install --path="${RUNNER_TEMP}/wordpress" --url=https://example.test --title=UCCM --admin_user=admin --admin_password=test-password --admin_email=admin@example.test --skip-email
+
+      - name: Install and activate packaged plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -q dist/uk-cookie-consent-manager-0.1.0-ci.zip -d "${RUNNER_TEMP}/wordpress/wp-content/plugins"
+          wp plugin activate uk-cookie-consent-manager --path="${RUNNER_TEMP}/wordpress"
+          wp plugin status uk-cookie-consent-manager --path="${RUNNER_TEMP}/wordpress"
+          test "$(wp eval 'echo defined( "UCCM_VERSION" ) ? UCCM_VERSION : "";' --path="${RUNNER_TEMP}/wordpress")" = "0.1.0-dev"
+
+      - name: Verify scheduled operating jobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp cron event list --path="${RUNNER_TEMP}/wordpress" --fields=hook --format=csv > "${RUNNER_TEMP}/cron.csv"
+          grep -q '^uccm_monthly_scan$' "${RUNNER_TEMP}/cron.csv"
+          grep -q '^uccm_retention_cleanup$' "${RUNNER_TEMP}/cron.csv"
