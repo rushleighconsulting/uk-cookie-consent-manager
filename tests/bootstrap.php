@@ -44,6 +44,8 @@ $GLOBALS['uccm_test_mail']             = array();
 $GLOBALS['uccm_test_users']            = array();
 $GLOBALS['uccm_test_admin_menus']       = array();
 $GLOBALS['uccm_test_admin_submenus']    = array();
+$GLOBALS['uccm_test_users_by_email']     = array();
+$GLOBALS['uccm_test_privacy_content']    = array();
 
 /**
  * Minimal wpdb test double.
@@ -123,6 +125,14 @@ class wpdb {
 $GLOBALS['wpdb'] = new wpdb();
 
 /**
+ * Minimal WordPress user test double.
+ */
+class WP_User {
+	public function __construct( public int $ID ) {
+	}
+}
+
+/**
  * Minimal administrator role test double.
  */
 class UCCM_Test_Role {
@@ -175,6 +185,22 @@ function get_option( string $name, mixed $default = false ): mixed {
 
 function sanitize_email( string $email ): string {
 	return false === filter_var( $email, FILTER_VALIDATE_EMAIL ) ? '' : $email;
+}
+
+function get_user_by( string $field, string $value ): WP_User|false {
+	return 'email' === $field ? ( $GLOBALS['uccm_test_users_by_email'][ $value ] ?? false ) : false;
+}
+
+function wpautop( string $text ): string {
+	return '<p>' . str_replace( "\n\n", '</p><p>', $text ) . '</p>';
+}
+
+function wp_kses_post( string $text ): string {
+	return strip_tags( $text, '<p><a><strong><em><code>' );
+}
+
+function wp_add_privacy_policy_content( string $plugin_name, string $policy_text ): void {
+	$GLOBALS['uccm_test_privacy_content'][ $plugin_name ] = $policy_text;
 }
 
 /**
@@ -514,4 +540,5 @@ require_once dirname( __DIR__ ) . '/includes/class-scan-findings.php';
 require_once dirname( __DIR__ ) . '/includes/class-scanner.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';
 require_once dirname( __DIR__ ) . '/includes/class-secure-updater.php';
+require_once dirname( __DIR__ ) . '/includes/class-privacy.php';
 require_once dirname( __DIR__ ) . '/includes/class-admin.php';
