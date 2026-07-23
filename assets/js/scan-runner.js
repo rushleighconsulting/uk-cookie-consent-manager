@@ -57,13 +57,20 @@
 				domain: observation.domain,
 				source_url: target,
 				source_urls: [],
+				source_count: 0,
+				source_seen: {},
 				consent_states: []
 			};
 			collected[ key ] = existing;
 		}
 
-		if ( -1 === existing.source_urls.indexOf( target ) && existing.source_urls.length < sourceLimit ) {
-			existing.source_urls.push( target );
+		if ( ! existing.source_seen[ target ] ) {
+			existing.source_seen[ target ] = true;
+			existing.source_count += 1;
+
+			if ( existing.source_urls.length < sourceLimit ) {
+				existing.source_urls.push( target );
+			}
 		}
 
 		if ( -1 === existing.consent_states.indexOf( scenarioName ) ) {
@@ -304,7 +311,7 @@
 
 			var observations = Object.keys( collected ).map( function ( key ) {
 				var observation = collected[ key ];
-				observation.source_count = observation.source_urls.length;
+				delete observation.source_seen;
 				return observation;
 			} );
 			var finalStatus = 0 === failedSteps ? 'completed' : ( 0 < completedSteps ? 'partial' : 'failed' );
