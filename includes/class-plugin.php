@@ -39,11 +39,18 @@ final class Plugin {
 	}
 
 	/**
-	 * Register runtime hooks.
+	 * Register runtime hooks and apply versioned upgrades.
 	 */
 	public function boot(): void {
+		Database::maybe_upgrade();
+		Capabilities::maybe_upgrade();
+
+		if ( is_multisite() ) {
+			add_action( 'wp_initialize_site', array( Activator::class, 'initialize_site' ), 100 );
+		}
+
 		/**
-		 * Fires after the UK Cookie Consent Manager scaffold has loaded.
+		 * Fires after the UK Cookie Consent Manager foundation has loaded.
 		 *
 		 * @param Plugin $plugin Main plugin coordinator.
 		 */
