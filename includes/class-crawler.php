@@ -163,6 +163,8 @@ final class Crawler {
 
 	/**
 	 * Collapse dot segments and repeated separators in a URL path.
+	 *
+	 * @param string $path URL path.
 	 */
 	private static function normalize_path( string $path ): string {
 		$segments = explode( '/', '/' . ltrim( $path, '/' ) );
