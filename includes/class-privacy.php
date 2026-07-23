@@ -181,8 +181,8 @@ final class Privacy {
 			}
 
 			$erased_hash = hash_hmac( 'sha256', 'privacy-erased|' . $record_id, wp_salt( 'auth' ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Explicit anonymisation in the plugin-owned receipt table.
-			$result = $wpdb->update(
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit anonymisation in the plugin-owned receipt table.
+			$result      = $wpdb->update(
 				$table,
 				array(
 					'wp_user_id'     => null,
