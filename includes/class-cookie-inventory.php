@@ -14,16 +14,32 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Cookie_Inventory {
 
-	/** @var string[] */
+	/**
+	 * Supported party classifications.
+	 *
+	 * @var string[]
+	 */
 	private const PARTIES = array( 'first-party', 'third-party' );
 
-	/** @var string[] */
+	/**
+	 * Supported browser storage types.
+	 *
+	 * @var string[]
+	 */
 	private const STORAGE_TYPES = array( 'cookie', 'local_storage', 'session_storage', 'other' );
 
-	/** @var string[] */
+	/**
+	 * Supported consent categories.
+	 *
+	 * @var string[]
+	 */
 	private const CATEGORIES = array( 'necessary', 'functional', 'analytics', 'marketing' );
 
-	/** @var string[] */
+	/**
+	 * Supported review statuses.
+	 *
+	 * @var string[]
+	 */
 	private const STATUSES = array( 'known', 'new', 'changed', 'ignored', 'resolved' );
 
 	/**
@@ -105,7 +121,7 @@ final class Cookie_Inventory {
 
 		if ( 0 < $id ) {
 			$validated['last_reviewed_at'] = $now;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Capability-gated update to the plugin-owned inventory table.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Capability-gated update to the plugin-owned inventory table.
 			$updated = $wpdb->update( $table, $validated, array( 'id' => $id ) );
 
 			return false === $updated
@@ -140,19 +156,21 @@ final class Cookie_Inventory {
 			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to view the cookie inventory.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
 
-		$page                 = max( 1, $page );
-		$per_page             = max( 1, min( 100, $per_page ) );
-		$offset               = ( $page - 1 ) * $per_page;
+		$page                  = max( 1, $page );
+		$per_page              = max( 1, min( 100, $per_page ) );
+		$offset                = ( $page - 1 ) * $per_page;
 		[ $where, $arguments ] = self::where_clause( $filters, $wpdb );
-		$table                = Database::table_names()['cookie_inventory'];
-		$count_sql            = "SELECT COUNT(*) FROM {$table} WHERE {$where}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and generated clauses are plugin-owned.
-		$count_query          = empty( $arguments ) ? $count_sql : $wpdb->prepare( $count_sql, ...$arguments );
+		$table                 = Database::table_names()['cookie_inventory'];
+		$count_sql             = "SELECT COUNT(*) FROM {$table} WHERE {$where}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and generated clauses are plugin-owned.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query structure is generated internally and values are prepared when present.
+		$count_query = empty( $arguments ) ? $count_sql : $wpdb->prepare( $count_sql, ...$arguments );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared bounded read from the plugin-owned inventory table.
 		$total = (int) $wpdb->get_var( $count_query );
 
 		$data_sql       = "SELECT id, storage_key, domain, provider, party, storage_type, purpose, category, duration, source_url, first_seen_at, last_seen_at, last_reviewed_at, status FROM {$table} WHERE {$where} ORDER BY last_seen_at DESC, id DESC LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and generated clauses are plugin-owned.
 		$data_arguments = array_merge( $arguments, array( $per_page, $offset ) );
-		$data_query     = $wpdb->prepare( $data_sql, ...$data_arguments );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query structure is generated internally; pagination and filter values use placeholders.
+		$data_query = $wpdb->prepare( $data_sql, ...$data_arguments );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared bounded read from the plugin-owned inventory table.
 		$items = $wpdb->get_results( $data_query, ARRAY_A );
 
@@ -180,9 +198,10 @@ final class Cookie_Inventory {
 		}
 
 		[ $where, $arguments ] = self::where_clause( $filters, $wpdb );
-		$table                = Database::table_names()['cookie_inventory'];
-		$sql                  = "SELECT storage_key, provider, domain, party, storage_type, purpose, category, duration, source_url, first_seen_at, last_seen_at, last_reviewed_at, status FROM {$table} WHERE {$where} ORDER BY storage_key ASC LIMIT 5000"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and generated clauses are plugin-owned.
-		$query                = empty( $arguments ) ? $sql : $wpdb->prepare( $sql, ...$arguments );
+		$table                 = Database::table_names()['cookie_inventory'];
+		$sql                   = "SELECT storage_key, provider, domain, party, storage_type, purpose, category, duration, source_url, first_seen_at, last_seen_at, last_reviewed_at, status FROM {$table} WHERE {$where} ORDER BY storage_key ASC LIMIT 5000"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and generated clauses are plugin-owned.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query structure is generated internally and values are prepared when present.
+		$query = empty( $arguments ) ? $sql : $wpdb->prepare( $sql, ...$arguments );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- Prepared bounded export from the plugin-owned inventory table.
 		$items = $wpdb->get_results( $query, ARRAY_A );
 		return is_array( $items ) ? $items : array();
@@ -194,7 +213,7 @@ final class Cookie_Inventory {
 	 * @param array<int, array<string, mixed>> $records Inventory records.
 	 */
 	public static function csv( array $records ): string {
-		$stream = fopen( 'php://temp', 'w+' );
+		$stream = fopen( 'php://temp', 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- In-memory stream for a generated download.
 
 		if ( false === $stream ) {
 			return '';
@@ -215,7 +234,7 @@ final class Cookie_Inventory {
 
 		rewind( $stream );
 		$csv = stream_get_contents( $stream );
-		fclose( $stream );
+		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the in-memory stream.
 		return false === $csv ? '' : $csv;
 	}
 
