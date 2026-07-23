@@ -32,6 +32,7 @@ final class Settings {
 			'store_full_ip'          => false,
 			'trust_proxy_headers'    => false,
 			'trusted_proxy_ips'      => array(),
+			'scan_urls'              => array(),
 		);
 	}
 
@@ -79,6 +80,10 @@ final class Settings {
 			$settings['trusted_proxy_ips'] = self::trusted_proxy_ips( $input['trusted_proxy_ips'] );
 		}
 
+		if ( array_key_exists( 'scan_urls', $input ) ) {
+			$settings['scan_urls'] = self::scan_urls( $input['scan_urls'] );
+		}
+
 		return $settings;
 	}
 
@@ -101,6 +106,28 @@ final class Settings {
 	 */
 	private static function boolean( mixed $value ): bool {
 		return true === $value || 1 === $value || '1' === $value || 'yes' === $value || 'on' === $value;
+	}
+
+	/**
+	 * Return unique, canonical proxy IP addresses.
+	 *
+	 * @param mixed $value Newline-delimited string or value list.
+	 * @return string[]
+	 */
+	private static function scan_urls( mixed $value ): array {
+		$values = is_array( $value ) ? $value : preg_split( '/[\r\n]+/', (string) $value );
+		$values = is_array( $values ) ? $values : array();
+		$urls   = array();
+
+		foreach ( array_slice( $values, 0, Scanner::MAX_TARGETS - 1 ) as $candidate ) {
+			$url = esc_url_raw( trim( (string) $candidate ) );
+
+			if ( '' !== $url ) {
+				$urls[] = $url;
+			}
+		}
+
+		return array_values( array_unique( $urls ) );
 	}
 
 	/**
