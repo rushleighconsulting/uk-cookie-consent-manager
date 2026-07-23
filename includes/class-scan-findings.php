@@ -357,7 +357,7 @@ final class Scan_Findings {
 			$category_candidate = '';
 		}
 
-		$source_urls        = array_values(
+		$source_urls    = array_values(
 			array_slice(
 				array_unique( array_filter( array_map( 'esc_url_raw', $source_urls ) ) ),
 				0,
