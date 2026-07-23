@@ -470,17 +470,24 @@ final class Admin {
 				$after  = is_array( $after ) ? $after : array();
 				echo '<tr><td>#' . esc_html( (string) $finding['id'] ) . '<br><small>' . esc_html( (string) $finding['finding_type'] ) . ' · ' . esc_html__( 'scan', 'uk-cookie-consent-manager' ) . ' ' . esc_html( (string) $finding['scan_run_id'] ) . '</small></td>';
 				echo '<td><strong>' . esc_html( (string) $finding['storage_key'] ) . '</strong><br>' . esc_html( (string) $finding['domain'] ) . '</td>';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The helper escapes all values and returns only fixed markup.
 				echo '<td>' . self::finding_diff_html( $before, $after ) . '</td>';
 				echo '<td>' . esc_html( (string) $finding['status'] ) . '</td><td>';
 
 				if ( 'pending' === $finding['status'] && current_user_can( 'manage_uccm_inventory' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
-					foreach ( array( 'reviewed', 'ignored', 'resolved' ) as $outcome ) {
+					$outcomes = array(
+						'reviewed' => __( 'Mark reviewed', 'uk-cookie-consent-manager' ),
+						'ignored'  => __( 'Ignore', 'uk-cookie-consent-manager' ),
+						'resolved' => __( 'Resolve', 'uk-cookie-consent-manager' ),
+					);
+
+					foreach ( $outcomes as $outcome => $label ) {
 						echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin:0 4px 4px 0">';
 						echo '<input type="hidden" name="action" value="uccm_review_scan_finding">';
 						echo '<input type="hidden" name="finding_id" value="' . esc_attr( (string) $finding['id'] ) . '">';
 						echo '<input type="hidden" name="finding_status" value="' . esc_attr( $outcome ) . '">';
 						wp_nonce_field( 'uccm_review_scan_finding' );
-						submit_button( ucfirst( $outcome ), 'secondary small', '', false );
+						submit_button( $label, 'secondary small', '', false );
 						echo '</form>';
 					}
 				} else {
@@ -563,6 +570,12 @@ final class Admin {
 	 */
 	private static function finding_diff_html( array $before, array $after ): string {
 		$parts = array();
+		$labels = array(
+			'duration'   => __( 'Duration', 'uk-cookie-consent-manager' ),
+			'domain'     => __( 'Domain', 'uk-cookie-consent-manager' ),
+			'source_url' => __( 'Source URL', 'uk-cookie-consent-manager' ),
+			'category'   => __( 'Category candidate', 'uk-cookie-consent-manager' ),
+		);
 
 		foreach ( Scan_Findings::material_fields() as $field ) {
 			if ( ! array_key_exists( $field, $after ) ) {
@@ -571,7 +584,7 @@ final class Admin {
 
 			$old     = (string) ( $before[ $field ] ?? __( 'not recorded', 'uk-cookie-consent-manager' ) );
 			$new     = (string) $after[ $field ];
-			$parts[] = '<strong>' . esc_html( ucfirst( str_replace( '_', ' ', $field ) ) ) . ':</strong> ' . esc_html( $old ) . ' &rarr; ' . esc_html( $new );
+			$parts[] = '<strong>' . esc_html( (string) ( $labels[ $field ] ?? $field ) ) . ':</strong> ' . esc_html( $old ) . ' &rarr; ' . esc_html( $new );
 		}
 
 		if ( array() === $parts ) {
