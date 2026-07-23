@@ -20,6 +20,11 @@ final class Consent_Receipts {
 	private const REST_NAMESPACE = 'uccm/v1';
 
 	/**
+	 * Maximum consent events accepted from one source per minute.
+	 */
+	private const RATE_LIMIT = 30;
+
+	/**
 	 * Register runtime hooks.
 	 */
 	public static function register(): void {
@@ -39,7 +44,7 @@ final class Consent_Receipts {
 				array(
 					'methods'             => 'POST',
 					'callback'            => array( self::class, 'create_response' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => array( self::class, 'can_create' ),
 				),
 				array(
 					'methods'             => 'GET',
@@ -108,8 +113,15 @@ final class Consent_Receipts {
 			return new \WP_Error( 'uccm_invalid_decision', __( 'The consent decision is incomplete.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
 		}
 
+		$source_ip = null === $ip ? IP_Privacy::client_ip() : $ip;
+		$limited   = self::consume_rate_limit( $source_ip );
+
+		if ( is_wp_error( $limited ) ) {
+			return $limited;
+		}
+
 		$occurred_at = gmdate( 'Y-m-d H:i:s' );
-		$ip_data     = IP_Privacy::protect( null === $ip ? IP_Privacy::client_ip() : $ip );
+		$ip_data     = IP_Privacy::protect( $source_ip );
 		$encoded     = wp_json_encode( $choices );
 
 		if ( false === $encoded ) {
@@ -284,6 +296,62 @@ final class Consent_Receipts {
 		$deleted = $wpdb->query( $query );
 
 		return false === $deleted ? 0 : (int) $deleted;
+	}
+
+	/**
+	 * Allow anonymous receipt creation only for same-origin browser requests.
+	 *
+	 * Requests without Origin and Referer are allowed for non-browser clients;
+	 * cross-origin browser submissions always supply an Origin header.
+	 *
+	 * @param \WP_REST_Request $request Receipt creation request.
+	 * @return true|\WP_Error
+	 */
+	public static function can_create( \WP_REST_Request $request ): bool|\WP_Error {
+		$origin = trim( (string) $request->get_header( 'origin' ) );
+
+		if ( '' === $origin ) {
+			$referer = trim( (string) $request->get_header( 'referer' ) );
+			$origin  = '' === $referer ? '' : $referer;
+		}
+
+		if ( '' === $origin ) {
+			return true;
+		}
+
+		$source = wp_parse_url( $origin );
+		$home   = wp_parse_url( home_url( '/' ) );
+
+		if ( ! is_array( $source ) || ! is_array( $home ) ) {
+			return new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+		}
+
+		$source_port = (int) ( $source['port'] ?? ( 'https' === ( $source['scheme'] ?? '' ) ? 443 : 80 ) );
+		$home_port   = (int) ( $home['port'] ?? ( 'https' === ( $home['scheme'] ?? '' ) ? 443 : 80 ) );
+		$same_origin = strtolower( (string) ( $source['scheme'] ?? '' ) ) === strtolower( (string) ( $home['scheme'] ?? '' ) )
+			&& strtolower( (string) ( $source['host'] ?? '' ) ) === strtolower( (string) ( $home['host'] ?? '' ) )
+			&& $source_port === $home_port;
+
+		return $same_origin
+			? true
+			: new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * Apply a bounded per-source receipt creation limit.
+	 *
+	 * @return true|\WP_Error
+	 */
+	private static function consume_rate_limit( string $ip ): bool|\WP_Error {
+		$key   = 'uccm_consent_rate_' . substr( hash_hmac( 'sha256', $ip, wp_salt( 'auth' ) ), 0, 32 );
+		$count = (int) get_transient( $key );
+
+		if ( self::RATE_LIMIT <= $count ) {
+			return new \WP_Error( 'uccm_consent_rate_limited', __( 'Too many consent events were submitted. Please try again shortly.', 'uk-cookie-consent-manager' ), array( 'status' => 429 ) );
+		}
+
+		set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
+		return true;
 	}
 
 	/**
