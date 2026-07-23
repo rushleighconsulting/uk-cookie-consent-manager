@@ -121,7 +121,6 @@ final class Admin {
 		$section = self::request_value( $_POST, 'section' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified immediately below.
 		check_admin_referer( 'uccm_save_' . $section );
 		$submitted = isset( $_POST['uccm'] ) && is_array( $_POST['uccm'] ) ? wp_unslash( $_POST['uccm'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Field-level validation follows.
-		$submitted = is_array( $submitted ) ? $submitted : array();
 
 		if ( 'banner' === $section ) {
 			Settings::update(
@@ -209,7 +208,7 @@ final class Admin {
 		self::require_capability( 'manage_uccm_inventory' );
 		check_admin_referer( 'uccm_save_inventory' );
 		$submitted = isset( $_POST['uccm'] ) && is_array( $_POST['uccm'] ) ? wp_unslash( $_POST['uccm'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Inventory service validates each field.
-		$result    = Cookie_Inventory::save( is_array( $submitted ) ? $submitted : array() );
+		$result    = Cookie_Inventory::save( $submitted );
 
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
@@ -494,9 +493,7 @@ final class Admin {
 			)
 		);
 
-		if ( is_string( $links ) ) {
-			echo '<nav aria-label="' . esc_attr__( 'Inventory pages', 'uk-cookie-consent-manager' ) . '">' . wp_kses_post( $links ) . '</nav>';
-		}
+		echo '<nav aria-label="' . esc_attr__( 'Inventory pages', 'uk-cookie-consent-manager' ) . '">' . wp_kses_post( $links ) . '</nav>';
 	}
 
 	/**
