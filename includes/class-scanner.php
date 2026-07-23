@@ -62,7 +62,7 @@ final class Scanner {
 	public static function register(): void {
 		add_filter( 'cron_schedules', array( self::class, 'cron_schedules' ) );
 		add_action( self::HOOK, array( self::class, 'run_scheduled' ) );
-		add_action( self::BATCH_HOOK, array( self::class, 'process_batch' ), 10, 1 );
+		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ), 10, 1 );
 		self::schedule();
 	}
 
@@ -294,6 +294,16 @@ final class Scanner {
 		return $run_id;
 	}
 
+
+	/**
+	 * Run one cron batch without returning a value to the action dispatcher.
+	 *
+	 * @param int $run_id Scan run identifier.
+	 */
+	public static function run_batch( int $run_id ): void {
+		self::process_batch( $run_id );
+	}
+
 	/**
 	 * Process one persisted crawl batch and queue the next when work remains.
 	 *
@@ -409,7 +419,7 @@ final class Scanner {
 			$summary['finding_counts']    = self::merge_finding_counts( self::decoded_counts( $summary['finding_counts'] ?? array() ), $counts );
 			$summary['findings']          = $summary['finding_counts']['actionable'];
 			$summary['warnings']          = array_slice( $warnings, 0, self::MAX_FINDINGS );
-			$coverage['frontier']         = array_values( $frontier );
+			$coverage['frontier']         = $frontier;
 			$coverage['seen']             = array_keys( $seen );
 			$coverage['discovered_count'] = count( $seen );
 			$coverage['visited_count']    = count( $visited );
