@@ -35,6 +35,11 @@ final class Scanner {
 	public const MAX_FINDINGS = 500;
 
 	/**
+	 * Maximum authenticated runner submissions per minute.
+	 */
+	private const RUNNER_RATE_LIMIT = 30;
+
+	/**
 	 * Register scheduling and execution hooks.
 	 */
 	public static function register(): void {
@@ -93,6 +98,14 @@ final class Scanner {
 			return new \WP_Error( 'uccm_runner_unauthorised', __( 'The browser runner could not be authenticated.', 'uk-cookie-consent-manager' ), array( 'status' => 401 ) );
 		}
 
+		$rate_key = 'uccm_runner_rate_' . substr( hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ), 0, 32 );
+		$count    = (int) get_transient( $rate_key );
+
+		if ( self::RUNNER_RATE_LIMIT <= $count ) {
+			return new \WP_Error( 'uccm_runner_rate_limited', __( 'The browser runner request limit has been reached.', 'uk-cookie-consent-manager' ), array( 'status' => 429 ) );
+		}
+
+		set_transient( $rate_key, $count + 1, MINUTE_IN_SECONDS );
 		$observations = $payload['observations'] ?? array();
 
 		if ( ! is_array( $observations ) ) {
