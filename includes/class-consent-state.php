@@ -88,6 +88,7 @@ final class Consent_State {
 			'policyVersion' => $policy_version,
 			'pluginVersion' => UCCM_VERSION,
 			'lifetimeDays'  => $lifetime_days,
+			'receiptEndpoint' => rest_url( 'uccm/v1/consents' ),
 			'categories'    => self::categories(),
 			'messages'      => array(
 				'saved'     => __( 'Your cookie choices have been saved.', 'uk-cookie-consent-manager' ),
