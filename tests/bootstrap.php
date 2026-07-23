@@ -40,6 +40,7 @@ $GLOBALS['uccm_test_db_query_result']  = 0;
 $GLOBALS['uccm_test_db_results_queue'] = array();
 $GLOBALS['uccm_test_db_vars_queue']    = array();
 $GLOBALS['uccm_test_mail']             = array();
+$GLOBALS['uccm_test_users']            = array();
 $GLOBALS['uccm_test_admin_menus']       = array();
 $GLOBALS['uccm_test_admin_submenus']    = array();
 
@@ -331,6 +332,16 @@ function current_user_can( string $capability ): bool {
 
 function get_current_user_id(): int {
 	return 0;
+}
+
+/**
+ * Return capability-filtered test users.
+ *
+ * @return object[]
+ */
+function get_users( array $arguments = array() ): array {
+	unset( $arguments );
+	return $GLOBALS['uccm_test_users'];
 }
 
 function get_current_blog_id(): int {
