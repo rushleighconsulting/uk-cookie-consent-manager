@@ -83,14 +83,14 @@ final class Consent_State {
 		}
 
 		return array(
-			'cookieName'    => self::COOKIE_NAME,
-			'cookiePath'    => defined( 'COOKIEPATH' ) ? COOKIEPATH : '/',
-			'policyVersion' => $policy_version,
-			'pluginVersion' => UCCM_VERSION,
-			'lifetimeDays'  => $lifetime_days,
+			'cookieName'      => self::COOKIE_NAME,
+			'cookiePath'      => defined( 'COOKIEPATH' ) ? COOKIEPATH : '/',
+			'policyVersion'   => $policy_version,
+			'pluginVersion'   => UCCM_VERSION,
+			'lifetimeDays'    => $lifetime_days,
 			'receiptEndpoint' => rest_url( 'uccm/v1/consents' ),
-			'categories'    => self::categories(),
-			'messages'      => array(
+			'categories'      => self::categories(),
+			'messages'        => array(
 				'saved'     => __( 'Your cookie choices have been saved.', 'uk-cookie-consent-manager' ),
 				'withdrawn' => __( 'Optional cookie consent has been withdrawn.', 'uk-cookie-consent-manager' ),
 			),
