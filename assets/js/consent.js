@@ -64,7 +64,7 @@
 
 				decision.categories = normaliseChoices( decision.categories );
 				return decision;
-			} catch ( error ) {
+			} catch {
 				return null;
 			}
 		}
@@ -83,15 +83,16 @@
 			const decision = {
 				receiptId: newReceiptId(),
 				policyVersion: config.policyVersion,
-				pluginVersion: config.pluginVersion || '',
+				pluginVersion: config.pluginVersion,
 				decidedAt: new Date( now ).toISOString(),
 				expiresAt: now + ( lifetimeSeconds * 1000 ),
 				action,
 				categories: normaliseChoices( choices ),
 			};
 			const secure = 'https:' === window.location.protocol ? '; Secure' : '';
+			const cookiePath = config.cookiePath || '/';
 
-			document.cookie = `${ encodeURIComponent( config.cookieName ) }=${ encodeURIComponent( JSON.stringify( decision ) ) }; Path=/; Max-Age=${ lifetimeSeconds }; SameSite=Lax${ secure }`;
+			document.cookie = `${ encodeURIComponent( config.cookieName ) }=${ encodeURIComponent( JSON.stringify( decision ) ) }; Path=${ cookiePath }; Max-Age=${ lifetimeSeconds }; SameSite=Lax${ secure }`;
 			applyDecision( decision );
 			window.dispatchEvent( new CustomEvent( 'uccm:consent-changed', { detail: decision } ) );
 
