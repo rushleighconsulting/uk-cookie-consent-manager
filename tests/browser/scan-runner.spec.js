@@ -19,9 +19,12 @@ const targetFixture = `
 	<meta charset="utf-8">
 	<title>Crawl target</title>
 	<script>
+		if ( document.cookie.includes( 'wordpress_logged_in_test' ) || localStorage.getItem( 'admin_secret' ) ) {
+			localStorage.setItem( 'inherited_admin_state', 'unsafe' );
+		}
 		document.cookie = 'analytics_id=123; path=/';
-		document.cookie = 'wordpress_logged_in_test=secret; path=/';
 		localStorage.setItem( 'marketing_preference', 'enabled' );
+		sessionStorage.setItem( 'visit_state', 'started' );
 	</script>
 	<script id="analytics-loader" src="https://cdn.example.test/analytics.js"></script>
 </head>
@@ -32,8 +35,8 @@ const targetFixture = `
 </html>
 `;
 
-test( 'authenticated runner collects bounded observations and rejects cross-origin targets', async ( { page } ) => {
-	let submitted;
+test( 'runner isolates administrator state, checks consent states and groups affected pages', async ( { page } ) => {
+	const submissions = [];
 
 	await page.addInitScript( () => {
 		window.UCCMScanRunner = {
@@ -41,8 +44,14 @@ test( 'authenticated runner collects bounded observations and rejects cross-orig
 			nonce: 'test-nonce',
 			runId: 42,
 			maxTargets: 100,
+			cookieName: 'uccm_consent',
+			cookiePath: '/',
+			policyVersion: '1',
+			pluginVersion: '0.1.0-rc.4',
+			lifetimeDays: 365,
 			targets: [
-				'https://example.test/crawl-target',
+				'https://example.test/page-one',
+				'https://example.test/page-two',
 				'https://outside.test/not-allowed'
 			]
 		};
@@ -53,7 +62,8 @@ test( 'authenticated runner collects bounded observations and rejects cross-orig
 		const url = new URL( request.url() );
 
 		if ( 'POST' === request.method() && '/wp-admin/admin-ajax.php' === url.pathname ) {
-			submitted = new URLSearchParams( request.postData() || '' );
+			const submitted = new URLSearchParams( request.postData() || '' );
+			submissions.push( JSON.parse( submitted.get( 'payload' ) ) );
 			await route.fulfill( {
 				status: 200,
 				contentType: 'application/json',
@@ -67,7 +77,7 @@ test( 'authenticated runner collects bounded observations and rejects cross-orig
 			return;
 		}
 
-		if ( '/crawl-target' === url.pathname ) {
+		if ( [ '/page-one', '/page-two' ].includes( url.pathname ) ) {
 			await route.fulfill( { status: 200, contentType: 'text/html', body: targetFixture } );
 			return;
 		}
@@ -76,28 +86,55 @@ test( 'authenticated runner collects bounded observations and rejects cross-orig
 	} );
 
 	await page.goto( 'https://example.test/wp-admin/admin.php?page=uccm-scans&scan_id=42' );
+	await page.evaluate( () => {
+		document.cookie = 'wordpress_logged_in_test=secret; path=/';
+		localStorage.setItem( 'admin_secret', 'must-not-leak' );
+	} );
 	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/scan-runner.js' ) } );
 	await page.getByRole( 'button', { name: 'Run browser observations' } ).click();
 
 	await expect( page.locator( '#uccm-browser-observation-status' ) ).toHaveText(
-		'Browser observations saved. Reload this scan to review updated findings and coverage.'
+		'Browser check saved. Reload this scan to review the results.',
+		{ timeout: 45000 }
 	);
-	expect( submitted ).toBeDefined();
-	expect( submitted.get( 'action' ) ).toBe( 'uccm_browser_scan_observations' );
-	expect( submitted.get( 'nonce' ) ).toBe( 'test-nonce' );
-	expect( submitted.get( 'scan_id' ) ).toBe( '42' );
 
-	const payload = JSON.parse( submitted.get( 'payload' ) );
-	expect( payload.target_count ).toBe( 1 );
+	expect( submissions[0] ).toEqual( expect.objectContaining( {
+		status: 'running',
+		target_count: 2,
+		scenario_count: 6
+	} ) );
+
+	const payload = submissions.at( -1 );
+	expect( payload.status ).toBe( 'completed' );
+	expect( payload.target_count ).toBe( 2 );
+	expect( payload.completed_steps ).toBe( 12 );
+	expect( payload.observations.filter( ( observation ) => 'analytics_id' === observation.storage_key ) ).toHaveLength( 1 );
+
+	const cookie = payload.observations.find( ( observation ) => 'analytics_id' === observation.storage_key );
+	expect( cookie.source_count ).toBe( 2 );
+	expect( cookie.source_urls ).toEqual( [
+		'https://example.test/page-one',
+		'https://example.test/page-two'
+	] );
+	expect( cookie.consent_states ).toEqual( [
+		'pre-consent',
+		'reject',
+		'accept-all',
+		'functional',
+		'analytics',
+		'marketing'
+	] );
+
 	expect( payload.observations ).toEqual(
 		expect.arrayContaining( [
-			expect.objectContaining( { type: 'cookie', storage_key: 'analytics_id' } ),
 			expect.objectContaining( { type: 'local_storage', storage_key: 'marketing_preference' } ),
+			expect.objectContaining( { type: 'session_storage', storage_key: 'visit_state' } ),
 			expect.objectContaining( { type: 'script', storage_key: 'analytics-loader' } ),
 			expect.objectContaining( { type: 'iframe', storage_key: 'Video provider' } ),
 			expect.objectContaining( { type: 'pixel', storage_key: 'tracking-pixel' } )
 		] )
 	);
-	expect( payload.observations.some( ( observation ) => 'wordpress_logged_in_test' === observation.storage_key ) ).toBe( false );
+	expect( payload.observations.some( ( observation ) => 'uccm_consent' === observation.storage_key ) ).toBe( false );
+	expect( payload.observations.some( ( observation ) => 'inherited_admin_state' === observation.storage_key ) ).toBe( false );
 	expect( payload.observations.some( ( observation ) => observation.source_url.includes( 'outside.test' ) ) ).toBe( false );
 } );
