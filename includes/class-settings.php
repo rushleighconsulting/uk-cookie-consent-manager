@@ -34,6 +34,8 @@ final class Settings {
 			'trusted_proxy_ips'      => array(),
 			'scan_urls'              => array(),
 			'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
+			'scan_page_limit'        => Scanner::MAX_TARGETS,
+			'scan_batch_size'        => Scanner::DEFAULT_BATCH_SIZE,
 			'update_manifest_url'    => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
 			'update_public_key'      => '',
 			'auto_update'            => false,
@@ -72,6 +74,14 @@ final class Settings {
 
 		if ( array_key_exists( 'retention_days', $input ) ) {
 			$settings['retention_days'] = max( 1, min( 3650, (int) $input['retention_days'] ) );
+		}
+
+		if ( array_key_exists( 'scan_page_limit', $input ) ) {
+			$settings['scan_page_limit'] = max( 1, min( Scanner::MAX_TARGETS, (int) $input['scan_page_limit'] ) );
+		}
+
+		if ( array_key_exists( 'scan_batch_size', $input ) ) {
+			$settings['scan_batch_size'] = max( 1, min( 25, (int) $input['scan_batch_size'] ) );
 		}
 
 		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'auto_update' ) as $flag ) {
