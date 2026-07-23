@@ -127,17 +127,8 @@ jobs:
       - name: Build plugin ZIP
         run: bash scripts/build-package.sh 0.1.0-ci
 
-      - name: Verify clean archive contents
-        shell: bash
-        run: |
-          set -euo pipefail
-          archive="dist/uk-cookie-consent-manager-0.1.0-ci.zip"
-          unzip -t "${archive}"
-          unzip -l "${archive}" > dist/archive-contents.txt
-          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|package(-lock)?\.json|playwright\.config|php(unit|stan)|phpcs' dist/archive-contents.txt; then
-            echo "Development-only content was found in the package." >&2
-            exit 1
-          fi
+      - name: Verify clean archive and credential regression cases
+        run: bash tests/package-verification.sh "dist/uk-cookie-consent-manager-0.1.0-ci.zip"
 
       - name: Upload verified package
         uses: actions/upload-artifact@v4
