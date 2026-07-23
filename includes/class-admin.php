@@ -28,6 +28,7 @@ final class Admin {
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
 		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
 		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
+		add_action( 'admin_post_uccm_review_scan_finding', array( self::class, 'review_scan_finding' ) );
 		add_action( 'admin_post_uccm_save_inventory', array( self::class, 'save_inventory' ) );
 		add_action( 'admin_post_uccm_export_inventory', array( self::class, 'export_inventory' ) );
 	}
@@ -230,6 +231,23 @@ final class Admin {
 	}
 
 	/**
+	 * Apply one explicit capability- and nonce-gated finding outcome.
+	 */
+	public static function review_scan_finding(): void {
+		self::require_capability( 'manage_uccm_inventory' );
+		check_admin_referer( 'uccm_review_scan_finding' );
+		$finding_id = isset( $_POST['finding_id'] ) ? (int) $_POST['finding_id'] : 0;
+		$status     = self::request_value( $_POST, 'finding_status' );
+		$result     = Scan_Findings::review( $finding_id, $status );
+
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'finding-reviewed' );
+	}
+
+	/**
 	 * Persist one capability-gated inventory edit.
 	 */
 	public static function save_inventory(): void {
@@ -371,8 +389,11 @@ final class Admin {
 		$urls     = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
 		$runs     = Scanner::recent_runs( 20 );
 		$next     = wp_next_scheduled( Scanner::HOOK );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded notice state.
-		$notice = self::request_value( $_GET, 'uccm_notice' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
+		$scan_id  = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
+		$notice   = self::request_value( $_GET, 'uccm_notice' );
+		$findings = Scan_Findings::records( $scan_id, 100 );
 
 		self::open_page( __( 'Scans', 'uk-cookie-consent-manager' ) );
 
@@ -380,6 +401,8 @@ final class Admin {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Scan settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		} elseif ( 'scan-complete' === $notice ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The manual scan completed.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'finding-reviewed' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan finding review outcome was saved. The curated inventory was not changed.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		}
 
 		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scans are bounded observations of configured public pages and are never exhaustive. Authenticated, personalised and geographically varied journeys may differ.', 'uk-cookie-consent-manager' ) . '</p></div>';
@@ -413,7 +436,58 @@ final class Admin {
 				$summary  = is_array( $summary ) ? $summary : array();
 				$pages    = is_array( $pages ) ? $pages : array();
 				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
-				echo '<tr><td>' . esc_html( (string) $run['id'] ) . '</td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
+				$run_url = add_query_arg(
+					array(
+						'page'    => 'uccm-scans',
+						'scan_id' => (int) $run['id'],
+					),
+					admin_url( 'admin.php' )
+				);
+				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
+			}
+
+			echo '</tbody></table>';
+		}
+
+		echo '<h2>' . esc_html__( 'Scan findings requiring human review', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Detections never publish, recategorise or otherwise change the curated inventory automatically.', 'uk-cookie-consent-manager' ) . '</p>';
+
+		if ( 0 < $scan_id ) {
+			echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=uccm-scans' ) ) . '">' . esc_html__( 'Show findings from all scans', 'uk-cookie-consent-manager' ) . '</a></p>';
+		}
+
+		if ( is_wp_error( $findings ) ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html( $findings->get_error_message() ) . '</p></div>';
+		} elseif ( array() === $findings ) {
+			echo '<p>' . esc_html__( 'No scan findings match this view.', 'uk-cookie-consent-manager' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Finding', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Observation', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Material diff', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Review', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+
+			foreach ( $findings as $finding ) {
+				$before = json_decode( (string) $finding['before_data'], true );
+				$after  = json_decode( (string) $finding['after_data'], true );
+				$before = is_array( $before ) ? $before : array();
+				$after  = is_array( $after ) ? $after : array();
+				echo '<tr><td>#' . esc_html( (string) $finding['id'] ) . '<br><small>' . esc_html( (string) $finding['finding_type'] ) . ' · ' . esc_html__( 'scan', 'uk-cookie-consent-manager' ) . ' ' . esc_html( (string) $finding['scan_run_id'] ) . '</small></td>';
+				echo '<td><strong>' . esc_html( (string) $finding['storage_key'] ) . '</strong><br>' . esc_html( (string) $finding['domain'] ) . '</td>';
+				echo '<td>' . self::finding_diff_html( $before, $after ) . '</td>';
+				echo '<td>' . esc_html( (string) $finding['status'] ) . '</td><td>';
+
+				if ( 'pending' === $finding['status'] && current_user_can( 'manage_uccm_inventory' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
+					foreach ( array( 'reviewed', 'ignored', 'resolved' ) as $outcome ) {
+						echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin:0 4px 4px 0">';
+						echo '<input type="hidden" name="action" value="uccm_review_scan_finding">';
+						echo '<input type="hidden" name="finding_id" value="' . esc_attr( (string) $finding['id'] ) . '">';
+						echo '<input type="hidden" name="finding_status" value="' . esc_attr( $outcome ) . '">';
+						wp_nonce_field( 'uccm_review_scan_finding' );
+						submit_button( ucfirst( $outcome ), 'secondary small', '', false );
+						echo '</form>';
+					}
+				} else {
+					echo '&mdash;';
+				}
+
+				echo '</td></tr>';
 			}
 
 			echo '</tbody></table>';
@@ -479,6 +553,32 @@ final class Admin {
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 		self::close_page();
+	}
+
+	/**
+	 * Render a safe material-field diff.
+	 *
+	 * @param array<string, mixed> $before Previous curated values.
+	 * @param array<string, mixed> $after  Observed values.
+	 */
+	private static function finding_diff_html( array $before, array $after ): string {
+		$parts = array();
+
+		foreach ( Scan_Findings::material_fields() as $field ) {
+			if ( ! array_key_exists( $field, $after ) ) {
+				continue;
+			}
+
+			$old     = (string) ( $before[ $field ] ?? __( 'not recorded', 'uk-cookie-consent-manager' ) );
+			$new     = (string) $after[ $field ];
+			$parts[] = '<strong>' . esc_html( ucfirst( str_replace( '_', ' ', $field ) ) ) . ':</strong> ' . esc_html( $old ) . ' &rarr; ' . esc_html( $new );
+		}
+
+		if ( array() === $parts ) {
+			return esc_html__( 'New observation', 'uk-cookie-consent-manager' );
+		}
+
+		return implode( '<br>', $parts );
 	}
 
 	/**
