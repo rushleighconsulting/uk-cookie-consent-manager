@@ -34,12 +34,15 @@ final class Activator {
 	public static function install_current_site(): void {
 		Database::install();
 		Capabilities::grant();
+		Consent_Receipts::schedule_cleanup();
 
 		add_option(
 			'uccm_settings',
 			array(
-				'retention_days' => 365,
-				'store_full_ip'  => false,
+				'retention_days'      => 365,
+				'store_full_ip'       => false,
+				'trust_proxy_headers' => false,
+				'trusted_proxy_ips'   => array(),
 			),
 			'',
 			false

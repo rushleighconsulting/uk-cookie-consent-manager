@@ -9,7 +9,7 @@ honouring cookie consent under UK GDPR and PECR.
 ## Status
 
 Release 1 is in development. The repository contains the database and lifecycle
-foundation, the UCCM-3 public consent interface and UCCM-4 explicit prior blocking. It is not production ready.
+foundation, visitor consent, explicit prior blocking and privacy-preserving consent receipts. It is not production ready.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
@@ -102,9 +102,34 @@ pixel sources. JavaScript already executed by the browser cannot be undone; it
 will not be executed again unless a new eligible placeholder is subsequently
 added and consent is granted.
 
+UCCM-5 adds:
+
+- One append-only server receipt for each grant, reject, update or withdrawal.
+- Server-owned UTC time, policy and plugin versions, category choices, a keyed
+  site identifier and integrity signature.
+- A masked address plus keyed non-reversible IP fingerprint by default. IPv4 is
+  masked to /24 and IPv6 to /48.
+- A public write-only REST endpoint. Listing, evidence export and full-IP reveal
+  routes require the dedicated consent-record capabilities.
+- A daily retention cleanup job with a configurable 365-day default.
+- Direct peer IP handling by default. Forwarded headers are considered only
+  when proxy trust is explicitly enabled and the peer is allowlisted.
+
+### Complete IP warning
+
+Complete IP collection is disabled by default and is not required for normal
+receipt evidence. Enabling `store_full_ip` increases privacy and security risk
+and should be done only after documenting a lawful purpose, transparency,
+retention and access controls. When enabled, the address is encrypted using
+site-held WordPress salt material; plaintext is never written to the receipt
+table. If encryption is unavailable, UCCM stores no complete address.
+
+The settings `trust_proxy_headers` and `trusted_proxy_ips` must both be
+configured before `X-Forwarded-For` is considered. Never enable proxy trust
+without an exact allowlist of the site's reverse proxies.
+
 ## Planned Release 1 capabilities
 
-- Privacy-preserving, versioned consent receipts.
 - Curated cookie inventory and hybrid detection.
 - Manual and monthly scans with administrator review.
 - WordPress privacy-tool integration.

@@ -22,6 +22,7 @@ final class FoundationTest extends TestCase {
 		$GLOBALS['uccm_test_dbdelta_calls'] = array();
 		$GLOBALS['uccm_test_cleared_hooks'] = array();
 		$GLOBALS['uccm_test_role']          = new UCCM_Test_Role();
+		$GLOBALS['uccm_test_scheduled_hooks'] = array();
 	}
 
 	public function test_schema_defines_four_prefixed_tables(): void {
@@ -65,7 +66,10 @@ final class FoundationTest extends TestCase {
 		$settings = get_option( 'uccm_settings' );
 		self::assertIsArray( $settings );
 		self::assertFalse( $settings['store_full_ip'] );
+		self::assertFalse( $settings['trust_proxy_headers'] );
+		self::assertSame( array(), $settings['trusted_proxy_ips'] );
 		self::assertSame( 365, $settings['retention_days'] );
+		self::assertArrayHasKey( 'uccm_retention_cleanup', $GLOBALS['uccm_test_scheduled_hooks'] );
 	}
 
 	public function test_administrator_receives_dedicated_capabilities(): void {
