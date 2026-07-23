@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="UK Cookie Consent Manager">
+	<description>WordPress coding standards for UK Cookie Consent Manager.</description>
+
+	<file>uk-cookie-consent-manager.php</file>
+	<file>includes</file>
+	<file>uninstall.php</file>
+
+	<exclude-pattern>vendor/*</exclude-pattern>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress"/>
+	<rule ref="WordPress-Docs"/>
+	<rule ref="PHPCompatibilityWP">
+		<properties>
+			<property name="testVersion" value="8.2-"/>
+		</properties>
+	</rule>
+
+	<config name="minimum_supported_wp_version" value="6.8"/>
+	<config name="text_domain" value="uk-cookie-consent-manager"/>
+</ruleset>
