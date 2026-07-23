@@ -44,6 +44,7 @@ final class Plugin {
 	public function boot(): void {
 		Database::maybe_upgrade();
 		Capabilities::maybe_upgrade();
+		Resource_Rules::register();
 		Consent_Interface::register();
 
 		if ( is_multisite() ) {
