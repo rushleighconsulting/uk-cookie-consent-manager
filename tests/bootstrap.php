@@ -17,6 +17,8 @@ $GLOBALS['uccm_test_options']          = array();
 $GLOBALS['uccm_test_dbdelta_calls']    = array();
 $GLOBALS['uccm_test_cleared_hooks']    = array();
 $GLOBALS['uccm_test_actions']          = array();
+$GLOBALS['uccm_test_filters']          = array();
+$GLOBALS['uccm_test_fired_actions']    = array();
 $GLOBALS['uccm_test_enqueued_styles']  = array();
 $GLOBALS['uccm_test_enqueued_scripts'] = array();
 $GLOBALS['uccm_test_localized']        = array();
@@ -129,6 +131,45 @@ function add_action( string $hook, callable $callback, int $priority = 10 ): voi
 	);
 }
 
+function add_filter( string $hook, callable $callback, int $priority = 10, int $accepted_arguments = 1 ): void {
+	$GLOBALS['uccm_test_filters'][ $hook ][] = array(
+		'callback'           => $callback,
+		'priority'           => $priority,
+		'accepted_arguments' => $accepted_arguments,
+	);
+}
+
+/**
+ * Apply registered test filters.
+ *
+ * @param mixed ...$arguments Additional filter arguments.
+ */
+function apply_filters( string $hook, mixed $value, mixed ...$arguments ): mixed {
+	foreach ( $GLOBALS['uccm_test_filters'][ $hook ] ?? array() as $filter ) {
+		$call_arguments = array_slice(
+			array_merge( array( $value ), $arguments ),
+			0,
+			(int) $filter['accepted_arguments']
+		);
+		$value          = call_user_func_array( $filter['callback'], $call_arguments );
+	}
+
+	return $value;
+}
+
+/**
+ * Fire and capture test actions.
+ *
+ * @param mixed ...$arguments Action arguments.
+ */
+function do_action( string $hook, mixed ...$arguments ): void {
+	$GLOBALS['uccm_test_fired_actions'][ $hook ][] = $arguments;
+
+	foreach ( $GLOBALS['uccm_test_actions'][ $hook ] ?? array() as $action ) {
+		call_user_func_array( $action['callback'], $arguments );
+	}
+}
+
 function is_admin(): bool {
 	return $GLOBALS['uccm_test_is_admin'];
 }
@@ -161,6 +202,22 @@ function wp_localize_script( string $handle, string $object_name, array $data ):
 	return true;
 }
 
+function esc_attr( string $text ): string {
+	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+}
+
+function esc_url_raw( string $url ): string {
+	return preg_match( '#^https?://#i', $url ) ? $url : '';
+}
+
+function esc_url( string $url ): string {
+	return esc_attr( esc_url_raw( $url ) );
+}
+
+function sanitize_text_field( string $text ): string {
+	return trim( strip_tags( $text ) );
+}
+
 function __( string $text, string $domain = 'default' ): string {
 	unset( $domain );
 	return $text;
@@ -179,4 +236,5 @@ require_once dirname( __DIR__ ) . '/includes/class-database.php';
 require_once dirname( __DIR__ ) . '/includes/class-capabilities.php';
 require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
+require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';

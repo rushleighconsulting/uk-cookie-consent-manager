@@ -43,7 +43,9 @@ jobs:
         run: composer lint
 
       - name: Check browser script syntax
-        run: node --check assets/js/consent.js
+        run: |
+          node --check assets/js/consent.js
+          node --check assets/js/blocker.js
 
       - name: Run unit tests
         run: composer test

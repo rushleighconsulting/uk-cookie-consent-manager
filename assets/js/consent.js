@@ -176,7 +176,11 @@
 			status.textContent = config.messages.withdrawn;
 		} );
 
-		applyDecision( readCookie() );
+		const initialDecision = readCookie();
+		applyDecision( initialDecision );
+		window.dispatchEvent( new CustomEvent( 'uccm:consent-ready', {
+			detail: initialDecision || { categories: emptyChoices() },
+		} ) );
 	}
 
 	if ( 'loading' === document.readyState ) {

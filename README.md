@@ -9,7 +9,7 @@ honouring cookie consent under UK GDPR and PECR.
 ## Status
 
 Release 1 is in development. The repository contains the database and lifecycle
-foundation plus the UCCM-3 public consent interface. It is not production ready.
+foundation, the UCCM-3 public consent interface and UCCM-4 explicit prior blocking. It is not production ready.
 
 - [Canonical product specification](https://rushleighconsulting.atlassian.net/wiki/spaces/UCCM/pages/16973869/Product+specification+-+UK+Cookie+Consent+Manager)
 - [Jira delivery project](https://rushleighconsulting.atlassian.net/jira/software/projects/UCCM/)
@@ -45,9 +45,65 @@ The browser decision is the active interface state. Server-side evidential
 consent receipts, privacy-preserving IP processing and retention are delivered
 by UCCM-5.
 
+UCCM-4 adds:
+
+- Explicit administrator-managed rules stored in the `uccm_blocking_rules`
+  option for scripts, iframes, embeds and pixels.
+- Server-side conversion of configured WordPress script handles into inert
+  `text/plain` markup before the browser can execute them.
+- Consent-aware activation for configured resources, including resources added
+  after the initial page load.
+- Default protection for core WordPress and common WooCommerce basket handles.
+- Diagnostics for invalid or unknown declarations rather than guessed
+  categories.
+
+### Blocking rule format
+
+Rules are allowlisted declarations. UCCM never rewrites arbitrary page HTML.
+
+```php
+update_option(
+    'uccm_blocking_rules',
+    array(
+        'analytics-test' => array(
+            'type'     => 'script',
+            'handle'   => 'analytics-test',
+            'category' => 'analytics',
+        ),
+        'map-frame' => array(
+            'type'     => 'iframe',
+            'source'   => 'https://maps.example.test/embed',
+            'category' => 'functional',
+            'title'    => 'Location map',
+        ),
+    )
+);
+```
+
+WordPress script rules are applied by handle. Explicit iframe, embed, pixel and
+URL-based script placeholders can be rendered with:
+
+```php
+do_action( 'uccm_render_resource', 'map-frame', array( 'title' => 'Location map' ) );
+```
+
+### Developer integration hooks
+
+- `uccm_blocking_rules` filters stored rules before strict validation.
+- `uccm_protected_script_handles` extends the handles that must not be blocked.
+- `uccm_resource_blocked` fires when a configured WordPress script is made inert.
+- `uccm_unknown_resource` reports invalid or incomplete declarations.
+- Browser events: `uccm:consent-ready`, `uccm:consent-changed`,
+  `uccm:resource-activated`, `uccm:resource-blocked` and
+  `uccm:resource-unknown`.
+
+Revocation prevents later eligible loads and unloads activated iframe, embed and
+pixel sources. JavaScript already executed by the browser cannot be undone; it
+will not be executed again unless a new eligible placeholder is subsequently
+added and consent is granted.
+
 ## Planned Release 1 capabilities
 
-- Prior blocking for configured non-essential scripts and embeds.
 - Privacy-preserving, versioned consent receipts.
 - Curated cookie inventory and hybrid detection.
 - Manual and monthly scans with administrator review.
