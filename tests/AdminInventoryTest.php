@@ -117,7 +117,7 @@ final class AdminInventoryTest extends TestCase {
 		self::assertCount( 2, $GLOBALS['wpdb']->queries );
 		self::assertStringContainsString( 'category = %s', $GLOBALS['wpdb']->queries[0] );
 		self::assertStringContainsString( 'LIMIT %d OFFSET %d', $GLOBALS['wpdb']->queries[1] );
-		self::assertStringContainsString( '[100,200]', $GLOBALS['wpdb']->queries[1] );
+		self::assertStringContainsString( ',100,200]', $GLOBALS['wpdb']->queries[1] );
 	}
 
 	public function test_csv_export_neutralises_spreadsheet_formulas(): void {
