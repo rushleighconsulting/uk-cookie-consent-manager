@@ -37,12 +37,12 @@ final class Admin {
 	 */
 	public static function screens(): array {
 		return array(
-			self::MENU_SLUG  => array(
+			self::MENU_SLUG   => array(
 				'title'      => __( 'Overview', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_overview' ),
 			),
-			'uccm-banner'    => array(
+			'uccm-banner'     => array(
 				'title'      => __( 'Banner', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_banner' ),
@@ -52,32 +52,32 @@ final class Admin {
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_categories' ),
 			),
-			'uccm-blocking'  => array(
+			'uccm-blocking'   => array(
 				'title'      => __( 'Script Blocking', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_blocking' ),
 			),
-			'uccm-inventory' => array(
+			'uccm-inventory'  => array(
 				'title'      => __( 'Cookie Inventory', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_inventory',
 				'callback'   => array( self::class, 'render_inventory' ),
 			),
-			'uccm-scans'     => array(
+			'uccm-scans'      => array(
 				'title'      => __( 'Scans', 'uk-cookie-consent-manager' ),
 				'capability' => 'run_uccm_scans',
 				'callback'   => array( self::class, 'render_scans' ),
 			),
-			'uccm-consents'  => array(
+			'uccm-consents'   => array(
 				'title'      => __( 'Consent Records', 'uk-cookie-consent-manager' ),
 				'capability' => 'view_uccm_consents',
 				'callback'   => array( self::class, 'render_consents' ),
 			),
-			'uccm-privacy'   => array(
+			'uccm-privacy'    => array(
 				'title'      => __( 'Privacy', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_privacy' ),
 			),
-			'uccm-advanced'  => array(
+			'uccm-advanced'   => array(
 				'title'      => __( 'Advanced', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_advanced' ),
