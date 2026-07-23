@@ -28,6 +28,9 @@ final class Admin {
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
 		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
 		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
+		add_action( 'admin_post_uccm_cancel_scan', array( self::class, 'cancel_scan' ) );
+		add_action( 'admin_post_uccm_resume_scan', array( self::class, 'resume_scan' ) );
+		add_action( 'wp_ajax_uccm_browser_scan_observations', array( self::class, 'browser_scan_observations' ) );
 		add_action( 'admin_post_uccm_review_scan_finding', array( self::class, 'review_scan_finding' ) );
 		add_action( 'admin_post_uccm_save_inventory', array( self::class, 'save_inventory' ) );
 		add_action( 'admin_post_uccm_export_inventory', array( self::class, 'export_inventory' ) );
@@ -247,7 +250,14 @@ final class Admin {
 			exit;
 		}
 
-		Settings::update( array( 'scan_urls' => $urls ) );
+		Settings::update(
+			array(
+				'scan_urls'           => $urls,
+				'scan_excluded_paths' => $submitted['scan_excluded_paths'] ?? Crawler::DEFAULT_EXCLUDED_PATHS,
+				'scan_page_limit'     => $submitted['scan_page_limit'] ?? Scanner::MAX_TARGETS,
+				'scan_batch_size'     => $submitted['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE,
+			)
+		);
 		self::redirect( 'uccm-scans', 'saved' );
 	}
 
@@ -257,13 +267,65 @@ final class Admin {
 	public static function run_scan(): void {
 		self::require_capability( 'run_uccm_scans' );
 		check_admin_referer( 'uccm_run_scan' );
-		$result = Scanner::run();
+		$result = Scanner::start();
 
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
 		}
 
-		self::redirect( 'uccm-scans', 'scan-complete' );
+		self::redirect( 'uccm-scans', 'scan-started' );
+	}
+
+	/**
+	 * Cancel one resumable scan while preserving its evidence.
+	 */
+	public static function cancel_scan(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_cancel_scan' );
+		$run_id = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$result = Scanner::cancel( $run_id );
+
+		if ( is_wp_error( $result ) || false === $result ) {
+			$message = is_wp_error( $result ) ? $result->get_error_message() : __( 'The scan could not be cancelled.', 'uk-cookie-consent-manager' );
+			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'scan-cancelled' );
+	}
+
+	/**
+	 * Resume one interrupted scan from its persisted frontier.
+	 */
+	public static function resume_scan(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_resume_scan' );
+		$run_id = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$result = Scanner::resume( $run_id );
+
+		if ( is_wp_error( $result ) || false === $result ) {
+			$message = is_wp_error( $result ) ? $result->get_error_message() : __( 'The scan could not be resumed.', 'uk-cookie-consent-manager' );
+			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'scan-resumed' );
+	}
+
+	/**
+	 * Receive one nonce- and capability-protected browser observation pass.
+	 */
+	public static function browser_scan_observations(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_ajax_referer( 'uccm_browser_scan', 'nonce' );
+		$run_id  = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$encoded = self::request_value( $_POST, 'payload' );
+		$payload = json_decode( $encoded, true );
+		$result  = Scanner::record_browser_observations( $run_id, is_array( $payload ) ? $payload : array() );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), (int) ( $result->get_error_data()['status'] ?? 400 ) );
+		}
+
+		wp_send_json_success( array( 'counts' => $result ) );
 	}
 
 	/**
