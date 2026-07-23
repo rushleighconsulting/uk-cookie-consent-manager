@@ -156,9 +156,21 @@ UCCM-7 adds:
 - A capability- and nonce-protected Scans screen for URL configuration, manual
   execution, schedule visibility and recent-run evidence.
 
-## Planned Release 1 capabilities
+UCCM-8 adds:
 
-- Administrator review and notifications for new or changed scan findings.
+- Comparison of bounded scan observations with the curated inventory, producing
+  actionable `new` and `changed` findings only when human review is required.
+- Duplicate suppression for identical pending findings and clear material diffs
+  for duration, domain, source URL and category candidates.
+- Capability- and nonce-protected review outcomes: reviewed, ignored or resolved.
+  Review outcomes never silently publish or recategorise inventory entries.
+- Summary-only administrator notifications with a direct link to the relevant
+  scan. Messages contain no consent records, IP data, captured page content or
+  form values.
+- Bounded findings filtering by scan and explicit pending/reviewed status
+  presentation in the Scans administration screen.
+
+## Planned Release 1 capabilities
 - WordPress privacy-tool integration.
 - Integrity-checked private repository updates.
 - WordPress 6.8–7.0 and PHP 8.2–8.5 compatibility.
