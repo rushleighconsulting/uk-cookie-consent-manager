@@ -265,7 +265,7 @@ final class Scanner {
 						'url'  => $target,
 						'code' => sanitize_key( $response->get_error_code() ),
 					);
-					$visited[] = array(
+					$visited[]  = array(
 						'url'    => $target,
 						'status' => 0,
 					);
