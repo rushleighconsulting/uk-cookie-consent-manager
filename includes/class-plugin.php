@@ -48,6 +48,7 @@ final class Plugin {
 		Scanner::register();
 		Resource_Rules::register();
 		Consent_Interface::register();
+		Secure_Updater::register();
 
 		if ( is_admin() ) {
 			Admin::register();
