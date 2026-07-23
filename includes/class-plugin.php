@@ -45,6 +45,7 @@ final class Plugin {
 		Database::maybe_upgrade();
 		Capabilities::maybe_upgrade();
 		Consent_Receipts::register();
+		Scanner::register();
 		Resource_Rules::register();
 		Consent_Interface::register();
 

@@ -26,6 +26,8 @@ final class Admin {
 		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_post_uccm_save_settings', array( self::class, 'save_settings' ) );
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
+		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
+		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
 		add_action( 'admin_post_uccm_save_inventory', array( self::class, 'save_inventory' ) );
 		add_action( 'admin_post_uccm_export_inventory', array( self::class, 'export_inventory' ) );
 	}
@@ -202,6 +204,32 @@ final class Admin {
 	}
 
 	/**
+	 * Persist the bounded list of public scan URLs.
+	 */
+	public static function save_scan_settings(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_save_scan_settings' );
+		$submitted = isset( $_POST['uccm'] ) && is_array( $_POST['uccm'] ) ? wp_unslash( $_POST['uccm'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Settings validates every URL.
+		Settings::update( array( 'scan_urls' => $submitted['scan_urls'] ?? '' ) );
+		self::redirect( 'uccm-scans', 'saved' );
+	}
+
+	/**
+	 * Run one capability- and nonce-gated manual scan.
+	 */
+	public static function run_scan(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_run_scan' );
+		$result = Scanner::run();
+
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'scan-complete' );
+	}
+
+	/**
 	 * Persist one capability-gated inventory edit.
 	 */
 	public static function save_inventory(): void {
@@ -335,12 +363,62 @@ final class Admin {
 	}
 
 	/**
-	 * Render scan empty state before UCCM-7.
+	 * Render manual controls, coverage and recent scan evidence.
 	 */
 	public static function render_scans(): void {
 		self::require_capability( 'run_uccm_scans' );
+		$settings = Settings::current();
+		$urls     = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
+		$runs     = Scanner::recent_runs( 20 );
+		$next     = wp_next_scheduled( Scanner::HOOK );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded notice state.
+		$notice = self::request_value( $_GET, 'uccm_notice' );
+
 		self::open_page( __( 'Scans', 'uk-cookie-consent-manager' ) );
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'No scan runner is installed yet. Manual and monthly hybrid scanning is delivered in UCCM-7.', 'uk-cookie-consent-manager' ) . '</p></div>';
+
+		if ( 'saved' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Scan settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'scan-complete' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The manual scan completed.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		}
+
+		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scans are bounded observations of configured public pages and are never exhaustive. Authenticated, personalised and geographically varied journeys may differ.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		echo '<p><strong>' . esc_html__( 'Methods:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html__( 'same-origin Set-Cookie response inspection and authenticated browser observations for cookies, local storage, scripts, iframes and pixels.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Next monthly run:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( false === $next ? __( 'Not scheduled', 'uk-cookie-consent-manager' ) : gmdate( 'Y-m-d H:i:s', $next ) . ' UTC' ) . '</p>';
+
+		self::form_open( 'uccm_save_scan_settings', 'uccm_save_scan_settings' );
+		echo '<h2>' . esc_html__( 'Public scan URLs', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'The homepage is always scanned. Add up to 19 same-origin public URLs, one per line.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<textarea class="large-text code" rows="7" name="uccm[scan_urls]">' . esc_textarea( $urls ) . '</textarea>';
+		submit_button( __( 'Save scan URLs', 'uk-cookie-consent-manager' ) );
+		self::form_close();
+
+		self::form_open( 'uccm_run_scan', 'uccm_run_scan' );
+		echo '<p>' . esc_html__( 'Manual scans run synchronously; keep this page open until WordPress returns.', 'uk-cookie-consent-manager' ) . '</p>';
+		submit_button( __( 'Run scan now', 'uk-cookie-consent-manager' ), 'primary' );
+		self::form_close();
+
+		echo '<h2>' . esc_html__( 'Recent scan runs', 'uk-cookie-consent-manager' ) . '</h2>';
+
+		if ( is_wp_error( $runs ) ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html( $runs->get_error_message() ) . '</p></div>';
+		} elseif ( array() === $runs ) {
+			echo '<p>' . esc_html__( 'No scan runs have been recorded yet.', 'uk-cookie-consent-manager' ) . '</p>';
+		} else {
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Pages', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+
+			foreach ( $runs as $run ) {
+				$summary  = json_decode( (string) $run['summary'], true );
+				$pages    = json_decode( (string) $run['pages_visited'], true );
+				$summary  = is_array( $summary ) ? $summary : array();
+				$pages    = is_array( $pages ) ? $pages : array();
+				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
+				echo '<tr><td>' . esc_html( (string) $run['id'] ) . '</td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
+			}
+
+			echo '</tbody></table>';
+		}
+
 		self::close_page();
 	}
 

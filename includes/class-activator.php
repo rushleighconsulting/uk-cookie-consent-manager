@@ -35,6 +35,9 @@ final class Activator {
 		Database::install();
 		Capabilities::grant();
 		Consent_Receipts::schedule_cleanup();
+		// phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- Scanner supplies the bounded 30-day interval.
+		add_filter( 'cron_schedules', array( Scanner::class, 'cron_schedules' ) );
+		Scanner::schedule();
 
 		add_option(
 			'uccm_settings',
@@ -45,6 +48,7 @@ final class Activator {
 				'store_full_ip'          => false,
 				'trust_proxy_headers'    => false,
 				'trusted_proxy_ips'      => array(),
+				'scan_urls'              => array(),
 			),
 			'',
 			false

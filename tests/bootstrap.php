@@ -14,6 +14,7 @@ define( 'UCCM_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
 define( 'UCCM_PLUGIN_URL', 'https://example.test/wp-content/plugins/uk-cookie-consent-manager/' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'MINUTE_IN_SECONDS', 60 );
 define( 'ARRAY_A', 'ARRAY_A' );
 
 $GLOBALS['uccm_test_options']          = array();
@@ -27,6 +28,10 @@ $GLOBALS['uccm_test_enqueued_scripts'] = array();
 $GLOBALS['uccm_test_localized']        = array();
 $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
+$GLOBALS['uccm_test_schedule_events']  = array();
+$GLOBALS['uccm_test_transients']       = array();
+$GLOBALS['uccm_test_http_validity']    = true;
+$GLOBALS['uccm_test_remote_responses'] = array();
 $GLOBALS['uccm_test_capabilities']     = array();
 $GLOBALS['uccm_test_rest_routes']      = array();
 $GLOBALS['uccm_test_db_rows']          = array();
@@ -205,8 +210,23 @@ function wp_next_scheduled( string $hook ): int|false {
 }
 
 function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
-	unset( $recurrence );
 	$GLOBALS['uccm_test_scheduled_hooks'][ $hook ] = $timestamp;
+	$GLOBALS['uccm_test_schedule_events'][]        = compact( 'timestamp', 'recurrence', 'hook' );
+	return true;
+}
+
+function get_transient( string $name ): mixed {
+	return $GLOBALS['uccm_test_transients'][ $name ] ?? false;
+}
+
+function set_transient( string $name, mixed $value, int $expiration ): bool {
+	unset( $expiration );
+	$GLOBALS['uccm_test_transients'][ $name ] = $value;
+	return true;
+}
+
+function delete_transient( string $name ): bool {
+	unset( $GLOBALS['uccm_test_transients'][ $name ] );
 	return true;
 }
 
@@ -288,6 +308,28 @@ function get_current_blog_id(): int {
 
 function home_url( string $path = '' ): string {
 	return 'https://example.test' . $path;
+}
+
+function wp_parse_url( string $url, int $component = -1 ): array|string|int|null|false {
+	return -1 === $component ? parse_url( $url ) : parse_url( $url, $component );
+}
+
+function wp_http_validate_url( string $url ): string|false {
+	return $GLOBALS['uccm_test_http_validity'] ? $url : false;
+}
+
+/** @return array<string, mixed>|WP_Error */
+function wp_safe_remote_get( string $url, array $arguments = array() ): array|WP_Error {
+	unset( $arguments );
+	return $GLOBALS['uccm_test_remote_responses'][ $url ] ?? new WP_Error( 'http_failed', 'No response configured.' );
+}
+
+function wp_remote_retrieve_response_code( mixed $response ): int {
+	return is_array( $response ) ? (int) ( $response['response']['code'] ?? 0 ) : 0;
+}
+
+function wp_remote_retrieve_header( mixed $response, string $header ): mixed {
+	return is_array( $response ) ? ( $response['headers'][ strtolower( $header ) ] ?? '' ) : '';
 }
 
 function wp_salt( string $scheme = 'auth' ): string {
@@ -392,5 +434,6 @@ require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
+require_once dirname( __DIR__ ) . '/includes/class-scanner.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';
 require_once dirname( __DIR__ ) . '/includes/class-admin.php';
