@@ -364,8 +364,8 @@ final class Scan_Findings {
 	/**
 	 * Send one summary-only notification for an actionable scan.
 	 *
-	 * @param int                                                                                 $run_id Scan run identifier.
-	 * @param array{actionable: int, new: int, changed: int, duplicates: int, unchanged: int} $counts Finding counts.
+	 * @param int                $run_id Scan run identifier.
+	 * @param array<string, int> $counts Finding counts.
 	 */
 	private static function notify_administrators( int $run_id, array $counts ): void {
 		$default_email = sanitize_email( (string) get_option( 'admin_email', '' ) );
