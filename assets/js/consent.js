@@ -77,6 +77,30 @@
 			return `uccm-${ Date.now() }-${ Math.random().toString( 16 ).slice( 2 ) }`;
 		}
 
+		function storeReceipt( decision ) {
+			if ( ! config.receiptEndpoint || 'function' !== typeof window.fetch ) {
+				return;
+			}
+
+			window.fetch( config.receiptEndpoint, {
+				method: 'POST',
+				credentials: 'same-origin',
+				keepalive: true,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify( decision ),
+			} ).then( ( response ) => {
+				if ( ! response.ok ) {
+					throw new Error( 'receipt-not-stored' );
+				}
+			} ).catch( () => {
+				window.dispatchEvent( new CustomEvent( 'uccm:receipt-failed', {
+					detail: { receiptId: decision.receiptId },
+				} ) );
+			} );
+		}
+
 		function writeDecision( action, choices ) {
 			const lifetimeSeconds = Number( config.lifetimeDays ) * 24 * 60 * 60;
 			const now = Date.now();
@@ -95,6 +119,7 @@
 			document.cookie = `${ encodeURIComponent( config.cookieName ) }=${ encodeURIComponent( JSON.stringify( decision ) ) }; Path=${ cookiePath }; Max-Age=${ lifetimeSeconds }; SameSite=Lax${ secure }`;
 			applyDecision( decision );
 			window.dispatchEvent( new CustomEvent( 'uccm:consent-changed', { detail: decision } ) );
+			storeReceipt( decision );
 
 			return decision;
 		}
