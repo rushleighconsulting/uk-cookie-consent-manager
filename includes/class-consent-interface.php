@@ -55,12 +55,25 @@ final class Consent_Interface {
 		if ( is_admin() ) {
 			return;
 		}
+
+		$configuration = Consent_State::configuration();
+		$lifetime_days = (int) ( $configuration['lifetimeDays'] ?? 180 );
+		$banner_copy   = sprintf(
+			/* translators: %d: configured consent lifetime in days. */
+			__( 'We use one necessary cookie to remember your choice for a %d-day period. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing.', 'uk-cookie-consent-manager' ),
+			$lifetime_days
+		);
+		$cookie_copy   = sprintf(
+			/* translators: %d: configured consent lifetime in days. */
+			__( 'is a first-party necessary cookie. It remembers your saved choice for a %d-day period and is set when you accept, reject, save preferences or withdraw optional consent. Changing the lifetime setting affects your next saved choice; it does not extend an existing cookie.', 'uk-cookie-consent-manager' ),
+			$lifetime_days
+		);
 		?>
 		<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
 			<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
 				<div class="uccm-banner__content">
 					<h2 id="uccm-banner-title" class="uccm-title"><?php esc_html_e( 'Your cookie choices', 'uk-cookie-consent-manager' ); ?></h2>
-					<p class="uccm-copy"><?php esc_html_e( 'We use necessary cookies to make this website work. With your permission, we may also use optional cookies for functionality, analytics and marketing.', 'uk-cookie-consent-manager' ); ?></p>
+					<p class="uccm-copy"><?php echo esc_html( $banner_copy ); ?></p>
 				</div>
 				<div class="uccm-actions uccm-actions--primary">
 					<button type="button" class="uccm-button" data-uccm-action="accept-all"><?php esc_html_e( 'Accept all', 'uk-cookie-consent-manager' ); ?></button>
@@ -80,6 +93,7 @@ final class Consent_Interface {
 						<button type="button" class="uccm-icon-button" data-uccm-action="close" aria-label="<?php esc_attr_e( 'Close cookie preferences', 'uk-cookie-consent-manager' ); ?>">&times;</button>
 					</div>
 					<p class="uccm-copy"><?php esc_html_e( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ); ?></p>
+					<p class="uccm-copy"><strong><?php echo esc_html( Consent_State::COOKIE_NAME ); ?></strong> <?php echo esc_html( $cookie_copy ); ?></p>
 
 					<div class="uccm-categories">
 						<label class="uccm-category">
