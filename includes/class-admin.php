@@ -37,15 +37,51 @@ final class Admin {
 	 */
 	public static function screens(): array {
 		return array(
-			self::MENU_SLUG       => array( 'title' => __( 'Overview', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_overview' ) ),
-			'uccm-banner'         => array( 'title' => __( 'Banner', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_banner' ) ),
-			'uccm-categories'     => array( 'title' => __( 'Categories', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_categories' ) ),
-			'uccm-blocking'       => array( 'title' => __( 'Script Blocking', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_blocking' ) ),
-			'uccm-inventory'      => array( 'title' => __( 'Cookie Inventory', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_inventory', 'callback' => array( self::class, 'render_inventory' ) ),
-			'uccm-scans'          => array( 'title' => __( 'Scans', 'uk-cookie-consent-manager' ), 'capability' => 'run_uccm_scans', 'callback' => array( self::class, 'render_scans' ) ),
-			'uccm-consents'       => array( 'title' => __( 'Consent Records', 'uk-cookie-consent-manager' ), 'capability' => 'view_uccm_consents', 'callback' => array( self::class, 'render_consents' ) ),
-			'uccm-privacy'        => array( 'title' => __( 'Privacy', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_privacy' ) ),
-			'uccm-advanced'       => array( 'title' => __( 'Advanced', 'uk-cookie-consent-manager' ), 'capability' => 'manage_uccm_settings', 'callback' => array( self::class, 'render_advanced' ) ),
+			self::MENU_SLUG  => array(
+				'title'      => __( 'Overview', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_overview' ),
+			),
+			'uccm-banner'    => array(
+				'title'      => __( 'Banner', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_banner' ),
+			),
+			'uccm-categories' => array(
+				'title'      => __( 'Categories', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_categories' ),
+			),
+			'uccm-blocking'  => array(
+				'title'      => __( 'Script Blocking', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_blocking' ),
+			),
+			'uccm-inventory' => array(
+				'title'      => __( 'Cookie Inventory', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_inventory',
+				'callback'   => array( self::class, 'render_inventory' ),
+			),
+			'uccm-scans'     => array(
+				'title'      => __( 'Scans', 'uk-cookie-consent-manager' ),
+				'capability' => 'run_uccm_scans',
+				'callback'   => array( self::class, 'render_scans' ),
+			),
+			'uccm-consents'  => array(
+				'title'      => __( 'Consent Records', 'uk-cookie-consent-manager' ),
+				'capability' => 'view_uccm_consents',
+				'callback'   => array( self::class, 'render_consents' ),
+			),
+			'uccm-privacy'   => array(
+				'title'      => __( 'Privacy', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_privacy' ),
+			),
+			'uccm-advanced'  => array(
+				'title'      => __( 'Advanced', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_advanced' ),
+			),
 		);
 	}
 
@@ -267,6 +303,7 @@ final class Admin {
 	 */
 	public static function render_inventory(): void {
 		self::require_capability( 'manage_uccm_inventory' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded pagination.
 		$page    = max( 1, (int) self::request_value( $_GET, 'paged' ) );
 		$filters = self::inventory_filters();
 		$records = Cookie_Inventory::records( $filters, $page, 20 );
@@ -280,6 +317,7 @@ final class Admin {
 		}
 
 		self::render_inventory_filters( $filters );
+		/* translators: %d: number of reviewed inventory items. */
 		echo '<p><strong>' . esc_html( sprintf( _n( '%d reviewed item', '%d reviewed items', $records['total'], 'uk-cookie-consent-manager' ), $records['total'] ) ) . '</strong></p>';
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Name', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Provider / domain', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Type', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Purpose', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Category', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Duration', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Review', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
@@ -380,7 +418,18 @@ final class Admin {
 		echo '</select> ';
 		submit_button( __( 'Filter', 'uk-cookie-consent-manager' ), 'secondary', '', false );
 		echo '</form>';
-		$export_url = wp_nonce_url( add_query_arg( array( 'action' => 'uccm_export_inventory', 'uccm_category' => $filters['category'], 'uccm_status' => $filters['status'], 's' => $filters['search'] ), admin_url( 'admin-post.php' ) ), 'uccm_export_inventory' );
+		$export_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action'        => 'uccm_export_inventory',
+					'uccm_category' => $filters['category'],
+					'uccm_status'   => $filters['status'],
+					's'             => $filters['search'],
+				),
+				admin_url( 'admin-post.php' )
+			),
+			'uccm_export_inventory'
+		);
 		echo '<p><a class="button" href="' . esc_url( $export_url ) . '">' . esc_html__( 'Export current filters as CSV', 'uk-cookie-consent-manager' ) . '</a></p>';
 	}
 
@@ -394,10 +443,18 @@ final class Admin {
 		echo '<input required maxlength="191" name="uccm[storage_key]" placeholder="' . esc_attr__( 'Cookie or storage key', 'uk-cookie-consent-manager' ) . '"> ';
 		echo '<input maxlength="191" name="uccm[provider]" placeholder="' . esc_attr__( 'Provider', 'uk-cookie-consent-manager' ) . '"> ';
 		echo '<input maxlength="191" name="uccm[domain]" placeholder="' . esc_attr__( 'Domain', 'uk-cookie-consent-manager' ) . '"><br><br>';
-		echo '<select name="uccm[party]">'; self::options( array( 'first-party', 'third-party' ), 'first-party' ); echo '</select> ';
-		echo '<select name="uccm[storage_type]">'; self::options( array( 'cookie', 'local_storage', 'session_storage', 'other' ), 'cookie' ); echo '</select> ';
-		echo '<select name="uccm[category]">'; self::options( array( 'necessary', 'functional', 'analytics', 'marketing' ), 'necessary' ); echo '</select> ';
-		echo '<select name="uccm[status]">'; self::options( array( 'known', 'new', 'changed', 'ignored', 'resolved' ), 'known' ); echo '</select><br><br>';
+		echo '<select name="uccm[party]">';
+		self::options( array( 'first-party', 'third-party' ), 'first-party' );
+		echo '</select> ';
+		echo '<select name="uccm[storage_type]">';
+		self::options( array( 'cookie', 'local_storage', 'session_storage', 'other' ), 'cookie' );
+		echo '</select> ';
+		echo '<select name="uccm[category]">';
+		self::options( array( 'necessary', 'functional', 'analytics', 'marketing' ), 'necessary' );
+		echo '</select> ';
+		echo '<select name="uccm[status]">';
+		self::options( array( 'known', 'new', 'changed', 'ignored', 'resolved' ), 'known' );
+		echo '</select><br><br>';
 		echo '<textarea required class="large-text" rows="3" name="uccm[purpose]" placeholder="' . esc_attr__( 'Purpose', 'uk-cookie-consent-manager' ) . '"></textarea>';
 		echo '<input class="regular-text" maxlength="100" name="uccm[duration]" placeholder="' . esc_attr__( 'Duration', 'uk-cookie-consent-manager' ) . '"> ';
 		echo '<input class="regular-text" type="url" name="uccm[source_url]" placeholder="https://">';
@@ -419,7 +476,16 @@ final class Admin {
 
 		$links = paginate_links(
 			array(
-				'base'      => add_query_arg( array( 'page' => 'uccm-inventory', 'uccm_category' => $filters['category'], 'uccm_status' => $filters['status'], 's' => $filters['search'], 'paged' => '%#%' ), admin_url( 'admin.php' ) ),
+				'base'      => add_query_arg(
+					array(
+						'page'          => 'uccm-inventory',
+						'uccm_category' => $filters['category'],
+						'uccm_status'   => $filters['status'],
+						's'             => $filters['search'],
+						'paged'         => '%#%',
+					),
+					admin_url( 'admin.php' )
+				),
 				'current'   => $page,
 				'total'     => $pages,
 				'type'      => 'list',
@@ -439,11 +505,14 @@ final class Admin {
 	 * @return array{category: string, status: string, search: string}
 	 */
 	private static function inventory_filters(): array {
-		return array(
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only allowlisted filters.
+		$filters = array(
 			'category' => sanitize_key( self::request_value( $_GET, 'uccm_category' ) ),
 			'status'   => sanitize_key( self::request_value( $_GET, 'uccm_status' ) ),
 			'search'   => sanitize_text_field( self::request_value( $_GET, 's' ) ),
 		);
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		return $filters;
 	}
 
 	/**
@@ -475,7 +544,15 @@ final class Admin {
 	 * @param string $notice Notice code.
 	 */
 	private static function redirect( string $page, string $notice ): void {
-		wp_safe_redirect( add_query_arg( array( 'page' => $page, 'uccm_notice' => $notice ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => $page,
+					'uccm_notice' => $notice,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -517,6 +594,7 @@ final class Admin {
 	 * Render a saved notice from a bounded query value.
 	 */
 	private static function saved_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded notice state.
 		if ( 'saved' === self::request_value( $_GET, 'uccm_notice' ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		}
@@ -524,6 +602,12 @@ final class Admin {
 
 	/**
 	 * Render a number field.
+	 *
+	 * @param string $name  Field name.
+	 * @param string $label Visible label.
+	 * @param int    $value Current value.
+	 * @param int    $min   Minimum value.
+	 * @param int    $max   Maximum value.
 	 */
 	private static function number_field( string $name, string $label, int $value, int $min, int $max ): void {
 		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input type="number" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( (string) $value ) . '" min="' . esc_attr( (string) $min ) . '" max="' . esc_attr( (string) $max ) . '"></label></p>';
@@ -531,6 +615,10 @@ final class Admin {
 
 	/**
 	 * Render a text field.
+	 *
+	 * @param string $name  Field name.
+	 * @param string $label Visible label.
+	 * @param string $value Current value.
 	 */
 	private static function text_field( string $name, string $label, string $value ): void {
 		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input class="regular-text" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( $value ) . '"></label></p>';
@@ -538,6 +626,11 @@ final class Admin {
 
 	/**
 	 * Render a checkbox with explanatory text.
+	 *
+	 * @param string $name        Field name.
+	 * @param string $label       Visible label.
+	 * @param bool   $checked     Whether the checkbox is selected.
+	 * @param string $description Explanatory text.
 	 */
 	private static function checkbox_field( string $name, string $label, bool $checked, string $description ): void {
 		echo '<p><label><input type="checkbox" name="uccm[' . esc_attr( $name ) . ']" value="1" ' . checked( $checked, true, false ) . '> <strong>' . esc_html( $label ) . '</strong></label><br><span class="description">' . esc_html( $description ) . '</span></p>';
