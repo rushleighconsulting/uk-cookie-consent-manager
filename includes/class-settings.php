@@ -61,7 +61,7 @@ final class Settings {
 		}
 
 		if ( array_key_exists( 'consent_policy_version', $input ) ) {
-			$version = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', (string) $input['consent_policy_version'] );
+			$version                            = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', (string) $input['consent_policy_version'] );
 			$settings['consent_policy_version'] = '' === $version ? Consent_State::POLICY_VERSION : substr( $version, 0, 40 );
 		}
 
