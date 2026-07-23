@@ -212,8 +212,8 @@ final class Secure_Updater {
 		}
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented signature wire format.
-		$signature  = base64_decode( $validated['signature'], true );
-		$settings   = Settings::current();
+		$signature = base64_decode( $validated['signature'], true );
+		$settings  = Settings::current();
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented public-key wire format.
 		$public_key = base64_decode( (string) ( $settings['update_public_key'] ?? '' ), true );
 		$payload    = self::canonical_payload( $validated );
