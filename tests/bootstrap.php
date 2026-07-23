@@ -30,6 +30,7 @@ $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
 $GLOBALS['uccm_test_transients']       = array();
+$GLOBALS['uccm_test_site_transients']  = array();
 $GLOBALS['uccm_test_http_validity']    = true;
 $GLOBALS['uccm_test_remote_responses'] = array();
 $GLOBALS['uccm_test_capabilities']     = array();
@@ -366,6 +367,10 @@ function wp_safe_remote_get( string $url, array $arguments = array() ): array|WP
 	return $GLOBALS['uccm_test_remote_responses'][ $url ] ?? new WP_Error( 'http_failed', 'No response configured.' );
 }
 
+function wp_remote_retrieve_body( mixed $response ): string {
+	return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : '';
+}
+
 function wp_remote_retrieve_response_code( mixed $response ): int {
 	return is_array( $response ) ? (int) ( $response['response']['code'] ?? 0 ) : 0;
 }
@@ -374,12 +379,41 @@ function wp_remote_retrieve_header( mixed $response, string $header ): mixed {
 	return is_array( $response ) ? ( $response['headers'][ strtolower( $header ) ] ?? '' ) : '';
 }
 
+function get_site_transient( string $name ): mixed {
+	return $GLOBALS['uccm_test_site_transients'][ $name ] ?? false;
+}
+
+function set_site_transient( string $name, mixed $value, int $expiration ): bool {
+	unset( $expiration );
+	$GLOBALS['uccm_test_site_transients'][ $name ] = $value;
+	return true;
+}
+
+function plugin_basename( string $file ): string {
+	return basename( dirname( $file ) ) . '/' . basename( $file );
+}
+
+function get_bloginfo( string $show = '' ): string {
+	return 'version' === $show ? '6.8' : '';
+}
+
+function wp_tempnam( string $filename = '' ): string|false {
+	unset( $filename );
+	return tempnam( sys_get_temp_dir(), 'uccm-' );
+}
+
+function wp_delete_file( string $file ): void {
+	if ( is_file( $file ) ) {
+		unlink( $file );
+	}
+}
+
 function wp_salt( string $scheme = 'auth' ): string {
 	return 'test-site-secret-' . $scheme;
 }
 
-function wp_json_encode( mixed $value ): string|false {
-	return json_encode( $value );
+function wp_json_encode( mixed $value, int $flags = 0 ): string|false {
+	return json_encode( $value, $flags );
 }
 
 function rest_url( string $path = '' ): string {
@@ -479,4 +513,5 @@ require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
 require_once dirname( __DIR__ ) . '/includes/class-scan-findings.php';
 require_once dirname( __DIR__ ) . '/includes/class-scanner.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-interface.php';
+require_once dirname( __DIR__ ) . '/includes/class-secure-updater.php';
 require_once dirname( __DIR__ ) . '/includes/class-admin.php';
