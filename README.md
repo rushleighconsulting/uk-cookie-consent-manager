@@ -141,10 +141,24 @@ UCCM-6 adds:
 - Masked consent-record presentation restricted to the dedicated consent
   capability, plus explicit empty and future-scan states.
 
+UCCM-7 adds:
+
+- Manual and idempotently scheduled 30-day scans of the homepage and up to 19
+  configured same-origin public URLs.
+- Safe HTTP inspection of observable `Set-Cookie` responses, including
+  HttpOnly cookies exposed in response headers.
+- An authenticated, bounded browser-runner boundary for cookies, local storage,
+  scripts, iframes and pixels; no consent records are included.
+- Strict same-origin and safe-HTTP target validation to reject credentials,
+  private/reserved network targets and disallowed origins.
+- Bounded pending findings plus scan coverage, methods, pages, timing, warnings
+  and explicit non-exhaustive limitations.
+- A capability- and nonce-protected Scans screen for URL configuration, manual
+  execution, schedule visibility and recent-run evidence.
+
 ## Planned Release 1 capabilities
 
-- Hybrid cookie detection.
-- Manual and monthly scans with administrator review.
+- Administrator review and notifications for new or changed scan findings.
 - WordPress privacy-tool integration.
 - Integrity-checked private repository updates.
 - WordPress 6.8–7.0 and PHP 8.2–8.5 compatibility.
