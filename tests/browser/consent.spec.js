@@ -10,7 +10,7 @@ const fixture = `
 	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
 		<div class="uccm-banner__content">
 			<h2 id="uccm-banner-title" class="uccm-title">Your cookie choices</h2>
-			<p class="uccm-copy">Choose optional cookies.</p>
+			<p class="uccm-copy">We use one necessary cookie to remember your choice for a 180-day period. It is set whether you accept or reject optional cookies, so we do not ask you again.</p>
 		</div>
 		<div class="uccm-actions uccm-actions--primary">
 			<button type="button" class="uccm-button" data-uccm-action="accept-all">Accept all</button>
@@ -125,6 +125,32 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 		marketing: true,
 	} );
 	await expect.poll( () => page.evaluate( () => window.analyticsExecutions || 0 ) ).toBe( 1 );
+} );
+
+test( 'rejecting optional cookies stores and discloses the necessary choice cookie', async ( { page } ) => {
+	const receipts = await boot( page );
+
+	await expect( page.locator( '#uccm-banner .uccm-copy' ) ).toContainText(
+		'It is set whether you accept or reject optional cookies'
+	);
+	await page.getByRole( 'button', { name: 'Reject non-essential' } ).click();
+	await expect.poll( () => receipts.length ).toBe( 1 );
+
+	const decision = await page.evaluate( () => {
+		const item = document.cookie.split( '; ' ).find( ( cookie ) => cookie.startsWith( 'uccm_consent=' ) );
+		return item ? JSON.parse( decodeURIComponent( item.slice( 'uccm_consent='.length ) ) ) : null;
+	} );
+
+	expect( decision ).not.toBeNull();
+	expect( decision.action ).toBe( 'reject' );
+	expect( decision.categories ).toEqual( {
+		necessary: true,
+		functional: false,
+		analytics: false,
+		marketing: false,
+	} );
+	expect( decision.expiresAt ).toBeGreaterThan( Date.now() + ( 179 * 24 * 60 * 60 * 1000 ) );
+	expect( receipts[0].action ).toBe( 'reject' );
 } );
 
 test( 'keyboard preferences support granular consent and withdrawal', async ( { page } ) => {

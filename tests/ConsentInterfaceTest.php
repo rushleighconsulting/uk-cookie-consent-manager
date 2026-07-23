@@ -75,6 +75,23 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'name="analytics"', $markup );
 		self::assertStringContainsString( 'name="marketing"', $markup );
 		self::assertStringContainsString( 'aria-live="polite"', $markup );
+		self::assertStringContainsString( 'whether you accept or reject optional cookies', $markup );
+		self::assertStringContainsString( 'uccm_consent', $markup );
+		self::assertStringContainsString( '180-day period', $markup );
+	}
+
+	public function test_markup_uses_the_configured_lifetime_for_newly_saved_choices(): void {
+		$GLOBALS['uccm_test_options']['uccm_settings'] = array(
+			'consent_lifetime_days' => 365,
+		);
+
+		ob_start();
+		Consent_Interface::render();
+		$markup = (string) ob_get_clean();
+
+		self::assertStringContainsString( '365-day period', $markup );
+		self::assertStringContainsString( 'affects your next saved choice', $markup );
+		self::assertStringContainsString( 'does not extend an existing cookie', $markup );
 	}
 
 	public function test_browser_script_persists_versioned_state_and_publishes_changes(): void {

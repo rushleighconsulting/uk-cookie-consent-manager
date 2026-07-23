@@ -29,6 +29,7 @@ $GLOBALS['uccm_test_localized']        = array();
 $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
+$GLOBALS['uccm_test_spawn_cron_calls'] = array();
 $GLOBALS['uccm_test_transients']       = array();
 $GLOBALS['uccm_test_site_transients']  = array();
 $GLOBALS['uccm_test_http_validity']    = true;
@@ -319,6 +320,11 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $argument
 	return true;
 }
 
+function spawn_cron( int $gmt_time = 0 ): bool {
+	$GLOBALS['uccm_test_spawn_cron_calls'][] = $gmt_time;
+	return true;
+}
+
 function get_transient( string $name ): mixed {
 	return $GLOBALS['uccm_test_transients'][ $name ] ?? false;
 }
@@ -552,6 +558,10 @@ function sanitize_key( string $key ): string {
 function __( string $text, string $domain = 'default' ): string {
 	unset( $domain );
 	return $text;
+}
+
+function esc_html( string $text ): string {
+	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 }
 
 function esc_html_e( string $text, string $domain = 'default' ): void {

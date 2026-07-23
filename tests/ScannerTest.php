@@ -19,6 +19,7 @@ final class ScannerTest extends TestCase {
 		$GLOBALS['uccm_test_options']            = array();
 		$GLOBALS['uccm_test_scheduled_hooks']    = array();
 		$GLOBALS['uccm_test_schedule_events']    = array();
+		$GLOBALS['uccm_test_spawn_cron_calls']   = array();
 		$GLOBALS['uccm_test_cleared_hooks']      = array();
 		$GLOBALS['uccm_test_capabilities']       = array();
 		$GLOBALS['uccm_test_transients']         = array();
@@ -179,6 +180,8 @@ final class ScannerTest extends TestCase {
 		self::assertSame( 5, $coverage['batch_size'] );
 		self::assertSame( Scanner::BATCH_HOOK, $GLOBALS['uccm_test_schedule_events'][0]['hook'] );
 		self::assertSame( array( 1 ), $GLOBALS['uccm_test_schedule_events'][0]['arguments'] );
+		self::assertLessThanOrEqual( time(), $GLOBALS['uccm_test_schedule_events'][0]['timestamp'] );
+		self::assertCount( 1, $GLOBALS['uccm_test_spawn_cron_calls'] );
 	}
 
 	public function test_background_batch_discovers_links_and_persists_resumable_progress(): void {
@@ -198,7 +201,9 @@ final class ScannerTest extends TestCase {
 			);
 		};
 
-		self::assertTrue( Scanner::process_batch( $run_id, $fetcher ) );
+		$events_before = count( $GLOBALS['uccm_test_schedule_events'] );
+		self::assertTrue( Scanner::process_batch( $run_id, $fetcher, false ) );
+		self::assertCount( $events_before, $GLOBALS['uccm_test_schedule_events'] );
 		$first_update = $GLOBALS['wpdb']->updates[0]['data'];
 		$coverage     = json_decode( (string) $first_update['coverage'], true );
 		self::assertSame( 'running', $first_update['status'] );
