@@ -322,7 +322,9 @@ final class Admin {
 		$result  = Scanner::record_browser_observations( $run_id, is_array( $payload ) ? $payload : array() );
 
 		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ), (int) ( $result->get_error_data()['status'] ?? 400 ) );
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) ? (int) ( $data['status'] ?? 400 ) : 400;
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), $status );
 		}
 
 		wp_send_json_success( array( 'counts' => $result ) );
