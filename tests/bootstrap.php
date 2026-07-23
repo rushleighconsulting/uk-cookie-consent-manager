@@ -36,6 +36,7 @@ $GLOBALS['uccm_test_remote_responses'] = array();
 $GLOBALS['uccm_test_capabilities']     = array();
 $GLOBALS['uccm_test_rest_routes']      = array();
 $GLOBALS['uccm_test_db_rows']          = array();
+$GLOBALS['uccm_test_db_row_queue']     = array();
 $GLOBALS['uccm_test_db_var']           = null;
 $GLOBALS['uccm_test_db_query_result']  = 0;
 $GLOBALS['uccm_test_db_results_queue'] = array();
@@ -110,7 +111,13 @@ class wpdb {
 	public function get_row( string $query, string $output = ARRAY_A ): ?array {
 		unset( $output );
 		$this->queries[] = $query;
-		$row             = $GLOBALS['uccm_test_db_rows'][0] ?? null;
+
+		if ( array() !== $GLOBALS['uccm_test_db_row_queue'] ) {
+			$row = array_shift( $GLOBALS['uccm_test_db_row_queue'] );
+			return is_array( $row ) ? $row : null;
+		}
+
+		$row = $GLOBALS['uccm_test_db_rows'][0] ?? null;
 		return is_array( $row ) ? $row : null;
 	}
 
