@@ -201,7 +201,7 @@ final class Scan_Findings {
 			);
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Bounded administration read from a plugin-owned table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- The query is prepared above and reads a bounded plugin-owned table.
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
 
@@ -234,7 +234,7 @@ final class Scan_Findings {
 			$finding_id,
 			'pending'
 		);
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Capability- and nonce-gated review update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- The query is prepared above and performs a capability- and nonce-gated update.
 		$updated = $wpdb->query( $sql );
 
 		if ( false === $updated ) {
@@ -273,7 +273,7 @@ final class Scan_Findings {
 			$observation['storage_type'],
 			$observation['domain']
 		);
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Bounded lookup in a plugin-owned table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- The query is prepared above and performs a bounded plugin-table lookup.
 		$records = $wpdb->get_results( $sql, ARRAY_A );
 
 		return isset( $records[0] ) && is_array( $records[0] ) ? $records[0] : null;
@@ -281,6 +281,9 @@ final class Scan_Findings {
 
 	/**
 	 * Detect an existing identical actionable finding.
+	 *
+	 * @param string $fingerprint Deterministic finding fingerprint.
+	 * @param string $table       Findings table.
 	 */
 	private static function pending_exists( string $fingerprint, string $table ): bool {
 		global $wpdb;
@@ -291,7 +294,7 @@ final class Scan_Findings {
 			"SELECT id FROM {$table} WHERE fingerprint = %s AND status IN ({$placeholders}) LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table and static placeholders.
 			...$arguments
 		);
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Exact bounded lookup in a plugin-owned table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared -- The query is prepared above and performs an exact bounded lookup.
 		return null !== $wpdb->get_var( $sql );
 	}
 
@@ -299,6 +302,8 @@ final class Scan_Findings {
 	 * Update observation time only; never alter reviewed classifications.
 	 *
 	 * @param array<string, mixed>|null $inventory Inventory record.
+	 * @param string                    $table     Inventory table.
+	 * @param string                    $now       Current UTC database timestamp.
 	 */
 	private static function touch_inventory( ?array $inventory, string $table, string $now ): void {
 		global $wpdb;
@@ -359,6 +364,7 @@ final class Scan_Findings {
 	/**
 	 * Send one summary-only notification for an actionable scan.
 	 *
+	 * @param int                                                                                 $run_id Scan run identifier.
 	 * @param array{actionable: int, new: int, changed: int, duplicates: int, unchanged: int} $counts Finding counts.
 	 */
 	private static function notify_administrators( int $run_id, array $counts ): void {
