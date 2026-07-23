@@ -145,10 +145,10 @@ final class Settings {
 	 * Strictly validate administrator-supplied scan URLs.
 	 *
 	 * @param mixed $value Newline-delimited string or value list.
-	 * @return string[]|\\WP_Error
+	 * @return string[]|\WP_Error
 	 */
-	public static function validate_scan_urls( mixed $value ): array|\\WP_Error {
-		$values = is_array( $value ) ? $value : preg_split( '/[\\r\\n]+/', (string) $value );
+	public static function validate_scan_urls( mixed $value ): array|\WP_Error {
+		$values = is_array( $value ) ? $value : preg_split( '/[\r\n]+/', (string) $value );
 		$values = is_array( $values ) ? $values : array();
 		$urls   = array();
 
@@ -166,7 +166,7 @@ final class Settings {
 				$error_data        = is_array( $data ) ? $data : array();
 				$error_data['url'] = substr( sanitize_text_field( $candidate ), 0, 2048 );
 
-				return new \\WP_Error(
+				return new \WP_Error(
 					$validated->get_error_code(),
 					$validated->get_error_message(),
 					$error_data
@@ -190,7 +190,7 @@ final class Settings {
 	 * @return string[]
 	 */
 	private static function scan_urls( mixed $value ): array {
-		$values = is_array( $value ) ? $value : preg_split( '/[\\r\\n]+/', (string) $value );
+		$values = is_array( $value ) ? $value : preg_split( '/[\r\n]+/', (string) $value );
 		$values = is_array( $values ) ? $values : array();
 		$urls   = array();
 
