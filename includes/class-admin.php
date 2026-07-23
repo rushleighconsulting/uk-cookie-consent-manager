@@ -389,7 +389,7 @@ final class Admin {
 		self::require_capability( 'manage_uccm_settings' );
 		self::open_page( __( 'Cookie Consent Overview', 'uk-cookie-consent-manager' ) );
 		echo '<p>' . esc_html__( 'Configure consent, review observed storage and inspect privacy-preserving evidence from this menu.', 'uk-cookie-consent-manager' ) . '</p>';
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scanning is delivered separately in UCCM-7. Until then, inventory entries are curated manually.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Cookie scans run in resumable background batches. Detected changes remain review findings until an administrator explicitly updates the curated inventory.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		self::close_page();
 	}
 
