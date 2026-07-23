@@ -149,12 +149,37 @@ final class Scanner {
 
 			$normalized = self::normalize_observation( $observation );
 
-			if ( null !== $normalized ) {
-				$accepted[] = $normalized;
+			if ( null === $normalized ) {
+				continue;
 			}
+
+			$identity = hash( 'sha256', strtolower( $normalized['type'] . '|' . $normalized['storage_key'] . '|' . $normalized['domain'] ) );
+
+			if ( ! isset( $accepted[ $identity ] ) ) {
+				$accepted[ $identity ] = $normalized;
+				continue;
+			}
+
+			$existing_urls   = is_array( $accepted[ $identity ]['source_urls'] ?? null ) ? $accepted[ $identity ]['source_urls'] : array();
+			$incoming_urls   = is_array( $normalized['source_urls'] ?? null ) ? $normalized['source_urls'] : array();
+			$existing_states = is_array( $accepted[ $identity ]['consent_states'] ?? null ) ? $accepted[ $identity ]['consent_states'] : array();
+			$incoming_states = is_array( $normalized['consent_states'] ?? null ) ? $normalized['consent_states'] : array();
+			$all_urls        = array_values( array_unique( array_merge( $existing_urls, $incoming_urls ) ) );
+
+			$accepted[ $identity ]['source_urls']    = array_slice( $all_urls, 0, 20 );
+			$accepted[ $identity ]['source_url']     = $accepted[ $identity ]['source_urls'][0] ?? '';
+			$accepted[ $identity ]['source_count']   = min(
+				self::BROWSER_MAX_TARGETS,
+				max(
+					count( $all_urls ),
+					(int) ( $accepted[ $identity ]['source_count'] ?? 0 ),
+					(int) ( $normalized['source_count'] ?? 0 )
+				)
+			);
+			$accepted[ $identity ]['consent_states'] = array_values( array_unique( array_merge( $existing_states, $incoming_states ) ) );
 		}
 
-		return $accepted;
+		return array_values( $accepted );
 	}
 
 	/**
@@ -405,11 +430,13 @@ final class Scanner {
 					continue;
 				}
 
-				$status    = wp_remote_retrieve_response_code( $response );
-				$visited[] = array(
-					'url'    => $validated,
-					'status' => $status,
-					'method' => 'server',
+				$status       = wp_remote_retrieve_response_code( $response );
+				$content_type = strtolower( (string) wp_remote_retrieve_header( $response, 'content-type' ) );
+				$visited[]    = array(
+					'url'          => $validated,
+					'status'       => $status,
+					'method'       => 'server',
+					'content_type' => substr( sanitize_text_field( $content_type ), 0, 191 ),
 				);
 
 				if ( 200 > $status || 399 < $status ) {
@@ -427,8 +454,6 @@ final class Scanner {
 						$observations[] = $cookie;
 					}
 				}
-
-				$content_type = strtolower( (string) wp_remote_retrieve_header( $response, 'content-type' ) );
 
 				if ( '' === $content_type || str_contains( $content_type, 'text/html' ) ) {
 					foreach ( Crawler::discover( wp_remote_retrieve_body( $response ), $validated, $excluded ) as $discovered ) {
@@ -593,26 +618,44 @@ final class Scanner {
 			return new \WP_Error( 'uccm_browser_scan_not_ready', __( 'The server crawl must complete before browser observations are added.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
 		}
 
-		$payload['token'] = self::runner_token();
-		$accepted         = self::accept_browser_observations( $payload, self::runner_token() );
+		$browser_status = sanitize_key( (string) ( $payload['status'] ?? 'completed' ) );
 
-		if ( is_wp_error( $accepted ) ) {
-			return $accepted;
+		if ( ! in_array( $browser_status, array( 'running', 'completed', 'partial', 'failed' ), true ) ) {
+			return new \WP_Error( 'uccm_browser_scan_invalid_status', __( 'The browser check status is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
 		}
 
-		$counts   = Scan_Findings::process( $run_id, $accepted );
 		$coverage = self::decoded_array( $run['coverage'] ?? '' );
 		$summary  = self::decoded_array( $run['summary'] ?? '' );
-		$current  = self::decoded_counts( $summary['finding_counts'] ?? array() );
-		$merged   = self::merge_finding_counts( $current, $counts );
+		$counts   = self::empty_finding_counts();
+		$accepted = array();
 
-		$coverage['browser_status']            = 'completed';
+		if ( 'running' !== $browser_status ) {
+			$payload['token'] = self::runner_token();
+			$accepted         = self::accept_browser_observations( $payload, self::runner_token() );
+
+			if ( is_wp_error( $accepted ) ) {
+				return $accepted;
+			}
+
+			if ( array() !== $accepted ) {
+				$counts  = Scan_Findings::process( $run_id, $accepted );
+				$current = self::decoded_counts( $summary['finding_counts'] ?? array() );
+				$merged  = self::merge_finding_counts( $current, $counts );
+
+				$summary['finding_counts'] = $merged;
+				$summary['findings']       = $merged['actionable'];
+			}
+		}
+
+		$coverage['browser_status']            = $browser_status;
+		$coverage['browser_problem']           = substr( sanitize_key( (string) ( $payload['problem'] ?? '' ) ), 0, 100 );
 		$coverage['browser_observation_count'] = count( $accepted );
 		$coverage['browser_target_count']      = min( self::BROWSER_MAX_TARGETS, max( 0, (int) ( $payload['target_count'] ?? 0 ) ) );
-		$summary['finding_counts']             = $merged;
-		$summary['findings']                   = $merged['actionable'];
+		$coverage['browser_scenario_count']    = min( 10, max( 0, (int) ( $payload['scenario_count'] ?? 0 ) ) );
+		$coverage['browser_completed_steps']   = min( self::BROWSER_MAX_TARGETS * 10, max( 0, (int) ( $payload['completed_steps'] ?? 0 ) ) );
+		$coverage['browser_total_steps']       = min( self::BROWSER_MAX_TARGETS * 10, max( 0, (int) ( $payload['total_steps'] ?? 0 ) ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Adds reviewed browser evidence to a plugin-owned run.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Adds bounded browser-check state and evidence to a plugin-owned run.
 		$updated = $wpdb->update(
 			Database::table_names()['scan_runs'],
 			array(
@@ -1067,10 +1110,47 @@ final class Scanner {
 	}
 
 	/**
+	 * Return eligible HTML pages for the isolated browser check.
+	 *
+	 * @param array<int, mixed> $visited Persisted server-crawl page evidence.
+	 * @return string[]
+	 */
+	public static function browser_targets( array $visited ): array {
+		$targets          = array();
+		$media_extensions = '/\\.(?:avif|bmp|gif|ico|jpe?g|pdf|png|svg|tiff?|webp|mp[34]|m4[av]|mov|avi|webm|wav|ogg|zip)(?:$|[?#])/i';
+
+		foreach ( $visited as $page ) {
+			if ( count( $targets ) >= self::BROWSER_MAX_TARGETS || ! is_array( $page ) ) {
+				break;
+			}
+
+			$url          = esc_url_raw( (string) ( $page['url'] ?? '' ) );
+			$status       = (int) ( $page['status'] ?? 0 );
+			$content_type = strtolower( trim( (string) ( $page['content_type'] ?? '' ) ) );
+
+			if ( '' === $url || 200 > $status || 399 < $status ) {
+				continue;
+			}
+
+			if ( '' !== $content_type && ! str_contains( $content_type, 'text/html' ) && ! str_contains( $content_type, 'application/xhtml+xml' ) ) {
+				continue;
+			}
+
+			if ( '' === $content_type && preg_match( $media_extensions, $url ) ) {
+				continue;
+			}
+
+			$targets[] = $url;
+		}
+
+		return array_values( array_unique( $targets ) );
+	}
+
+	/**
 	 * Normalise one browser observation.
 	 *
 	 * @param array<string, mixed> $observation Untrusted observation.
-	 * @return array<string, string>|null
+	 * @return array<string, mixed>|null
 	 */
 	private static function normalize_observation( array $observation ): ?array {
 		$type               = sanitize_key( (string) ( $observation['type'] ?? '' ) );
@@ -1079,22 +1159,49 @@ final class Scanner {
 		$source_url         = esc_url_raw( (string) ( $observation['source_url'] ?? '' ) );
 		$duration           = substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 );
 		$category_candidate = sanitize_key( (string) ( $observation['category_candidate'] ?? '' ) );
+		$source_urls        = is_array( $observation['source_urls'] ?? null ) ? $observation['source_urls'] : array( $source_url );
+		$consent_states     = is_array( $observation['consent_states'] ?? null ) ? $observation['consent_states'] : array();
+		$allowed_states     = array( 'pre-consent', 'reject', 'accept-all', 'functional', 'analytics', 'marketing' );
 
 		if ( ! in_array( $category_candidate, array( 'necessary', 'functional', 'analytics', 'marketing' ), true ) ) {
 			$category_candidate = '';
 		}
 
-		if ( ! in_array( $type, array( 'cookie', 'local_storage', 'script', 'iframe', 'pixel' ), true ) || '' === $storage_key ) {
+		if ( ! in_array( $type, array( 'cookie', 'local_storage', 'session_storage', 'script', 'iframe', 'pixel' ), true ) || '' === $storage_key ) {
 			return null;
 		}
+
+		$source_urls    = array_values(
+			array_slice(
+				array_unique(
+					array_filter(
+						array_map(
+							static fn ( mixed $url ): string => esc_url_raw( (string) $url ),
+							$source_urls
+						)
+					)
+				),
+				0,
+				20
+			)
+		);
+		$consent_states = array_values(
+			array_filter(
+				array_unique( array_map( 'sanitize_key', $consent_states ) ),
+				static fn ( string $state ): bool => in_array( $state, $allowed_states, true )
+			)
+		);
 
 		return array(
 			'type'               => $type,
 			'storage_key'        => $storage_key,
 			'domain'             => $domain,
-			'source_url'         => $source_url,
+			'source_url'         => $source_urls[0] ?? $source_url,
+			'source_urls'        => $source_urls,
+			'source_count'       => min( self::BROWSER_MAX_TARGETS, max( count( $source_urls ), (int) ( $observation['source_count'] ?? 0 ) ) ),
+			'consent_states'     => $consent_states,
 			'duration'           => $duration,
-			'storage_type'       => in_array( $type, array( 'cookie', 'local_storage' ), true ) ? $type : 'other',
+			'storage_type'       => in_array( $type, array( 'cookie', 'local_storage', 'session_storage' ), true ) ? $type : 'other',
 			'method'             => 'browser',
 			'category_candidate' => $category_candidate,
 		);

@@ -513,24 +513,24 @@ final class Admin {
 		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
 			$runner_pages   = json_decode( (string) $runner_run['pages_visited'], true );
 			$runner_pages   = is_array( $runner_pages ) ? $runner_pages : array();
-			$runner_targets = array();
-
-			foreach ( array_slice( $runner_pages, 0, Scanner::BROWSER_MAX_TARGETS ) as $runner_page ) {
-				if ( is_array( $runner_page ) && 0 < (int) ( $runner_page['status'] ?? 0 ) && ! empty( $runner_page['url'] ) ) {
-					$runner_targets[] = (string) $runner_page['url'];
-				}
-			}
+			$runner_targets = Scanner::browser_targets( $runner_pages );
+			$consent_config = Consent_State::configuration();
 
 			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
 			wp_localize_script(
 				'uccm-scan-runner',
 				'UCCMScanRunner',
 				array(
-					'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-					'nonce'      => wp_create_nonce( 'uccm_browser_scan' ),
-					'runId'      => $scan_id,
-					'targets'    => array_values( array_unique( $runner_targets ) ),
-					'maxTargets' => Scanner::BROWSER_MAX_TARGETS,
+					'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+					'nonce'         => wp_create_nonce( 'uccm_browser_scan' ),
+					'runId'         => $scan_id,
+					'targets'       => $runner_targets,
+					'maxTargets'    => Scanner::BROWSER_MAX_TARGETS,
+					'cookieName'    => (string) $consent_config['cookieName'],
+					'cookiePath'    => (string) $consent_config['cookiePath'],
+					'policyVersion' => (string) $consent_config['policyVersion'],
+					'pluginVersion' => (string) $consent_config['pluginVersion'],
+					'lifetimeDays'  => (int) $consent_config['lifetimeDays'],
 				)
 			);
 		}
@@ -643,8 +643,12 @@ final class Admin {
 			$runner_coverage = json_decode( (string) $runner_run['coverage'], true );
 			$runner_coverage = is_array( $runner_coverage ) ? $runner_coverage : array();
 			echo '<h2>' . esc_html__( 'Browser check for scan ', 'uk-cookie-consent-manager' ) . esc_html( (string) $scan_id ) . '</h2>';
-			echo '<p>' . esc_html__( 'This optional check opens up to 100 pages in your browser and looks for cookie names, browser storage, scripts, embedded content and tracking images. Some protected cookies and pages that refuse to open inside another page cannot be checked this way.', 'uk-cookie-consent-manager' ) . '</p>';
+			echo '<p>' . esc_html__( 'This optional check visits eligible public pages as a temporary visitor, tries the main cookie choices, and lists cookie names, browser storage, scripts, embedded content and tracking images. It does not use your administrator sign-in or saved browser choices.', 'uk-cookie-consent-manager' ) . '</p>';
 			echo '<p><strong>' . esc_html__( 'Browser check status:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( (string) ( $runner_coverage['browser_status'] ?? 'not-run' ) ) . '</p>';
+
+			if ( ! empty( $runner_coverage['browser_problem'] ) ) {
+				echo '<p><strong>' . esc_html__( 'Browser check note:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( str_replace( '-', ' ', (string) $runner_coverage['browser_problem'] ) ) . '</p>';
+			}
 			echo '<button type="button" class="button button-secondary" id="uccm-run-browser-observations">' . esc_html__( 'Run browser check', 'uk-cookie-consent-manager' ) . '</button>';
 			echo '<p id="uccm-browser-observation-status" aria-live="polite"></p>';
 			echo '<div id="uccm-browser-observation-frames" hidden></div>';
@@ -670,7 +674,8 @@ final class Admin {
 				$before = is_array( $before ) ? $before : array();
 				$after  = is_array( $after ) ? $after : array();
 				echo '<tr><td>#' . esc_html( (string) $finding['id'] ) . '<br><small>' . esc_html( (string) $finding['finding_type'] ) . ' · ' . esc_html__( 'scan', 'uk-cookie-consent-manager' ) . ' ' . esc_html( (string) $finding['scan_run_id'] ) . '</small></td>';
-				echo '<td><strong>' . esc_html( (string) $finding['storage_key'] ) . '</strong><br>' . esc_html( (string) $finding['domain'] ) . '</td>';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The helper escapes all values and returns only fixed markup.
+				echo '<td>' . self::finding_observation_html( $finding, $before, $after ) . '</td>';
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The helper escapes all values and returns only fixed markup.
 				echo '<td>' . self::finding_diff_html( $before, $after ) . '</td>';
 				echo '<td>' . esc_html( (string) $finding['status'] ) . '</td><td>';
@@ -770,6 +775,49 @@ final class Admin {
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 		self::close_page();
+	}
+
+	/**
+	 * Render bounded site-wide browser evidence without values or page content.
+	 *
+	 * @param array<string, mixed> $finding Finding database row.
+	 * @param array<string, mixed> $before  Previous curated values.
+	 * @param array<string, mixed> $after   Observed values.
+	 */
+	private static function finding_observation_html( array $finding, array $before, array $after ): string {
+		$storage_type   = (string) ( $after['storage_type'] ?? $before['storage_type'] ?? 'other' );
+		$consent_states = is_array( $after['consent_states'] ?? null ) ? $after['consent_states'] : array();
+		$source_urls    = is_array( $after['source_urls'] ?? null ) ? array_slice( $after['source_urls'], 0, 20 ) : array();
+		$source_count   = min( Scanner::BROWSER_MAX_TARGETS, max( count( $source_urls ), (int) ( $after['source_count'] ?? 0 ) ) );
+		$parts          = array(
+			'<strong>' . esc_html( (string) $finding['storage_key'] ) . '</strong>',
+			esc_html( (string) $finding['domain'] ),
+			'<small>' . esc_html__( 'Storage type:', 'uk-cookie-consent-manager' ) . ' ' . esc_html( ucwords( str_replace( '_', ' ', $storage_type ) ) ) . '</small>',
+		);
+
+		if ( array() !== $consent_states ) {
+			$parts[] = '<small>' . esc_html__( 'Seen with:', 'uk-cookie-consent-manager' ) . ' ' . esc_html( implode( ', ', array_map( static fn ( mixed $state ): string => str_replace( '-', ' ', sanitize_key( (string) $state ) ), $consent_states ) ) ) . '</small>';
+		}
+
+		if ( 0 < $source_count ) {
+			$parts[] = '<small>' . esc_html(
+				sprintf(
+					/* translators: %d: number of affected pages. */
+					_n( '%d affected page', '%d affected pages', $source_count, 'uk-cookie-consent-manager' ),
+					$source_count
+				)
+			) . '</small>';
+		}
+
+		if ( array() !== $source_urls ) {
+			$links   = array_map(
+				static fn ( mixed $url ): string => '<a href="' . esc_url( (string) $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( (string) $url ) . '</a>',
+				$source_urls
+			);
+			$parts[] = '<details><summary>' . esc_html__( 'Show affected pages', 'uk-cookie-consent-manager' ) . '</summary>' . implode( '<br>', $links ) . '</details>';
+		}
+
+		return implode( '<br>', $parts );
 	}
 
 	/**

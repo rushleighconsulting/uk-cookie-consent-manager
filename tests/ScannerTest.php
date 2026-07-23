@@ -241,13 +241,25 @@ final class ScannerTest extends TestCase {
 		);
 		$GLOBALS['uccm_test_db_row_queue'] = array( $run, null );
 		$payload = array(
-			'target_count' => 1,
-			'observations' => array(
+			'status'         => 'completed',
+			'target_count'   => 2,
+			'scenario_count' => 6,
+			'observations'   => array(
 				array(
-					'type'        => 'local_storage',
-					'storage_key' => 'preferences',
-					'domain'      => 'example.test',
-					'source_url'  => 'https://example.test/',
+					'type'           => 'local_storage',
+					'storage_key'    => 'preferences',
+					'domain'         => 'example.test',
+					'source_url'     => 'https://example.test/one',
+					'source_urls'    => array( 'https://example.test/one' ),
+					'consent_states' => array( 'reject', 'accept-all' ),
+				),
+				array(
+					'type'           => 'local_storage',
+					'storage_key'    => 'preferences',
+					'domain'         => 'example.test',
+					'source_url'     => 'https://example.test/two',
+					'source_urls'    => array( 'https://example.test/two' ),
+					'consent_states' => array( 'analytics' ),
 				),
 			),
 		);
@@ -259,9 +271,56 @@ final class ScannerTest extends TestCase {
 		$updated_coverage = json_decode( (string) $last_update['coverage'], true );
 		self::assertSame( 'completed', $updated_coverage['browser_status'] );
 		self::assertSame( 1, $updated_coverage['browser_observation_count'] );
+		self::assertSame( 2, $updated_coverage['browser_target_count'] );
+		self::assertCount( 1, $GLOBALS['wpdb']->inserts );
+		$after = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['after_data'], true );
+		self::assertSame( 2, $after['source_count'] );
+		self::assertSame( array( 'reject', 'accept-all', 'analytics' ), $after['consent_states'] );
 	}
 
-	public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
+
+	public function test_browser_targets_include_only_successful_html_pages(): void {
+		$targets = Scanner::browser_targets(
+			array(
+				array( 'url' => 'https://example.test/page', 'status' => 200, 'content_type' => 'text/html; charset=UTF-8' ),
+				array( 'url' => 'https://example.test/gallery/photo.jpg', 'status' => 200, 'content_type' => 'image/jpeg' ),
+				array( 'url' => 'https://example.test/manual.pdf', 'status' => 200 ),
+				array( 'url' => 'https://example.test/missing', 'status' => 404, 'content_type' => 'text/html' ),
+			)
+		);
+
+		self::assertSame( array( 'https://example.test/page' ), $targets );
+	}
+
+	public function test_browser_running_status_is_persisted_without_findings(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$run = array(
+			'id'            => 8,
+			'status'        => 'completed',
+			'coverage'      => wp_json_encode( array( 'browser_status' => 'not-run' ) ),
+			'pages_visited' => wp_json_encode( array() ),
+			'summary'       => wp_json_encode( array( 'findings' => 0, 'finding_counts' => array() ) ),
+		);
+		$GLOBALS['uccm_test_db_row_queue'] = array( $run );
+
+		$counts = Scanner::record_browser_observations(
+			8,
+			array(
+				'status'         => 'running',
+				'target_count'   => 2,
+				'scenario_count' => 6,
+				'observations'   => array(),
+			)
+		);
+
+		self::assertSame( 0, $counts['actionable'] );
+		self::assertCount( 0, $GLOBALS['wpdb']->inserts );
+		$coverage = json_decode( (string) $GLOBALS['wpdb']->updates[0]['data']['coverage'], true );
+		self::assertSame( 'running', $coverage['browser_status'] );
+		self::assertSame( 6, $coverage['browser_scenario_count'] );
+	}
+
+public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
 		$urls = array();
 
 		self::assertSame( 1024, Scanner::MAX_TARGETS );
