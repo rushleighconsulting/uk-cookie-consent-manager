@@ -43,20 +43,9 @@ jobs:
         run: bash scripts/build-package.sh "${{ steps.version.outputs.version }}"
 
       - name: Release check - verify clean installable archive
-        shell: bash
-        run: |
-          set -euo pipefail
-          archive="dist/uk-cookie-consent-manager-${{ steps.version.outputs.version }}.zip"
-          unzip -t "${archive}"
-          unzip -l "${archive}" > dist/archive-contents.txt
-          if grep -E '/(tests|vendor|\.github|scripts)/|composer\.(json|lock)|package(-lock)?\.json|playwright\.config|php(unit|stan)|phpcs' dist/archive-contents.txt; then
-            echo "Development-only content was found in the release archive." >&2
-            exit 1
-          fi
-          if unzip -p "${archive}" | grep -E 'UCCM_MANIFEST_PRIVATE_KEY|ghp_[A-Za-z0-9]+'; then
-            echo "A secret-like value was found in the release archive." >&2
-            exit 1
-          fi
+        env:
+          UCCM_MANIFEST_PRIVATE_KEY: ${{ secrets.UCCM_MANIFEST_PRIVATE_KEY }}
+        run: bash scripts/verify-package.sh "dist/uk-cookie-consent-manager-${{ steps.version.outputs.version }}.zip"
 
       - name: Release check - create signed update manifest
         env:
@@ -76,4 +65,10 @@ jobs:
             echo "Release ${GITHUB_REF_NAME} already exists; refusing to replace immutable assets." >&2
             exit 1
           fi
-          gh release create "${GITHUB_REF_NAME}"             "dist/uk-cookie-consent-manager-${version}.zip"             "dist/SHA256SUMS"             "dist/update-manifest.json"             --verify-tag             --generate-notes             --title "UK Cookie Consent Manager ${version}"
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/uk-cookie-consent-manager-${version}.zip" \
+            "dist/SHA256SUMS" \
+            "dist/update-manifest.json" \
+            --verify-tag \
+            --generate-notes \
+            --title "UK Cookie Consent Manager ${version}"
