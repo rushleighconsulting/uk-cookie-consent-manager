@@ -127,7 +127,7 @@ final class Secure_Updater {
 	 * @param mixed  $reply      Existing short-circuit value.
 	 * @param string $package    Package URL.
 	 * @param mixed  $upgrader   WordPress upgrader.
-	 * @param array  $hook_extra Upgrade context.
+	 * @param array<string, mixed> $hook_extra Upgrade context.
 	 * @return mixed
 	 */
 	public static function verify_download( mixed $reply, string $package, mixed $upgrader, array $hook_extra ): mixed {
@@ -151,7 +151,7 @@ final class Secure_Updater {
 
 		$temporary = wp_tempnam( $package );
 
-		if ( ! is_string( $temporary ) || '' === $temporary ) {
+		if ( '' === $temporary ) {
 			return new \WP_Error( 'uccm_update_temp_failed', __( 'WordPress could not create a temporary update file.', 'uk-cookie-consent-manager' ) );
 		}
 
