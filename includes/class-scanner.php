@@ -366,23 +366,23 @@ final class Scanner {
 	/**
 	 * Attach the rejected target to a validation error for safe evidence and feedback.
 	 *
-	 * @param \\WP_Error $error  Validation error.
+	 * @param \WP_Error $error  Validation error.
 	 * @param string    $target Rejected target.
 	 */
-	private static function target_error( \\WP_Error $error, string $target ): \\WP_Error {
+	private static function target_error( \WP_Error $error, string $target ): \WP_Error {
 		$data              = $error->get_error_data();
 		$error_data        = is_array( $data ) ? $data : array();
 		$error_data['url'] = substr( sanitize_text_field( $target ), 0, 2048 );
 
-		return new \\WP_Error( $error->get_error_code(), $error->get_error_message(), $error_data );
+		return new \WP_Error( $error->get_error_code(), $error->get_error_message(), $error_data );
 	}
 
 	/**
 	 * Preserve evidence when target validation prevents a scan from starting.
 	 *
-	 * @param \\WP_Error $error Validation error.
+	 * @param \WP_Error $error Validation error.
 	 */
-	private static function record_failed_run( \\WP_Error $error ): void {
+	private static function record_failed_run( \WP_Error $error ): void {
 		global $wpdb;
 
 		$data    = $error->get_error_data();
