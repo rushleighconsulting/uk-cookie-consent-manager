@@ -157,10 +157,18 @@ UCCM-7 adds:
 - A capability- and nonce-protected Scans screen for URL configuration, manual
   execution, schedule visibility and recent-run evidence.
 
-The 1,024-page total is a temporary hard ceiling, not a recommendation for the
-current synchronous scanner. It does not discover links; safe asynchronous
-same-origin crawling and an operational browser-observation runner are tracked
-for corrective delivery.
+UCCM-18 replaces the administrator-request scan path with a persisted,
+WP-Cron-driven crawl frontier. It discovers canonical same-origin links, excludes
+administration/authentication and configured path patterns, de-duplicates cycles,
+and processes configurable batches up to the 1,024-page hard ceiling. Progress,
+frontier, visited pages, warnings, cancellation and resumable failure state remain
+visible in the scan record.
+
+Completed server crawls can be followed by the packaged administrator browser
+runner. It inspects up to 100 successfully visited same-origin pages for
+accessible cookie names, local-storage keys, scripts, iframes and pixels and
+records whether the browser pass ran. HttpOnly cookie values, page content, form
+values and consent records are never collected.
 
 UCCM-8 adds:
 
