@@ -153,8 +153,8 @@
 					finish( observations );
 				}, 750 );
 			} );
-			document.body.appendChild( frame );
 			frame.src = targetUrl.href;
+			document.body.appendChild( frame );
 		} );
 	}
 
