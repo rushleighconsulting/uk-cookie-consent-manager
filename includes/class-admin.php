@@ -390,7 +390,7 @@ final class Admin {
 		$runs     = Scanner::recent_runs( 20 );
 		$next     = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
-		$scan_id  = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
+		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$notice   = self::request_value( $_GET, 'uccm_notice' );
 		$findings = Scan_Findings::records( $scan_id, 100 );
@@ -436,7 +436,7 @@ final class Admin {
 				$summary  = is_array( $summary ) ? $summary : array();
 				$pages    = is_array( $pages ) ? $pages : array();
 				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
-				$run_url = add_query_arg(
+				$run_url  = add_query_arg(
 					array(
 						'page'    => 'uccm-scans',
 						'scan_id' => (int) $run['id'],
@@ -569,7 +569,7 @@ final class Admin {
 	 * @param array<string, mixed> $after  Observed values.
 	 */
 	private static function finding_diff_html( array $before, array $after ): string {
-		$parts = array();
+		$parts  = array();
 		$labels = array(
 			'duration'   => __( 'Duration', 'uk-cookie-consent-manager' ),
 			'domain'     => __( 'Domain', 'uk-cookie-consent-manager' ),
