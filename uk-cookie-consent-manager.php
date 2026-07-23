@@ -28,6 +28,7 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-ip-privacy.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-receipts.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-crawler.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-settings.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-resource-rules.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-cookie-inventory.php';

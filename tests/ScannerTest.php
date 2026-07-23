@@ -24,6 +24,8 @@ final class ScannerTest extends TestCase {
 		$GLOBALS['uccm_test_transients']         = array();
 		$GLOBALS['uccm_test_http_validity']      = true;
 		$GLOBALS['uccm_test_remote_responses']   = array();
+		$GLOBALS['uccm_test_db_rows']            = array();
+		$GLOBALS['uccm_test_db_row_queue']       = array();
 	}
 
 	public function test_monthly_schedule_is_idempotent_and_deactivation_clears_it(): void {
@@ -161,6 +163,97 @@ final class ScannerTest extends TestCase {
 
 		$summary = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['summary'], true );
 		self::assertSame( 'https://tracker.test/pixel', $summary['warnings'][0]['url'] );
+	}
+
+	public function test_asynchronous_start_persists_frontier_and_queues_first_batch(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+
+		$run_id = Scanner::start();
+
+		self::assertSame( 1, $run_id );
+		self::assertSame( 'queued', $GLOBALS['wpdb']->inserts[0]['data']['status'] );
+
+		$coverage = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['coverage'], true );
+		self::assertSame( array( 'https://example.test/' ), $coverage['frontier'] );
+		self::assertSame( 1024, $coverage['max_pages'] );
+		self::assertSame( 5, $coverage['batch_size'] );
+		self::assertSame( Scanner::BATCH_HOOK, $GLOBALS['uccm_test_schedule_events'][0]['hook'] );
+		self::assertSame( array( 1 ), $GLOBALS['uccm_test_schedule_events'][0]['arguments'] );
+	}
+
+	public function test_background_batch_discovers_links_and_persists_resumable_progress(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$run_id = Scanner::start();
+		$run     = array_merge( array( 'id' => $run_id ), $GLOBALS['wpdb']->inserts[0]['data'] );
+		$GLOBALS['uccm_test_db_rows'] = array( $run );
+		$GLOBALS['uccm_test_scheduled_hooks'] = array();
+		$fetcher = static function ( string $url, array $arguments ): array {
+			unset( $arguments );
+			return array(
+				'response' => array( 'code' => 200 ),
+				'headers'  => array( 'content-type' => 'text/html' ),
+				'body'     => 'https://example.test/' === $url
+					? '<a href="/about">About</a><a href="/#top">Home</a>'
+					: '<a href="/">Home</a>',
+			);
+		};
+
+		self::assertTrue( Scanner::process_batch( $run_id, $fetcher ) );
+		$first_update = $GLOBALS['wpdb']->updates[0]['data'];
+		$coverage     = json_decode( (string) $first_update['coverage'], true );
+		self::assertSame( 'running', $first_update['status'] );
+		self::assertSame( 1, $coverage['visited_count'] );
+		self::assertSame( 2, $coverage['discovered_count'] );
+		self::assertSame( array( 'https://example.test/about' ), $coverage['frontier'] );
+
+		$GLOBALS['uccm_test_db_rows'] = array( array_merge( $run, $first_update ) );
+		$GLOBALS['uccm_test_scheduled_hooks'] = array();
+		self::assertTrue( Scanner::process_batch( $run_id, $fetcher ) );
+		$second_update = $GLOBALS['wpdb']->updates[1]['data'];
+		$coverage      = json_decode( (string) $second_update['coverage'], true );
+		self::assertSame( 'completed', $second_update['status'] );
+		self::assertSame( 2, $coverage['visited_count'] );
+		self::assertSame( 0, $coverage['remaining_count'] );
+	}
+
+	public function test_browser_observations_are_attached_to_a_completed_run(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$coverage = array(
+			'browser_status' => 'not-run',
+			'visited_count'  => 1,
+		);
+		$summary = array(
+			'findings'       => 0,
+			'finding_counts' => array( 'actionable' => 0, 'new' => 0, 'changed' => 0, 'duplicates' => 0, 'unchanged' => 0 ),
+			'warnings'       => array(),
+		);
+		$run = array(
+			'id'            => 7,
+			'status'        => 'completed',
+			'coverage'      => wp_json_encode( $coverage ),
+			'pages_visited' => wp_json_encode( array() ),
+			'summary'       => wp_json_encode( $summary ),
+		);
+		$GLOBALS['uccm_test_db_row_queue'] = array( $run, null );
+		$payload = array(
+			'target_count' => 1,
+			'observations' => array(
+				array(
+					'type'        => 'local_storage',
+					'storage_key' => 'preferences',
+					'domain'      => 'example.test',
+					'source_url'  => 'https://example.test/',
+				),
+			),
+		);
+
+		$counts = Scanner::record_browser_observations( 7, $payload );
+
+		self::assertSame( 1, $counts['actionable'] );
+		$last_update = $GLOBALS['wpdb']->updates[ count( $GLOBALS['wpdb']->updates ) - 1 ]['data'];
+		$updated_coverage = json_decode( (string) $last_update['coverage'], true );
+		self::assertSame( 'completed', $updated_coverage['browser_status'] );
+		self::assertSame( 1, $updated_coverage['browser_observation_count'] );
 	}
 
 	public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {

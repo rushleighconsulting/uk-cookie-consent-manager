@@ -49,6 +49,9 @@ final class Activator {
 				'trust_proxy_headers'    => false,
 				'trusted_proxy_ips'      => array(),
 				'scan_urls'              => array(),
+				'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
+				'scan_page_limit'        => Scanner::MAX_TARGETS,
+				'scan_batch_size'        => Scanner::DEFAULT_BATCH_SIZE,
 			),
 			'',
 			false
@@ -89,6 +92,7 @@ final class Activator {
 	 */
 	private static function clear_scheduled_work(): void {
 		wp_clear_scheduled_hook( 'uccm_monthly_scan' );
+		wp_clear_scheduled_hook( Scanner::BATCH_HOOK );
 		wp_clear_scheduled_hook( 'uccm_retention_cleanup' );
 	}
 

@@ -74,6 +74,22 @@ final class AdminInventoryTest extends TestCase {
 		self::assertSame( 'https://tracker.test/pixel', $invalid->get_error_data()['url'] );
 	}
 
+
+	public function test_crawler_settings_bound_limits_and_sanitise_exclusions(): void {
+		$settings = Settings::sanitize(
+			array(
+				'scan_page_limit'     => 5000,
+				'scan_batch_size'     => 0,
+				'scan_excluded_paths' => "/private/*\ninvalid\n*/checkout/\n/private/*",
+			),
+			array()
+		);
+
+		self::assertSame( 1024, $settings['scan_page_limit'] );
+		self::assertSame( 1, $settings['scan_batch_size'] );
+		self::assertSame( array( '/private/*', '*/checkout/' ), $settings['scan_excluded_paths'] );
+	}
+
 	public function test_inventory_rejects_invalid_category_and_storage_type(): void {
 		$input = self::valid_item();
 		$input['category'] = 'advertising';

@@ -36,6 +36,7 @@ $GLOBALS['uccm_test_remote_responses'] = array();
 $GLOBALS['uccm_test_capabilities']     = array();
 $GLOBALS['uccm_test_rest_routes']      = array();
 $GLOBALS['uccm_test_db_rows']          = array();
+$GLOBALS['uccm_test_db_row_queue']     = array();
 $GLOBALS['uccm_test_db_var']           = null;
 $GLOBALS['uccm_test_db_query_result']  = 0;
 $GLOBALS['uccm_test_db_results_queue'] = array();
@@ -104,6 +105,20 @@ class wpdb {
 		}
 
 		return $GLOBALS['uccm_test_db_rows'];
+	}
+
+	/** @return array<string, mixed>|null */
+	public function get_row( string $query, string $output = ARRAY_A ): ?array {
+		unset( $output );
+		$this->queries[] = $query;
+
+		if ( array() !== $GLOBALS['uccm_test_db_row_queue'] ) {
+			$row = array_shift( $GLOBALS['uccm_test_db_row_queue'] );
+			return is_array( $row ) ? $row : null;
+		}
+
+		$row = $GLOBALS['uccm_test_db_rows'][0] ?? null;
+		return is_array( $row ) ? $row : null;
 	}
 
 	public function get_var( string $query ): mixed {
@@ -281,13 +296,26 @@ function wp_clear_scheduled_hook( string $hook ): int {
 	return 1;
 }
 
-function wp_next_scheduled( string $hook ): int|false {
-	return $GLOBALS['uccm_test_scheduled_hooks'][ $hook ] ?? false;
+function wp_next_scheduled( string $hook, array $arguments = array() ): int|false {
+	$key = array() === $arguments ? $hook : $hook . ':' . md5( wp_json_encode( $arguments ) );
+	return $GLOBALS['uccm_test_scheduled_hooks'][ $key ] ?? false;
 }
 
 function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
 	$GLOBALS['uccm_test_scheduled_hooks'][ $hook ] = $timestamp;
 	$GLOBALS['uccm_test_schedule_events'][]        = compact( 'timestamp', 'recurrence', 'hook' );
+	return true;
+}
+
+function wp_schedule_single_event( int $timestamp, string $hook, array $arguments = array() ): bool {
+	$key = $hook . ':' . md5( wp_json_encode( $arguments ) );
+	$GLOBALS['uccm_test_scheduled_hooks'][ $key ] = $timestamp;
+	$GLOBALS['uccm_test_schedule_events'][]        = array(
+		'timestamp'  => $timestamp,
+		'recurrence' => '',
+		'hook'       => $hook,
+		'arguments'  => $arguments,
+	);
 	return true;
 }
 
@@ -320,7 +348,8 @@ function restore_current_blog(): bool {
 	return true;
 }
 
-function add_action( string $hook, callable $callback, int $priority = 10 ): void {
+function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_arguments = 1 ): void {
+	unset( $accepted_arguments );
 	$GLOBALS['uccm_test_actions'][ $hook ][] = array(
 		'callback' => $callback,
 		'priority' => $priority,
@@ -550,6 +579,7 @@ require_once dirname( __DIR__ ) . '/includes/class-ip-privacy.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-receipts.php';
 require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
+require_once dirname( __DIR__ ) . '/includes/class-crawler.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';

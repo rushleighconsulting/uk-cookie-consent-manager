@@ -28,6 +28,9 @@ final class Admin {
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
 		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
 		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
+		add_action( 'admin_post_uccm_cancel_scan', array( self::class, 'cancel_scan' ) );
+		add_action( 'admin_post_uccm_resume_scan', array( self::class, 'resume_scan' ) );
+		add_action( 'wp_ajax_uccm_browser_scan_observations', array( self::class, 'browser_scan_observations' ) );
 		add_action( 'admin_post_uccm_review_scan_finding', array( self::class, 'review_scan_finding' ) );
 		add_action( 'admin_post_uccm_save_inventory', array( self::class, 'save_inventory' ) );
 		add_action( 'admin_post_uccm_export_inventory', array( self::class, 'export_inventory' ) );
@@ -247,7 +250,14 @@ final class Admin {
 			exit;
 		}
 
-		Settings::update( array( 'scan_urls' => $urls ) );
+		Settings::update(
+			array(
+				'scan_urls'           => $urls,
+				'scan_excluded_paths' => $submitted['scan_excluded_paths'] ?? Crawler::DEFAULT_EXCLUDED_PATHS,
+				'scan_page_limit'     => $submitted['scan_page_limit'] ?? Scanner::MAX_TARGETS,
+				'scan_batch_size'     => $submitted['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE,
+			)
+		);
 		self::redirect( 'uccm-scans', 'saved' );
 	}
 
@@ -257,13 +267,67 @@ final class Admin {
 	public static function run_scan(): void {
 		self::require_capability( 'run_uccm_scans' );
 		check_admin_referer( 'uccm_run_scan' );
-		$result = Scanner::run();
+		$result = Scanner::start();
 
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
 		}
 
-		self::redirect( 'uccm-scans', 'scan-complete' );
+		self::redirect( 'uccm-scans', 'scan-started' );
+	}
+
+	/**
+	 * Cancel one resumable scan while preserving its evidence.
+	 */
+	public static function cancel_scan(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_cancel_scan' );
+		$run_id = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$result = Scanner::cancel( $run_id );
+
+		if ( is_wp_error( $result ) || false === $result ) {
+			$message = is_wp_error( $result ) ? $result->get_error_message() : __( 'The scan could not be cancelled.', 'uk-cookie-consent-manager' );
+			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'scan-cancelled' );
+	}
+
+	/**
+	 * Resume one interrupted scan from its persisted frontier.
+	 */
+	public static function resume_scan(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_admin_referer( 'uccm_resume_scan' );
+		$run_id = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$result = Scanner::resume( $run_id );
+
+		if ( is_wp_error( $result ) || false === $result ) {
+			$message = is_wp_error( $result ) ? $result->get_error_message() : __( 'The scan could not be resumed.', 'uk-cookie-consent-manager' );
+			wp_die( esc_html( $message ), '', array( 'response' => 400 ) );
+		}
+
+		self::redirect( 'uccm-scans', 'scan-resumed' );
+	}
+
+	/**
+	 * Receive one nonce- and capability-protected browser observation pass.
+	 */
+	public static function browser_scan_observations(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_ajax_referer( 'uccm_browser_scan', 'nonce' );
+		$run_id  = isset( $_POST['scan_id'] ) ? (int) $_POST['scan_id'] : 0;
+		$encoded = self::request_value( $_POST, 'payload' );
+		$payload = json_decode( $encoded, true );
+		$result  = Scanner::record_browser_observations( $run_id, is_array( $payload ) ? $payload : array() );
+
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) ? (int) ( $data['status'] ?? 400 ) : 400;
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), $status );
+		}
+
+		wp_send_json_success( array( 'counts' => $result ) );
 	}
 
 	/**
@@ -325,7 +389,7 @@ final class Admin {
 		self::require_capability( 'manage_uccm_settings' );
 		self::open_page( __( 'Cookie Consent Overview', 'uk-cookie-consent-manager' ) );
 		echo '<p>' . esc_html__( 'Configure consent, review observed storage and inspect privacy-preserving evidence from this menu.', 'uk-cookie-consent-manager' ) . '</p>';
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scanning is delivered separately in UCCM-7. Until then, inventory entries are curated manually.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Cookie scans run in resumable background batches. Detected changes remain review findings until an administrator explicitly updates the curated inventory.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		self::close_page();
 	}
 
@@ -421,10 +485,13 @@ final class Admin {
 	 */
 	public static function render_scans(): void {
 		self::require_capability( 'run_uccm_scans' );
-		$settings = Settings::current();
-		$urls     = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
-		$runs     = Scanner::recent_runs( 20 );
-		$next     = wp_next_scheduled( Scanner::HOOK );
+		$settings       = Settings::current();
+		$urls           = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
+		$excluded_paths = is_array( $settings['scan_excluded_paths'] ?? null ) ? implode( "\n", $settings['scan_excluded_paths'] ) : '';
+		$page_limit     = (int) ( $settings['scan_page_limit'] ?? Scanner::MAX_TARGETS );
+		$batch_size     = (int) ( $settings['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE );
+		$runs           = Scanner::recent_runs( 20 );
+		$next           = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
@@ -432,19 +499,58 @@ final class Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only value is escaped before display.
 		$rejected_url = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
 		$findings     = Scan_Findings::records( $scan_id, 100 );
+		$runner_run   = null;
+
+		if ( is_array( $runs ) && 0 < $scan_id ) {
+			foreach ( $runs as $candidate_run ) {
+				if ( $scan_id === (int) $candidate_run['id'] ) {
+					$runner_run = $candidate_run;
+					break;
+				}
+			}
+		}
+
+		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
+			$runner_pages   = json_decode( (string) $runner_run['pages_visited'], true );
+			$runner_pages   = is_array( $runner_pages ) ? $runner_pages : array();
+			$runner_targets = array();
+
+			foreach ( array_slice( $runner_pages, 0, Scanner::BROWSER_MAX_TARGETS ) as $runner_page ) {
+				if ( is_array( $runner_page ) && 0 < (int) ( $runner_page['status'] ?? 0 ) && ! empty( $runner_page['url'] ) ) {
+					$runner_targets[] = (string) $runner_page['url'];
+				}
+			}
+
+			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
+			wp_localize_script(
+				'uccm-scan-runner',
+				'UCCMScanRunner',
+				array(
+					'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+					'nonce'      => wp_create_nonce( 'uccm_browser_scan' ),
+					'runId'      => $scan_id,
+					'targets'    => array_values( array_unique( $runner_targets ) ),
+					'maxTargets' => Scanner::BROWSER_MAX_TARGETS,
+				)
+			);
+		}
 
 		self::open_page( __( 'Scans', 'uk-cookie-consent-manager' ) );
 
 		if ( 'saved' === $notice ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Scan settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
-		} elseif ( 'scan-complete' === $notice ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The manual scan completed.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'scan-started' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan was queued. WordPress will process it in resumable background batches.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'scan-cancelled' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan was cancelled and its evidence was retained.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'scan-resumed' === $notice ) {
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The interrupted scan was requeued from its saved frontier.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		} elseif ( 'finding-reviewed' === $notice ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan finding review outcome was saved. The curated inventory was not changed.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		}
 
 		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scans are bounded observations of configured public pages and are never exhaustive. Authenticated, personalised and geographically varied journeys may differ.', 'uk-cookie-consent-manager' ) . '</p></div>';
-		echo '<p><strong>' . esc_html__( 'Methods:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html__( 'same-origin Set-Cookie response inspection and authenticated browser observations for cookies, local storage, scripts, iframes and pixels.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Methods:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html__( 'asynchronous same-origin crawling with Set-Cookie inspection, plus an administrator-run browser pass for cookies, local storage, scripts, iframes and pixels.', 'uk-cookie-consent-manager' ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Next monthly run:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( false === $next ? __( 'Not scheduled', 'uk-cookie-consent-manager' ) : gmdate( 'Y-m-d H:i:s', $next ) . ' UTC' ) . '</p>';
 
 		self::form_open( 'uccm_save_scan_settings', 'uccm_save_scan_settings' );
@@ -464,11 +570,17 @@ final class Admin {
 
 		$textarea_attributes = 'scan-url-error' === $notice ? ' aria-invalid="true" aria-describedby="uccm-scan-url-error"' : '';
 		echo '<textarea id="uccm-scan-urls" class="large-text code" rows="7" name="uccm[scan_urls]"' . $textarea_attributes . '>' . esc_textarea( $urls ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attribute fragment is a fixed allowlisted string.
-		submit_button( __( 'Save scan URLs', 'uk-cookie-consent-manager' ) );
+		echo '<h3>' . esc_html__( 'Crawler limits', 'uk-cookie-consent-manager' ) . '</h3>';
+		self::number_field( 'scan_page_limit', __( 'Maximum unique pages per scan', 'uk-cookie-consent-manager' ), $page_limit, 1, Scanner::MAX_TARGETS );
+		self::number_field( 'scan_batch_size', __( 'Pages per background batch', 'uk-cookie-consent-manager' ), $batch_size, 1, 25 );
+		echo '<p><label for="uccm-scan-excluded-paths"><strong>' . esc_html__( 'Excluded path patterns', 'uk-cookie-consent-manager' ) . '</strong></label><br>';
+		echo '<textarea id="uccm-scan-excluded-paths" class="large-text code" rows="5" name="uccm[scan_excluded_paths]">' . esc_textarea( $excluded_paths ) . '</textarea><br>';
+		echo '<span class="description">' . esc_html__( 'One path pattern per line. Use * as a wildcard. WordPress administration, login, REST and feed paths are always excluded.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		submit_button( __( 'Save scan settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 
 		self::form_open( 'uccm_run_scan', 'uccm_run_scan' );
-		echo '<p>' . esc_html__( 'Manual scans run synchronously; keep this page open until WordPress returns. Until asynchronous crawling is delivered, configure only a practical test set even though the temporary hard ceiling is 1,024 pages including the homepage.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'Starting a scan returns immediately. WP-Cron processes a saved same-origin crawl frontier in bounded batches up to the configured limit; the page does not need to remain open.', 'uk-cookie-consent-manager' ) . '</p>';
 		submit_button( __( 'Run scan now', 'uk-cookie-consent-manager' ), 'primary' );
 		self::form_close();
 
@@ -479,25 +591,63 @@ final class Admin {
 		} elseif ( array() === $runs ) {
 			echo '<p>' . esc_html__( 'No scan runs have been recorded yet.', 'uk-cookie-consent-manager' ) . '</p>';
 		} else {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Pages', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Crawl progress', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Browser', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Findings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Warnings', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 			foreach ( $runs as $run ) {
-				$summary  = json_decode( (string) $run['summary'], true );
-				$pages    = json_decode( (string) $run['pages_visited'], true );
-				$summary  = is_array( $summary ) ? $summary : array();
-				$pages    = is_array( $pages ) ? $pages : array();
-				$warnings = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
-				$run_url  = add_query_arg(
+				$summary          = json_decode( (string) $run['summary'], true );
+				$pages            = json_decode( (string) $run['pages_visited'], true );
+				$coverage         = json_decode( (string) $run['coverage'], true );
+				$summary          = is_array( $summary ) ? $summary : array();
+				$pages            = is_array( $pages ) ? $pages : array();
+				$coverage         = is_array( $coverage ) ? $coverage : array();
+				$warnings         = is_array( $summary['warnings'] ?? null ) ? $summary['warnings'] : array();
+				$run_url          = add_query_arg(
 					array(
 						'page'    => 'uccm-scans',
 						'scan_id' => (int) $run['id'],
 					),
 					admin_url( 'admin.php' )
 				);
-				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td><td>' . esc_html( (string) count( $pages ) ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td></tr>';
+				$visited_count    = (int) ( $coverage['visited_count'] ?? count( $pages ) );
+				$discovered_count = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
+				$remaining_count  = (int) ( $coverage['remaining_count'] ?? 0 );
+				$browser_status   = (string) ( $coverage['browser_status'] ?? 'not-run' );
+				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td>';
+				/* translators: 1: visited pages, 2: discovered pages, 3: remaining pages. */
+				echo '<td>' . esc_html( sprintf( __( '%1$d visited / %2$d discovered; %3$d remaining', 'uk-cookie-consent-manager' ), $visited_count, $discovered_count, $remaining_count ) ) . '</td>';
+				echo '<td>' . esc_html( $browser_status ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td><td>';
+
+				if ( in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
+					if ( 'failed' === (string) $run['status'] ) {
+						self::form_open( 'uccm_resume_scan', 'uccm_resume_scan' );
+						echo '<input type="hidden" name="scan_id" value="' . esc_attr( (string) $run['id'] ) . '">';
+						submit_button( __( 'Resume', 'uk-cookie-consent-manager' ), 'secondary small', '', false );
+						self::form_close();
+					}
+
+					self::form_open( 'uccm_cancel_scan', 'uccm_cancel_scan' );
+					echo '<input type="hidden" name="scan_id" value="' . esc_attr( (string) $run['id'] ) . '">';
+					submit_button( __( 'Cancel', 'uk-cookie-consent-manager' ), 'secondary small', '', false );
+					self::form_close();
+				} else {
+					echo '&mdash;';
+				}
+
+				echo '</td></tr>';
 			}
 
 			echo '</tbody></table>';
+		}
+
+		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
+			$runner_coverage = json_decode( (string) $runner_run['coverage'], true );
+			$runner_coverage = is_array( $runner_coverage ) ? $runner_coverage : array();
+			echo '<h2>' . esc_html__( 'Browser observations for scan ', 'uk-cookie-consent-manager' ) . esc_html( (string) $scan_id ) . '</h2>';
+			echo '<p>' . esc_html__( 'This administrator-run pass opens up to 100 successfully crawled same-origin pages in hidden frames and observes accessible cookie names, local-storage keys, scripts, iframes and pixels. It cannot read HttpOnly cookie values and may be limited by page framing policy.', 'uk-cookie-consent-manager' ) . '</p>';
+			echo '<p><strong>' . esc_html__( 'Browser status:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( (string) ( $runner_coverage['browser_status'] ?? 'not-run' ) ) . '</p>';
+			echo '<button type="button" class="button button-secondary" id="uccm-run-browser-observations">' . esc_html__( 'Run browser observations', 'uk-cookie-consent-manager' ) . '</button>';
+			echo '<p id="uccm-browser-observation-status" aria-live="polite"></p>';
+			echo '<div id="uccm-browser-observation-frames" hidden></div>';
 		}
 
 		echo '<h2>' . esc_html__( 'Scan findings requiring human review', 'uk-cookie-consent-manager' ) . '</h2>';
