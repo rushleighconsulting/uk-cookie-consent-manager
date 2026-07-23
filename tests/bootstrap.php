@@ -185,6 +185,10 @@ class WP_Error {
 	public function get_error_message(): string {
 		return $this->message;
 	}
+
+	public function get_error_data(): mixed {
+		return $this->data;
+	}
 }
 
 function is_wp_error( mixed $value ): bool {
