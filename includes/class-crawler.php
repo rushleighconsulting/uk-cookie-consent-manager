@@ -42,7 +42,7 @@ final class Crawler {
 		preg_match_all( '/<a\b[^>]*\bhref\s*=\s*(["\'])(.*?)\1/is', $html, $matches );
 		$links = array();
 
-		foreach ( array_slice( $matches[2] ?? array(), 0, Scanner::MAX_TARGETS * 2 ) as $href ) {
+		foreach ( array_slice( $matches[2], 0, Scanner::MAX_TARGETS * 2 ) as $href ) {
 			$target = self::canonicalize( (string) $href, $base_url );
 
 			if ( is_wp_error( $target ) || self::is_excluded( $target, $excluded_patterns ) ) {
@@ -82,7 +82,7 @@ final class Crawler {
 		} else {
 			$relative = wp_parse_url( $href );
 
-			if ( false === $relative || ! is_array( $relative ) ) {
+			if ( false === $relative ) {
 				return new \WP_Error( 'uccm_crawl_invalid_link', __( 'The discovered link is invalid.', 'uk-cookie-consent-manager' ) );
 			}
 
