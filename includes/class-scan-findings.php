@@ -130,6 +130,11 @@ final class Scan_Findings {
 		$after = self::summary_fields( $observation );
 
 		if ( null === $inventory ) {
+			if ( '' !== $after['category_candidate'] ) {
+				$after['category'] = $after['category_candidate'];
+			}
+			unset( $after['category_candidate'] );
+
 			return array(
 				'type'   => 'new',
 				'before' => array(),
@@ -335,13 +340,19 @@ final class Scan_Findings {
 	 * @return array<string, string>
 	 */
 	private static function summary_fields( array $observation ): array {
+		$category_candidate = sanitize_key( (string) ( $observation['category_candidate'] ?? '' ) );
+
+		if ( ! in_array( $category_candidate, array( 'necessary', 'functional', 'analytics', 'marketing' ), true ) ) {
+			$category_candidate = '';
+		}
+
 		return array(
-			'storage_key'       => substr( sanitize_text_field( (string) ( $observation['storage_key'] ?? '' ) ), 0, 191 ),
-			'domain'            => strtolower( substr( sanitize_text_field( (string) ( $observation['domain'] ?? '' ) ), 0, 191 ) ),
-			'storage_type'      => sanitize_key( (string) ( $observation['storage_type'] ?? 'other' ) ),
-			'duration'          => substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 ),
-			'source_url'        => esc_url_raw( (string) ( $observation['source_url'] ?? '' ) ),
-			'category_candidate' => sanitize_key( (string) ( $observation['category_candidate'] ?? '' ) ),
+			'storage_key'        => substr( sanitize_text_field( (string) ( $observation['storage_key'] ?? '' ) ), 0, 191 ),
+			'domain'             => strtolower( substr( sanitize_text_field( (string) ( $observation['domain'] ?? '' ) ), 0, 191 ) ),
+			'storage_type'       => sanitize_key( (string) ( $observation['storage_type'] ?? 'other' ) ),
+			'duration'           => substr( sanitize_text_field( (string) ( $observation['duration'] ?? '' ) ), 0, 100 ),
+			'source_url'         => esc_url_raw( (string) ( $observation['source_url'] ?? '' ) ),
+			'category_candidate' => $category_candidate,
 		);
 	}
 
