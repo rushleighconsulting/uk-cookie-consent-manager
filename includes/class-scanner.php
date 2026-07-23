@@ -424,7 +424,7 @@ final class Scanner {
 			)
 		);
 
-		return is_array( $payload ) ? $payload : $empty;
+		return $payload;
 	}
 
 	/**
@@ -536,13 +536,9 @@ final class Scanner {
 	 * @return string[]
 	 */
 	private static function set_cookie_headers( mixed $response ): array {
-		$header = wp_remote_retrieve_header( $response, 'set-cookie' );
+		$header = (string) wp_remote_retrieve_header( $response, 'set-cookie' );
 
-		if ( is_array( $header ) ) {
-			return array_values( array_filter( array_map( 'strval', $header ) ) );
-		}
-
-		if ( ! is_string( $header ) || '' === trim( $header ) ) {
+		if ( '' === trim( $header ) ) {
 			return array();
 		}
 
@@ -561,7 +557,7 @@ final class Scanner {
 		$segments = array_map( 'trim', explode( ';', $header ) );
 		$pair     = array_shift( $segments );
 
-		if ( null === $pair || ! str_contains( $pair, '=' ) ) {
+		if ( ! str_contains( $pair, '=' ) ) {
 			return null;
 		}
 
