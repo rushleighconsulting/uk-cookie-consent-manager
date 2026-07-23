@@ -25,6 +25,8 @@ define( 'UCCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once UCCM_PLUGIN_DIR . 'includes/class-database.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-capabilities.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-consent-interface.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-plugin.php';
 
 register_activation_hook( UCCM_PLUGIN_FILE, array( 'UCCM\\Activator', 'activate' ) );
