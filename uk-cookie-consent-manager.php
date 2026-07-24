@@ -2,6 +2,7 @@
 /**
  * Plugin Name: UK Cookie Consent Manager
  * Plugin URI:  https://github.com/rushleighconsulting/uk-cookie-consent-manager
+ * Update URI:  https://github.com/rushleighconsulting/uk-cookie-consent-manager
  * Description: Privacy-by-design cookie consent and management for UK WordPress sites.
  * Version:     0.1.0-rc.9
  * Requires at least: 6.8

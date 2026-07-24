@@ -9,21 +9,17 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use UCCM\Secure_Updater;
-use UCCM\Settings;
 
 final class SecureUpdaterTest extends TestCase {
 
 	protected function setUp(): void {
 		$GLOBALS['uccm_test_options']         = array();
 		$GLOBALS['uccm_test_site_transients'] = array();
+		$GLOBALS['uccm_test_actions']         = array();
+		$GLOBALS['uccm_test_filters']         = array();
 	}
 
 	public function test_valid_signature_and_newer_compatible_release_are_accepted(): void {
-		Settings::update(
-			array(
-				'update_public_key' => base64_encode( str_repeat( 'p', 32 ) ),
-			)
-		);
 		$manifest = $this->manifest();
 		$result   = Secure_Updater::validate_manifest(
 			$manifest,
@@ -41,11 +37,6 @@ final class SecureUpdaterTest extends TestCase {
 	}
 
 	public function test_signature_mismatch_is_blocked(): void {
-		Settings::update(
-			array(
-				'update_public_key' => base64_encode( str_repeat( 'p', 32 ) ),
-			)
-		);
 		$result = Secure_Updater::validate_manifest(
 			$this->manifest(),
 			static fn (): bool => false
@@ -53,6 +44,15 @@ final class SecureUpdaterTest extends TestCase {
 
 		self::assertInstanceOf( WP_Error::class, $result );
 		self::assertSame( 'uccm_update_signature_invalid', $result->get_error_code() );
+	}
+
+	public function test_package_outside_the_official_immutable_release_path_is_blocked(): void {
+		$manifest                = $this->manifest();
+		$manifest['package_url'] = 'https://example.test/uk-cookie-consent-manager-0.2.0.zip';
+		$result                  = Secure_Updater::validate_manifest( $manifest, static fn (): bool => true );
+
+		self::assertInstanceOf( WP_Error::class, $result );
+		self::assertSame( 'uccm_update_manifest_invalid', $result->get_error_code() );
 	}
 
 	public function test_checksum_mismatch_is_blocked(): void {
@@ -66,32 +66,67 @@ final class SecureUpdaterTest extends TestCase {
 		unlink( $file );
 	}
 
-	public function test_site_credential_is_encrypted_and_never_stored_in_settings(): void {
-		$result = Secure_Updater::save_credential( 'site-specific-token' );
+	public function test_register_uses_wordpress_native_update_controls(): void {
+		Secure_Updater::register();
 
-		self::assertTrue( $result );
-		self::assertArrayHasKey( Secure_Updater::CREDENTIAL_OPTION, $GLOBALS['uccm_test_options'] );
-		self::assertStringNotContainsString( 'site-specific-token', $GLOBALS['uccm_test_options'][ Secure_Updater::CREDENTIAL_OPTION ] );
-		self::assertArrayNotHasKey( 'update_credential', Settings::current() );
-		self::assertTrue( Secure_Updater::has_credential() );
-
-		Secure_Updater::clear_credential();
-		self::assertFalse( Secure_Updater::has_credential() );
+		self::assertArrayHasKey( 'update_plugins_github.com', $GLOBALS['uccm_test_filters'] );
+		self::assertArrayNotHasKey( 'auto_update_plugin', $GLOBALS['uccm_test_filters'] );
+		self::assertArrayHasKey( 'automatic_updates_complete', $GLOBALS['uccm_test_actions'] );
 	}
 
-	public function test_auto_update_accepts_nullable_wordpress_value_and_requires_explicit_opt_in(): void {
-		$item       = (object) array( 'plugin' => 'uk-cookie-consent-manager/uk-cookie-consent-manager.php' );
-		$other_item = (object) array( 'plugin' => 'other/plugin.php' );
+	public function test_native_update_uri_offer_uses_authenticated_cached_manifest(): void {
+		$GLOBALS['uccm_test_site_transients']['uccm_update_manifest'] = array_diff_key(
+			$this->manifest(),
+			array( 'signature' => true )
+		);
 
-		self::assertFalse( Secure_Updater::allow_auto_update( null, $item ) );
-		self::assertFalse( Secure_Updater::allow_auto_update( false, $item ) );
-		self::assertNull( Secure_Updater::allow_auto_update( null, $other_item ) );
-		self::assertFalse( Secure_Updater::allow_auto_update( false, $other_item ) );
-		self::assertTrue( Secure_Updater::allow_auto_update( true, $other_item ) );
+		$result = Secure_Updater::update_offer(
+			false,
+			array(),
+			'uk-cookie-consent-manager/uk-cookie-consent-manager.php',
+			array( 'en_GB' )
+		);
 
-		Settings::update( array( 'auto_update' => true ) );
-		self::assertTrue( Secure_Updater::allow_auto_update( null, $item ) );
-		self::assertTrue( Secure_Updater::allow_auto_update( false, $item ) );
+		self::assertIsArray( $result );
+		self::assertSame( '0.2.0', $result['version'] );
+		self::assertSame( 'https://github.com/rushleighconsulting/uk-cookie-consent-manager', $result['id'] );
+		self::assertArrayNotHasKey( 'autoupdate', $result );
+	}
+
+	public function test_signed_staged_rollout_is_deterministic_and_older_manifests_remain_eligible(): void {
+		self::assertTrue( Secure_Updater::rollout_eligible( array() ) );
+		self::assertFalse(
+			Secure_Updater::rollout_eligible(
+				array(
+					'rollout_percentage' => '0',
+					'rollout_seed'       => 'v0.2.0',
+				)
+			)
+		);
+		self::assertTrue(
+			Secure_Updater::rollout_eligible(
+				array(
+					'rollout_percentage' => '100',
+					'rollout_seed'       => 'v0.2.0',
+				)
+			)
+		);
+	}
+
+	public function test_staged_rollout_fields_are_covered_by_the_signature_payload(): void {
+		$manifest                       = $this->manifest();
+		$manifest['rollout_percentage'] = '25';
+		$manifest['rollout_seed']       = 'v0.2.0';
+		$result                         = Secure_Updater::validate_manifest(
+			$manifest,
+			static fn ( string $signature, string $payload, string $public_key ): bool => 64 === strlen( $signature )
+				&& 32 === strlen( $public_key )
+				&& str_contains( $payload, '"rollout_percentage":"25"' )
+				&& str_contains( $payload, '"rollout_seed":"v0.2.0"' )
+		);
+
+		self::assertIsArray( $result );
+		self::assertSame( '25', $result['rollout_percentage'] );
 	}
 
 	/**

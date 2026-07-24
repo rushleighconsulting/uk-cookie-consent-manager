@@ -43,9 +43,12 @@ the versioned plugin ZIP produced by the Release workflow.
   addresses but keeps forwarded headers ignored.
 - **Retention:** confirm the consent-record retention period. Cleanup runs daily
   through WP-Cron and defaults to 365 days.
-- **Advanced:** leave automatic updates disabled until the signed manifest URL,
-  Ed25519 public key and a least-privilege release-download credential are
-  configured and tested.
+- **Updates:** UCCM needs no GitHub account or site-specific update credentials.
+  Open **Plugins** to enable or disable WordPress automatic updates for UCCM.
+  Open **Cookie Consent → Advanced** to check the installed and latest versions,
+  run an immediate authenticated check, and review temporary-backup, disk-space
+  and loopback readiness. Resolve any recovery warning before relying on
+  unattended updates.
 
 ## Inventory and scanning
 
