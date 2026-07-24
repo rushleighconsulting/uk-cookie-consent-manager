@@ -31,6 +31,7 @@ final class Admin {
 		add_action( 'admin_post_uccm_cancel_scan', array( self::class, 'cancel_scan' ) );
 		add_action( 'admin_post_uccm_resume_scan', array( self::class, 'resume_scan' ) );
 		add_action( 'wp_ajax_uccm_browser_scan_observations', array( self::class, 'browser_scan_observations' ) );
+		add_action( 'wp_ajax_nopriv_uccm_post_password_bootstrap', array( self::class, 'post_password_bootstrap' ) );
 		add_action( 'admin_post_uccm_review_scan_finding', array( self::class, 'review_scan_finding' ) );
 		add_action( 'admin_post_uccm_save_inventory', array( self::class, 'save_inventory' ) );
 		add_action( 'admin_post_uccm_export_inventory', array( self::class, 'export_inventory' ) );
@@ -394,14 +395,26 @@ final class Admin {
 			exit;
 		}
 
+		if ( ! empty( $submitted['remove_post_password'] ) ) {
+			Post_Password_Access::clear_password();
+		} elseif ( isset( $submitted['post_password'] ) && is_string( $submitted['post_password'] ) && '' !== $submitted['post_password'] ) {
+			$password_result = Post_Password_Access::save_password( $submitted['post_password'] );
+
+			if ( is_wp_error( $password_result ) ) {
+				wp_die( esc_html( $password_result->get_error_message() ), '', array( 'response' => 400 ) );
+			}
+		}
+
 		Settings::update(
 			array(
-				'scan_urls'           => $urls,
-				'scan_excluded_paths' => $submitted['scan_excluded_paths'] ?? Crawler::DEFAULT_EXCLUDED_PATHS,
-				'scan_page_limit'     => $submitted['scan_page_limit'] ?? Scanner::MAX_TARGETS,
-				'scan_batch_size'     => $submitted['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE,
+				'scan_urls'                      => $urls,
+				'scan_excluded_paths'            => $submitted['scan_excluded_paths'] ?? Crawler::DEFAULT_EXCLUDED_PATHS,
+				'scan_page_limit'                => $submitted['scan_page_limit'] ?? Scanner::MAX_TARGETS,
+				'scan_batch_size'                => $submitted['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE,
+				'scan_protected_content_enabled' => $submitted['scan_protected_content_enabled'] ?? false,
 			)
 		);
+
 		self::redirect( 'uccm-scans', 'saved' );
 	}
 
@@ -453,6 +466,49 @@ final class Admin {
 
 		self::redirect( 'uccm-scans', 'scan-resumed' );
 	}
+
+
+	/**
+	 * Establish WordPress's native post-password cookie inside an isolated browser frame.
+	 *
+	 * The short-lived opaque token authorises only exact protected targets from one
+	 * completed scan. Neither the password nor cookie value is returned as data.
+	 */
+	public static function post_password_bootstrap(): void {
+		$token  = self::request_value( $_POST, 'token' );
+		$run_id = (int) self::request_value( $_POST, 'scan_id' );
+		$target = self::request_value( $_POST, 'target' );
+		$target = Scanner::validate_target( $target );
+
+		if ( is_wp_error( $target ) || ! Post_Password_Access::browser_token_allows( $token, $run_id, $target ) ) {
+			status_header( 403 );
+			exit;
+		}
+
+		$value = Post_Password_Access::cookie_value();
+
+		if ( '' === $value ) {
+			status_header( 403 );
+			exit;
+		}
+
+		$options = array(
+			'expires'  => time() + ( 20 * MINUTE_IN_SECONDS ),
+			'path'     => defined( 'COOKIEPATH' ) && '' !== COOKIEPATH ? COOKIEPATH : '/',
+			'secure'   => is_ssl(),
+			'httponly' => true,
+			'samesite' => 'Lax',
+		);
+
+		if ( defined( 'COOKIE_DOMAIN' ) && '' !== COOKIE_DOMAIN ) {
+			$options['domain'] = COOKIE_DOMAIN;
+		}
+
+		setcookie( Post_Password_Access::cookie_name(), $value, $options );
+		wp_safe_redirect( $target );
+		exit;
+	}
+
 
 	/**
 	 * Receive one nonce- and capability-protected browser observation pass.
@@ -718,6 +774,8 @@ final class Admin {
 		$excluded_paths = is_array( $settings['scan_excluded_paths'] ?? null ) ? implode( "\n", $settings['scan_excluded_paths'] ) : '';
 		$page_limit     = (int) ( $settings['scan_page_limit'] ?? Scanner::MAX_TARGETS );
 		$batch_size     = (int) ( $settings['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE );
+		$protected_enabled = ! empty( $settings['scan_protected_content_enabled'] );
+		$protected_password = Post_Password_Access::has_password();
 		$runs           = Scanner::recent_runs( 20 );
 		$next           = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
@@ -741,8 +799,10 @@ final class Admin {
 		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
 			$runner_pages   = json_decode( (string) $runner_run['pages_visited'], true );
 			$runner_pages   = is_array( $runner_pages ) ? $runner_pages : array();
-			$runner_targets = Scanner::browser_targets( $runner_pages );
-			$consent_config = Consent_State::configuration();
+			$runner_targets    = Scanner::browser_targets( $runner_pages );
+			$protected_targets = array_values( array_filter( $runner_targets, array( Post_Password_Access::class, 'target_is_unlocked' ) ) );
+			$browser_token     = Post_Password_Access::issue_browser_token( $scan_id, $protected_targets );
+			$consent_config    = Consent_State::configuration();
 
 			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
 			wp_localize_script(
@@ -752,8 +812,10 @@ final class Admin {
 					'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 					'nonce'         => wp_create_nonce( 'uccm_browser_scan' ),
 					'runId'         => $scan_id,
-					'targets'       => $runner_targets,
-					'maxTargets'    => Scanner::BROWSER_MAX_TARGETS,
+					'targets'           => $runner_targets,
+					'protectedTargets'  => $protected_targets,
+					'postPasswordToken' => $browser_token,
+					'maxTargets'        => Scanner::BROWSER_MAX_TARGETS,
 					'cookieName'    => (string) $consent_config['cookieName'],
 					'cookiePath'    => (string) $consent_config['cookiePath'],
 					'policyVersion' => (string) $consent_config['policyVersion'],
@@ -804,6 +866,11 @@ final class Admin {
 		echo '<p><label for="uccm-scan-excluded-paths"><strong>' . esc_html__( 'Excluded path patterns', 'uk-cookie-consent-manager' ) . '</strong></label><br>';
 		echo '<textarea id="uccm-scan-excluded-paths" class="large-text code" rows="5" name="uccm[scan_excluded_paths]">' . esc_textarea( $excluded_paths ) . '</textarea><br>';
 		echo '<span class="description">' . esc_html__( 'One path pattern per line. Use * as a wildcard. WordPress administration, login, REST and feed paths are always excluded.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '<h3>' . esc_html__( 'Password-protected pages', 'uk-cookie-consent-manager' ) . '</h3>';
+		echo '<p>' . esc_html__( 'By default, WordPress post-password protected pages are not checked. You can opt in with one shared WordPress post password. This does not sign the scanner into WordPress or other services.', 'uk-cookie-consent-manager' ) . '</p>';
+		self::checkbox_field( 'scan_protected_content_enabled', __( 'Check pages unlocked by the stored WordPress post password', 'uk-cookie-consent-manager' ), $protected_enabled, __( 'Only published pages and posts on this site that match the stored password become eligible.', 'uk-cookie-consent-manager' ) );
+		echo '<p><label for="uccm-post-password"><strong>' . esc_html__( 'WordPress post password', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-post-password" class="regular-text" type="password" autocomplete="new-password" name="uccm[post_password]" value="" placeholder="' . esc_attr__( 'Leave blank to keep the stored password', 'uk-cookie-consent-manager' ) . '"><br><small>' . esc_html( $protected_password ? __( 'An encrypted post password is configured.', 'uk-cookie-consent-manager' ) : __( 'No usable post password is configured.', 'uk-cookie-consent-manager' ) ) . '</small></p>';
+		self::checkbox_field( 'remove_post_password', __( 'Remove the stored post password', 'uk-cookie-consent-manager' ), false, __( 'The password is never displayed after saving. Removing it makes protected pages ineligible immediately.', 'uk-cookie-consent-manager' ) );
 		submit_button( __( 'Save scan settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 
