@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use UCCM\Activator;
+use UCCM\Operational_Alerts;
 use UCCM\Scanner;
 use UCCM\Settings;
 
@@ -17,6 +18,7 @@ final class ScannerTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['wpdb']                         = new wpdb();
 		$GLOBALS['uccm_test_options']            = array();
+		$GLOBALS['uccm_test_mail']               = array();
 		$GLOBALS['uccm_test_scheduled_hooks']    = array();
 		$GLOBALS['uccm_test_schedule_events']    = array();
 		$GLOBALS['uccm_test_spawn_cron_calls']   = array();
@@ -374,6 +376,28 @@ final class ScannerTest extends TestCase {
 		self::assertSame( array( 'reject', 'accept-all', 'analytics' ), $after['consent_states'] );
 	}
 
+
+	public function test_browser_failure_alert_survives_an_unavailable_scan_record(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$GLOBALS['uccm_test_options']['admin_email']          = 'admin@example.test';
+		Settings::update( array( 'error_email_enabled' => true ) );
+
+		$result = Scanner::record_browser_observations(
+			41,
+			array(
+				'status'       => 'failed',
+				'problem'      => 'isolated-context-unavailable',
+				'observations' => array(),
+			)
+		);
+
+		self::assertTrue( is_wp_error( $result ) );
+		self::assertCount( 1, Operational_Alerts::current() );
+		self::assertSame( 'uccm_browser_isolated-context-unavailable', Operational_Alerts::current()[0]['code'] );
+		self::assertSame( 41, Operational_Alerts::current()[0]['run_id'] );
+		self::assertSame( 'sent', Operational_Alerts::current()[0]['email_status'] );
+		self::assertCount( 1, $GLOBALS['uccm_test_mail'] );
+	}
 
 	public function test_browser_targets_include_only_successful_html_pages(): void {
 		$targets = Scanner::browser_targets(
