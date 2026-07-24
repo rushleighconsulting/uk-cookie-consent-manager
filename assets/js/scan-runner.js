@@ -215,7 +215,7 @@
 	function inspectScenario( target, scenario, collected, protectedTarget ) {
 		return new Promise( function ( resolve, reject ) {
 			var frame = document.createElement( 'iframe' );
-			var phase = protectedTarget ? 'bootstrap' : 'prepare';
+			var phase = 'prepare';
 			var settled = false;
 			var timer;
 
@@ -235,27 +235,6 @@
 			frame.addEventListener( 'load', function () {
 				window.setTimeout( function () {
 					try {
-						if ( 'bootstrap' === phase ) {
-							if ( ! config.postPasswordToken ) {
-								throw new Error( 'protected-page-access-unavailable' );
-							}
-
-							phase = 'prepare';
-							var form = frame.contentDocument.createElement( 'form' );
-							form.method = 'post';
-							form.action = String( config.ajaxUrl || '' );
-							[ [ 'action', 'uccm_post_password_bootstrap' ], [ 'token', config.postPasswordToken ], [ 'scan_id', config.runId ], [ 'target', target ] ].forEach( function ( field ) {
-								var input = frame.contentDocument.createElement( 'input' );
-								input.type = 'hidden';
-								input.name = field[ 0 ];
-								input.value = String( field[ 1 ] || '' );
-								form.appendChild( input );
-							} );
-							frame.contentDocument.body.appendChild( form );
-							form.submit();
-							return;
-						}
-
 						if ( 'prepare' === phase ) {
 							clearVisitorState( frame.contentWindow, frame.contentDocument );
 							applyScenario( frame.contentWindow, frame.contentDocument, scenario );
@@ -275,7 +254,33 @@
 			timer = window.setTimeout( function () {
 				finish( new Error( 'page-observation-timed-out' ) );
 			}, 15000 );
-			frame.src = protectedTarget ? 'about:blank' : target;
+			if ( protectedTarget ) {
+				if ( ! config.postPasswordToken ) {
+					finish( new Error( 'protected-page-access-unavailable' ) );
+					return;
+				}
+
+				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
+				document.body.appendChild( frame );
+				var form = document.createElement( 'form' );
+				form.method = 'post';
+				form.action = String( config.ajaxUrl || '' );
+				form.target = frame.name;
+				form.hidden = true;
+				[ [ 'action', 'uccm_post_password_bootstrap' ], [ 'token', config.postPasswordToken ], [ 'scan_id', config.runId ], [ 'target', target ] ].forEach( function ( field ) {
+					var input = document.createElement( 'input' );
+					input.type = 'hidden';
+					input.name = field[ 0 ];
+					input.value = String( field[ 1 ] || '' );
+					form.appendChild( input );
+				} );
+				document.body.appendChild( form );
+				form.submit();
+				form.remove();
+				return;
+			}
+
+			frame.src = target;
 			document.body.appendChild( frame );
 		} );
 	}
