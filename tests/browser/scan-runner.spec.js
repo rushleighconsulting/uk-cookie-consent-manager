@@ -35,8 +35,9 @@ const targetFixture = `
 </html>
 `;
 
-test( 'runner isolates administrator state, checks consent states and groups affected pages', async ( { page } ) => {
+test( 'runner isolates administrator state, uses bounded post-password bootstrap and groups affected pages', async ( { page } ) => {
 	const submissions = [];
+	let bootstrapRequests = 0;
 
 	await page.addInitScript( () => {
 		window.UCCMScanRunner = {
@@ -49,6 +50,8 @@ test( 'runner isolates administrator state, checks consent states and groups aff
 			policyVersion: '1',
 			pluginVersion: '0.1.0-rc.4',
 			lifetimeDays: 365,
+			protectedTargets: [ 'https://example.test/page-two' ],
+			postPasswordToken: 'opaque-browser-token',
 			targets: [
 				'https://example.test/page-one',
 				'https://example.test/page-two',
@@ -63,6 +66,23 @@ test( 'runner isolates administrator state, checks consent states and groups aff
 
 		if ( 'POST' === request.method() && '/wp-admin/admin-ajax.php' === url.pathname ) {
 			const submitted = new URLSearchParams( request.postData() || '' );
+
+			if ( 'uccm_post_password_bootstrap' === submitted.get( 'action' ) ) {
+				bootstrapRequests += 1;
+				expect( submitted.get( 'token' ) ).toBe( 'opaque-browser-token' );
+				expect( submitted.get( 'scan_id' ) ).toBe( '42' );
+				expect( submitted.get( 'target' ) ).toBe( 'https://example.test/page-two' );
+				await route.fulfill( {
+					status: 302,
+					headers: {
+						location: 'https://example.test/page-two',
+						'set-cookie': 'wp-postpass_test=%24P%24Bhash; Path=/; HttpOnly; SameSite=Lax'
+					},
+					body: ''
+				} );
+				return;
+			}
+
 			submissions.push( JSON.parse( submitted.get( 'payload' ) ) );
 			await route.fulfill( {
 				status: 200,
@@ -134,7 +154,9 @@ test( 'runner isolates administrator state, checks consent states and groups aff
 			expect.objectContaining( { type: 'pixel', storage_key: 'tracking-pixel' } )
 		] )
 	);
+	expect( bootstrapRequests ).toBe( 6 );
 	expect( payload.observations.some( ( observation ) => 'uccm_consent' === observation.storage_key ) ).toBe( false );
+	expect( payload.observations.some( ( observation ) => 'wp-postpass_test' === observation.storage_key ) ).toBe( false );
 	expect( payload.observations.some( ( observation ) => 'inherited_admin_state' === observation.storage_key ) ).toBe( false );
 	expect( payload.observations.some( ( observation ) => observation.source_url.includes( 'outside.test' ) ) ).toBe( false );
 } );
