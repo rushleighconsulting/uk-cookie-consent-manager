@@ -229,10 +229,7 @@
 				error ? reject( error ) : resolve();
 			}
 
-			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
-			frame.credentialless = true;
-			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
-			frame.addEventListener( 'load', function () {
+			function handleObservationLoad() {
 				window.setTimeout( function () {
 					try {
 						if ( 'prepare' === phase ) {
@@ -250,18 +247,12 @@
 						finish( error instanceof Error ? error : new Error( 'page-observation-failed' ) );
 					}
 				}, 'prepare' === phase ? 50 : 750 );
-			} );
-			timer = window.setTimeout( function () {
-				finish( new Error( 'page-observation-timed-out' ) );
-			}, 15000 );
-			if ( protectedTarget ) {
-				if ( ! config.postPasswordToken ) {
-					finish( new Error( 'protected-page-access-unavailable' ) );
-					return;
-				}
+			}
 
-				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
-				document.body.appendChild( frame );
+			function submitProtectedBootstrap() {
+				frame.removeEventListener( 'load', submitProtectedBootstrap );
+				frame.addEventListener( 'load', handleObservationLoad );
+
 				var form = document.createElement( 'form' );
 				form.method = 'post';
 				form.action = String( config.ajaxUrl || '' );
@@ -277,9 +268,29 @@
 				document.body.appendChild( form );
 				form.submit();
 				form.remove();
+			}
+
+			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
+			frame.credentialless = true;
+			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
+			timer = window.setTimeout( function () {
+				finish( new Error( 'page-observation-timed-out' ) );
+			}, 15000 );
+
+			if ( protectedTarget ) {
+				if ( ! config.postPasswordToken ) {
+					finish( new Error( 'protected-page-access-unavailable' ) );
+					return;
+				}
+
+				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
+				frame.addEventListener( 'load', submitProtectedBootstrap );
+				frame.srcdoc = '<!doctype html><title>Cookie scan preparation</title>';
+				document.body.appendChild( frame );
 				return;
 			}
 
+			frame.addEventListener( 'load', handleObservationLoad );
 			frame.src = target;
 			document.body.appendChild( frame );
 		} );
