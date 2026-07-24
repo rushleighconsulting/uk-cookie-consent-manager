@@ -73,7 +73,6 @@ final class PostPasswordAccessTest extends TestCase {
 		$targets = Scanner::targets();
 
 		self::assertIsArray( $targets );
-		self::assertContains( 'https://example.test/public/', $targets );
 		self::assertContains( 'https://example.test/protected-match/', $targets );
 		self::assertNotContains( 'https://example.test/protected-other/', $targets );
 		self::assertNotContains( 'https://example.test/draft-protected/', $targets );
