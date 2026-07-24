@@ -152,7 +152,8 @@ final class Admin {
 					'update_manifest_url' => $submitted['update_manifest_url'] ?? '',
 					'update_public_key'   => $submitted['update_public_key'] ?? '',
 					'auto_update'         => $submitted['auto_update'] ?? false,
-					'error_email_enabled' => $submitted['error_email_enabled'] ?? false,
+					'error_email_enabled'             => $submitted['error_email_enabled'] ?? false,
+					'error_email_suppression_minutes' => $submitted['error_email_suppression_minutes'] ?? Settings::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES,
 				)
 			);
 
@@ -1104,7 +1105,8 @@ final class Admin {
 		self::checkbox_field( 'clear_update_credential', __( 'Remove the stored update credential', 'uk-cookie-consent-manager' ), false, __( 'The credential is never displayed after saving.', 'uk-cookie-consent-manager' ) );
 		self::checkbox_field( 'auto_update', __( 'Automatically install authenticated UCCM updates', 'uk-cookie-consent-manager' ), ! empty( $settings['auto_update'] ), __( 'Opt in only after testing your backup and recovery process.', 'uk-cookie-consent-manager' ) );
 		echo '<hr><h2>' . esc_html__( 'Operational error notifications', 'uk-cookie-consent-manager' ) . '</h2>';
-		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery, contain no consent records or credentials, and repeated problems are suppressed for six hours.', 'uk-cookie-consent-manager' ) );
+		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials.', 'uk-cookie-consent-manager' ) );
+		echo '<p><label for="uccm-error-email-suppression"><strong>' . esc_html__( 'Repeat email suppression (minutes)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-error-email-suppression" class="small-text" type="number" min="1" max="' . esc_attr( (string) Settings::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES ) . '" step="1" name="uccm[error_email_suppression_minutes]" value="' . esc_attr( (string) $settings['error_email_suppression_minutes'] ) . '"><br><small>' . esc_html__( 'Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours).', 'uk-cookie-consent-manager' ) . '</small></p>';
 		echo '<hr>';
 		self::checkbox_field( 'delete_data_on_uninstall', __( 'Delete all UCCM data when the plugin is uninstalled', 'uk-cookie-consent-manager' ), true === get_option( 'uccm_delete_data_on_uninstall', false ), __( 'Leave disabled to retain settings and evidence by default.', 'uk-cookie-consent-manager' ) );
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
