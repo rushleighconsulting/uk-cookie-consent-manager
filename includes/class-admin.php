@@ -613,8 +613,8 @@ final class Admin {
 	public static function render_overview(): void {
 		self::require_capability( 'manage_uccm_settings' );
 		self::open_page( __( 'Cookie Consent Overview', 'uk-cookie-consent-manager' ) );
-		echo '<p>' . esc_html__( 'Configure consent, review observed storage and inspect privacy-preserving evidence from this menu.', 'uk-cookie-consent-manager' ) . '</p>';
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Cookie scans run in resumable background batches. Detected changes remain review findings until an administrator explicitly updates the curated inventory.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		echo '<p>' . esc_html__( 'Set up your cookie banner, review what your site stores, and check visitors’ choices.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scans continue in the background. Anything new is listed for you to review before it is added to your cookie list.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		self::close_page();
 	}
 
