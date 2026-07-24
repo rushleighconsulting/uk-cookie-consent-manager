@@ -248,13 +248,14 @@ final class Scanner {
 	 * Build a bounded target plan and its coverage metadata.
 	 *
 	 * @param int $limit Maximum target count.
-	 * @return array{targets: string[], wordpress_content_count: int}|\WP_Error
+	 * @return array{targets: string[], wordpress_content_count: int, protected_targets: string[]}|\WP_Error
 	 */
 	private static function target_plan( int $limit ): array|\WP_Error {
 		$settings   = Settings::current();
 		$configured = is_array( $settings['scan_urls'] ?? null ) ? $settings['scan_urls'] : array();
 		$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
-		$wordpress  = self::eligible_wordpress_targets( $excluded );
+		$wordpress_plan = self::eligible_wordpress_targets( $excluded );
+		$wordpress      = $wordpress_plan['targets'];
 
 		$candidates = array_merge(
 			array(
@@ -321,6 +322,7 @@ final class Scanner {
 		return array(
 			'targets'                 => $targets,
 			'wordpress_content_count' => $wordpress_count,
+			'protected_targets'       => array_values( array_intersect( $targets, $wordpress_plan['protected_targets'] ) ),
 		);
 	}
 
@@ -333,27 +335,30 @@ final class Scanner {
 	 * @return string[]
 	 */
 	private static function eligible_wordpress_targets( array $excluded ): array {
-		$post_ids = get_posts(
-			array(
-				'post_type'              => array( 'page', 'post' ),
-				'post_status'            => 'publish',
-				'has_password'           => false,
-				'numberposts'            => self::MAX_TARGETS,
-				'posts_per_page'         => self::MAX_TARGETS,
-				'orderby'                => array(
-					'post_type' => 'ASC',
-					'ID'        => 'ASC',
-				),
-				'fields'                 => 'ids',
-				'no_found_rows'          => true,
-				'suppress_filters'       => false,
-				'ignore_sticky_posts'    => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			)
+		$protected_access = Post_Password_Access::enabled();
+		$query            = array(
+			'post_type'              => array( 'page', 'post' ),
+			'post_status'            => 'publish',
+			'numberposts'            => self::MAX_TARGETS,
+			'posts_per_page'         => self::MAX_TARGETS,
+			'orderby'                => array(
+				'post_type' => 'ASC',
+				'ID'        => 'ASC',
+			),
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'suppress_filters'       => false,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 
-		$records = array();
+		if ( ! $protected_access ) {
+			$query['has_password'] = false;
+		}
+
+		$post_ids = get_posts( $query );
+		$records  = array();
 
 		foreach ( $post_ids as $post_id ) {
 			$post = get_post( (int) $post_id );
@@ -362,14 +367,20 @@ final class Scanner {
 				null === $post
 				|| 'publish' !== $post->post_status
 				|| ! in_array( $post->post_type, array( 'page', 'post' ), true )
-				|| '' !== $post->post_password
 			) {
 				continue;
 			}
 
+			$is_protected = '' !== (string) $post->post_password;
+
+			if ( $is_protected && ! Post_Password_Access::matches( (string) $post->post_password ) ) {
+				continue;
+			}
+
 			$records[] = array(
-				'id'   => (int) $post_id,
-				'type' => (string) $post->post_type,
+				'id'        => (int) $post_id,
+				'type'      => (string) $post->post_type,
+				'protected' => $is_protected,
 			);
 		}
 
@@ -381,7 +392,8 @@ final class Scanner {
 			}
 		);
 
-		$targets = array();
+		$targets   = array();
+		$protected = array();
 
 		foreach ( $records as $record ) {
 			$permalink = get_permalink( $record['id'] );
@@ -397,9 +409,16 @@ final class Scanner {
 			}
 
 			$targets[ $target ] = true;
+
+			if ( $record['protected'] ) {
+				$protected[ $target ] = true;
+			}
 		}
 
-		return array_keys( $targets );
+		return array(
+			'targets'           => array_keys( $targets ),
+			'protected_targets' => array_keys( $protected ),
+		);
 	}
 
 	/**
@@ -443,6 +462,7 @@ final class Scanner {
 			'seen'                      => $targets,
 			'browser_status'            => 'not-run',
 			'browser_observation_count' => 0,
+			'protected_targets'         => $plan['protected_targets'],
 		);
 		$summary  = array(
 			'findings'       => 0,
@@ -451,7 +471,9 @@ final class Scanner {
 			'limitations'    => array(
 				'Published WordPress pages and posts are checked alongside eligible same-site links.',
 				'Media files, attachment records, archives, pagination and tracking-only URL variants are ignored unless explicitly configured.',
-				'Password-protected, unpublished, authenticated, personalised and geographically varied journeys are not included.',
+				Post_Password_Access::enabled()
+					? 'Password-protected pages matching the configured WordPress post password are included; other authenticated, unpublished, personalised and geographically varied journeys are not included.'
+					: 'Password-protected, unpublished, authenticated, personalised and geographically varied journeys are not included.',
 			),
 		);
 
@@ -566,7 +588,7 @@ final class Scanner {
 					continue;
 				}
 
-				$response = $fetcher( $validated, self::request_arguments() );
+				$response = $fetcher( $validated, self::request_arguments( $validated ) );
 
 				if ( is_wp_error( $response ) ) {
 					$warnings[] = array(
@@ -904,7 +926,7 @@ final class Scanner {
 			$fetcher      = $fetcher ?? array( self::class, 'safe_fetch' );
 
 			foreach ( $targets as $target ) {
-				$response = $fetcher( $target, self::request_arguments() );
+				$response = $fetcher( $target, self::request_arguments( $target ) );
 
 				if ( is_wp_error( $response ) ) {
 					$warnings[] = array(
@@ -1207,14 +1229,24 @@ final class Scanner {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private static function request_arguments(): array {
-		return array(
+	private static function request_arguments( string $target ): array {
+		$arguments = array(
 			'timeout'             => 10,
 			'redirection'         => 2,
 			'limit_response_size' => 1024 * 1024,
 			'user-agent'          => 'UCCM/' . UCCM_VERSION . '; ' . home_url( '/' ),
 			'reject_unsafe_urls'  => true,
 		);
+
+		if ( Post_Password_Access::target_is_unlocked( $target ) ) {
+			$cookie = Post_Password_Access::cookie_header();
+
+			if ( '' !== $cookie ) {
+				$arguments['headers'] = array( 'Cookie' => $cookie );
+			}
+		}
+
+		return $arguments;
 	}
 
 	/**
