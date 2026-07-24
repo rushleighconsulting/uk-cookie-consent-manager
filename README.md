@@ -137,6 +137,10 @@ The settings `trust_proxy_headers` and `trusted_proxy_ips` must both be
 configured before `X-Forwarded-For` is considered. Never enable proxy trust
 without an exact allowlist of the site's reverse proxies.
 
+In **Cookie Consent → Privacy**, the trusted-proxy address field is available
+only while forwarded-header trust is selected. Turning trust off preserves the
+saved allowlist for later use but keeps forwarded headers ignored.
+
 UCCM-6 adds:
 
 - A top-level Cookie Consent menu with Overview, Banner, View Categories, Script

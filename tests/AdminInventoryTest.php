@@ -25,6 +25,7 @@ final class AdminInventoryTest extends TestCase {
 		$GLOBALS['uccm_test_db_var']           = 0;
 		$GLOBALS['uccm_test_admin_menus']      = array();
 		$GLOBALS['uccm_test_admin_submenus']   = array();
+		$GLOBALS['uccm_test_enqueued_scripts'] = array();
 	}
 
 	public function test_nine_capability_separated_admin_screens_are_registered(): void {
@@ -60,6 +61,51 @@ final class AdminInventoryTest extends TestCase {
 		self::assertTrue( $settings['store_full_ip'] );
 		self::assertTrue( $settings['trust_proxy_headers'] );
 		self::assertSame( array( '192.0.2.10', '2001:db8::1' ), $settings['trusted_proxy_ips'] );
+	}
+
+	public function test_proxy_allowlist_is_preserved_and_ignored_when_header_trust_is_disabled(): void {
+		$current = array(
+			'trust_proxy_headers' => true,
+			'trusted_proxy_ips'   => array( '192.0.2.10' ),
+		);
+		$settings = Settings::sanitize(
+			array(
+				'trust_proxy_headers' => false,
+				'trusted_proxy_ips'   => "198.51.100.20\n",
+			),
+			$current
+		);
+
+		self::assertFalse( $settings['trust_proxy_headers'] );
+		self::assertSame( array( '192.0.2.10' ), $settings['trusted_proxy_ips'] );
+	}
+
+	public function test_privacy_screen_makes_proxy_addresses_unavailable_until_header_trust_is_enabled(): void {
+		$GLOBALS['uccm_test_capabilities']['manage_uccm_settings'] = true;
+		$GLOBALS['uccm_test_options']['uccm_settings']             = array(
+			'trust_proxy_headers' => false,
+			'trusted_proxy_ips'   => array( '192.0.2.10' ),
+		);
+
+		ob_start();
+		Admin::render_privacy();
+		$markup = (string) ob_get_clean();
+
+		self::assertArrayHasKey( 'uccm-privacy-settings', $GLOBALS['uccm_test_enqueued_scripts'] );
+		self::assertStringContainsString( 'data-uccm-trust-proxy-headers', $markup );
+		self::assertStringContainsString( 'aria-expanded="false"', $markup );
+		self::assertStringContainsString( 'data-uccm-trusted-proxies-settings hidden', $markup );
+		self::assertStringContainsString( 'disabled aria-disabled="true">192.0.2.10</textarea>', $markup );
+
+		$GLOBALS['uccm_test_options']['uccm_settings']['trust_proxy_headers'] = true;
+
+		ob_start();
+		Admin::render_privacy();
+		$enabled_markup = (string) ob_get_clean();
+
+		self::assertStringContainsString( 'aria-expanded="true"', $enabled_markup );
+		self::assertStringNotContainsString( 'data-uccm-trusted-proxies-settings hidden', $enabled_markup );
+		self::assertStringNotContainsString( 'disabled aria-disabled="true">192.0.2.10</textarea>', $enabled_markup );
 	}
 
 	public function test_scan_url_settings_reject_cross_origin_entries_before_save(): void {
@@ -259,6 +305,15 @@ final class AdminInventoryTest extends TestCase {
 		self::assertStringContainsString( '[data-uccm-remove-rule]', $script );
 		self::assertStringContainsString( 'setCustomValidity', $script );
 		self::assertStringContainsString( "JSON.stringify( rulesObject(), null, 2 )", $script );
+	}
+
+	public function test_privacy_script_preserves_and_controls_the_proxy_allowlist_field(): void {
+		$script = file_get_contents( dirname( __DIR__ ) . '/assets/js/admin-privacy.js' );
+
+		self::assertIsString( $script );
+		self::assertStringContainsString( 'proxySettings.hidden = ! enabled', $script );
+		self::assertStringContainsString( 'proxyAddresses.disabled = ! enabled', $script );
+		self::assertStringContainsString( "trustHeaders.setAttribute( 'aria-expanded'", $script );
 	}
 
 	/**

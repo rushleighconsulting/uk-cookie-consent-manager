@@ -138,14 +138,17 @@ final class Admin {
 				)
 			);
 		} elseif ( 'privacy' === $section ) {
-			Settings::update(
-				array(
-					'retention_days'      => $submitted['retention_days'] ?? 365,
-					'store_full_ip'       => $submitted['store_full_ip'] ?? false,
-					'trust_proxy_headers' => $submitted['trust_proxy_headers'] ?? false,
-					'trusted_proxy_ips'   => $submitted['trusted_proxy_ips'] ?? '',
-				)
+			$privacy_settings = array(
+				'retention_days'      => $submitted['retention_days'] ?? 365,
+				'store_full_ip'       => $submitted['store_full_ip'] ?? false,
+				'trust_proxy_headers' => $submitted['trust_proxy_headers'] ?? false,
 			);
+
+			if ( ! empty( $submitted['trust_proxy_headers'] ) && array_key_exists( 'trusted_proxy_ips', $submitted ) ) {
+				$privacy_settings['trusted_proxy_ips'] = $submitted['trusted_proxy_ips'];
+			}
+
+			Settings::update( $privacy_settings );
 		} elseif ( 'advanced' === $section ) {
 			Settings::update(
 				array(
@@ -1076,16 +1079,28 @@ final class Admin {
 	 */
 	public static function render_privacy(): void {
 		self::require_capability( 'manage_uccm_settings' );
-		$settings = Settings::current();
+		$settings            = Settings::current();
+		$trust_proxy_headers = ! empty( $settings['trust_proxy_headers'] );
+
+		wp_enqueue_script(
+			'uccm-privacy-settings',
+			plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/admin-privacy.js',
+			array(),
+			UCCM_VERSION,
+			true
+		);
+
 		self::open_page( __( 'Privacy', 'uk-cookie-consent-manager' ) );
 		self::saved_notice();
 		self::form_open( 'uccm_save_settings', 'uccm_save_privacy' );
 		echo '<input type="hidden" name="section" value="privacy">';
 		self::number_field( 'retention_days', __( 'Consent retention (days)', 'uk-cookie-consent-manager' ), (int) $settings['retention_days'], 1, 3650 );
 		self::checkbox_field( 'store_full_ip', __( 'Store encrypted complete IP addresses', 'uk-cookie-consent-manager' ), ! empty( $settings['store_full_ip'] ), __( 'This increases privacy risk and is not required for normal consent evidence.', 'uk-cookie-consent-manager' ) );
-		self::checkbox_field( 'trust_proxy_headers', __( 'Trust forwarded IP headers', 'uk-cookie-consent-manager' ), ! empty( $settings['trust_proxy_headers'] ), __( 'Enable only when every trusted reverse proxy is listed below.', 'uk-cookie-consent-manager' ) );
+		echo '<p><label><input id="uccm-trust-proxy-headers" data-uccm-trust-proxy-headers type="checkbox" name="uccm[trust_proxy_headers]" value="1" aria-controls="uccm-trusted-proxies-settings" aria-expanded="' . esc_attr( $trust_proxy_headers ? 'true' : 'false' ) . '" ' . checked( $trust_proxy_headers, true, false ) . '> <strong>' . esc_html__( 'Trust forwarded IP headers', 'uk-cookie-consent-manager' ) . '</strong></label><br><span class="description">' . esc_html__( 'Enable only when every trusted reverse proxy is listed below.', 'uk-cookie-consent-manager' ) . '</span></p>';
 		$proxies = is_array( $settings['trusted_proxy_ips'] ) ? implode( "\n", $settings['trusted_proxy_ips'] ) : '';
-		echo '<p><label for="uccm-trusted-proxies"><strong>' . esc_html__( 'Trusted proxy IPs', 'uk-cookie-consent-manager' ) . '</strong></label><br><textarea id="uccm-trusted-proxies" class="large-text code" rows="5" name="uccm[trusted_proxy_ips]">' . esc_textarea( $proxies ) . '</textarea></p>';
+		echo '<div id="uccm-trusted-proxies-settings" data-uccm-trusted-proxies-settings' . ( $trust_proxy_headers ? '' : ' hidden' ) . '>';
+		echo '<p><label for="uccm-trusted-proxies"><strong>' . esc_html__( 'Trusted proxy IPs', 'uk-cookie-consent-manager' ) . '</strong></label><br><textarea id="uccm-trusted-proxies" class="large-text code" rows="5" name="uccm[trusted_proxy_ips]" aria-describedby="uccm-trusted-proxies-description"' . ( $trust_proxy_headers ? '' : ' disabled aria-disabled="true"' ) . '>' . esc_textarea( $proxies ) . '</textarea><br><span class="description" id="uccm-trusted-proxies-description">' . esc_html__( 'Enter one proxy IP address per line. Only these proxies may supply a forwarded visitor address.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '</div>';
 		submit_button( __( 'Save privacy settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 		self::close_page();
