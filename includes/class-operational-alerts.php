@@ -51,7 +51,7 @@ final class Operational_Alerts {
 	 * @return array<string, mixed>
 	 */
 	public static function report( string $code, string $component, int $run_id = 0 ): array {
-		$code      = substr( sanitize_key( $code ), 0, 50 );
+		$code      = self::code( $code );
 		$component = self::component( $component );
 		$run_id    = max( 0, $run_id );
 		$now       = gmdate( 'Y-m-d H:i:s' );
@@ -96,7 +96,7 @@ final class Operational_Alerts {
 	 */
 	public static function resolve( string $code, string $component, int $run_id = 0 ): bool {
 		$records = self::records();
-		$id      = self::identifier( substr( sanitize_key( $code ), 0, 50 ), self::component( $component ), max( 0, $run_id ) );
+		$id      = self::identifier( self::code( $code ), self::component( $component ), max( 0, $run_id ) );
 
 		if ( ! isset( $records[ $id ] ) ) {
 			return false;
@@ -247,6 +247,14 @@ final class Operational_Alerts {
 	 */
 	private static function identifier( string $code, string $component, int $run_id ): string {
 		return hash( 'sha256', get_current_blog_id() . '|' . $component . '|' . $code . '|' . $run_id );
+	}
+
+	/**
+	 * Accept stable plugin error codes only, never caller-supplied detail.
+	 */
+	private static function code( string $code ): string {
+		$code = substr( sanitize_key( $code ), 0, 50 );
+		return str_starts_with( $code, 'uccm_' ) ? $code : 'uccm_operational_error';
 	}
 
 	/**
