@@ -255,17 +255,30 @@ final class Scanner {
 		$configured = is_array( $settings['scan_urls'] ?? null ) ? $settings['scan_urls'] : array();
 		$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
 		$wordpress  = self::eligible_wordpress_targets( $excluded );
+
 		$candidates = array_merge(
-			array( array( 'url' => home_url( '/' ), 'source' => 'homepage' ) ),
+			array(
+				array(
+					'url'    => home_url( '/' ),
+					'source' => 'homepage',
+				),
+			),
 			array_map(
-				static fn ( string $url ): array => array( 'url' => $url, 'source' => 'wordpress' ),
+				static fn ( string $url ): array => array(
+					'url'    => $url,
+					'source' => 'content',
+				),
 				$wordpress
 			),
 			array_map(
-				static fn ( mixed $url ): array => array( 'url' => (string) $url, 'source' => 'configured' ),
+				static fn ( mixed $url ): array => array(
+					'url'    => (string) $url,
+					'source' => 'configured',
+				),
 				$configured
 			)
 		);
+
 		$targets          = array();
 		$sources          = array();
 		$wordpress_lookup = array_fill_keys( $wordpress, true );
@@ -283,7 +296,7 @@ final class Scanner {
 			}
 
 			if ( isset( $sources[ $validated ] ) ) {
-				if ( 'wordpress' === $candidate['source'] ) {
+				if ( 'content' === $candidate['source'] ) {
 					$wordpress_lookup[ $validated ] = true;
 				}
 				continue;
@@ -306,8 +319,8 @@ final class Scanner {
 		}
 
 		return array(
-			'targets'                   => $targets,
-			'wordpress_content_count'   => $wordpress_count,
+			'targets'                 => $targets,
+			'wordpress_content_count' => $wordpress_count,
 		);
 	}
 
@@ -339,6 +352,7 @@ final class Scanner {
 				'update_post_term_cache' => false,
 			)
 		);
+
 		$records = array();
 
 		foreach ( is_array( $post_ids ) ? $post_ids : array() as $post_id ) {
@@ -412,10 +426,10 @@ final class Scanner {
 			return $plan;
 		}
 
-		$targets = $plan['targets'];
-		$methods    = array( 'same-origin-set-cookie', 'administrator-browser-observations' );
-		$now        = gmdate( 'Y-m-d H:i:s' );
-		$coverage   = array(
+		$targets  = $plan['targets'];
+		$methods  = array( 'same-origin-set-cookie', 'administrator-browser-observations' );
+		$now      = gmdate( 'Y-m-d H:i:s' );
+		$coverage = array(
 			'target_count'              => count( $targets ),
 			'discovered_count'          => count( $targets ),
 			'wordpress_content_count'   => (int) $plan['wordpress_content_count'],
@@ -430,7 +444,7 @@ final class Scanner {
 			'browser_status'            => 'not-run',
 			'browser_observation_count' => 0,
 		);
-		$summary    = array(
+		$summary  = array(
 			'findings'       => 0,
 			'finding_counts' => self::empty_finding_counts(),
 			'warnings'       => array(),
@@ -612,6 +626,7 @@ final class Scanner {
 
 						$seen[ $discovered ] = true;
 						$frontier[]          = $discovered;
+
 						$coverage['accepted_link_count'] = (int) ( $coverage['accepted_link_count'] ?? 0 ) + 1;
 					}
 
