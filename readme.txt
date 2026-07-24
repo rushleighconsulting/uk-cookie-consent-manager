@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.4
+Stable tag: 0.1.0-rc.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Privacy-by-design cookie consent and management for UK WordPress sites.
 
 == Description ==
 
-UK Cookie Consent Manager 0.1.0-rc.4 is a release candidate for controlled
+UK Cookie Consent Manager 0.1.0-rc.5 is a release candidate for controlled
 staging acceptance. It is not approved for production use.
 
 Release 1 provides an accessible consent banner, granular preferences, prior
@@ -35,6 +35,13 @@ or guarantee compliance.
 Do not install GitHub's automatic Source code archives.
 
 == Changelog ==
+
+= 0.1.0-rc.5 =
+* Makes background scans continue reliably on low-traffic sites, simplifies scan wording and clearly explains the necessary choice cookie set after any consent decision.
+* Isolates browser observations across pre-consent and category-specific choices, excludes non-page targets and de-duplicates detected storage items across pages and consent states.
+* Adds labelled Script Blocking controls for scripts, iframes, embeds and pixels, with accessible validation and a read-only expert view.
+* Expands crawler coverage across eligible published pages and posts while excluding media, archive, search, pagination, draft, private and trashed content; password-protected content remains excluded unless explicitly enabled.
+* Adds optional encrypted access for one WordPress post password and privacy-safe WordPress Dashboard alerts, with disabled-by-default administrator email notifications and configurable repeat suppression.
 
 = 0.1.0-rc.4 =
 * Renames the read-only Categories administration screen to View Categories and validates configured same-origin scan targets before saving.
