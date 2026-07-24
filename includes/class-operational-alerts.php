@@ -335,8 +335,8 @@ final class Operational_Alerts {
 			return $record;
 		}
 
-		$subject = __( 'UK Cookie Consent Manager needs attention', 'uk-cookie-consent-manager' );
-		$message = (string) $record['message'] . "\n\n";
+		$subject  = __( 'UK Cookie Consent Manager needs attention', 'uk-cookie-consent-manager' );
+		$message  = (string) $record['message'] . "\n\n";
 		$message .= __( 'Error code:', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['code'] . "\n";
 		$message .= __( 'Component:', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['component'] . "\n";
 		$message .= __( 'Time (UTC):', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['last_seen_at'] . "\n";
@@ -344,7 +344,7 @@ final class Operational_Alerts {
 
 		$sent = wp_mail( $recipient, $subject, $message );
 
-		$record['email_status'] = $sent ? 'sent' : 'failed';
+		$record['email_status']  = $sent ? 'sent' : 'failed';
 		$record['last_email_at'] = $now;
 
 		return $record;
