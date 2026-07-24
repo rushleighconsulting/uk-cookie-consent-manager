@@ -172,13 +172,17 @@ final class Admin {
 	}
 
 	/**
-	 * Persist explicitly declared resource rules from JSON.
+	 * Persist explicitly declared resource rules from the guided editor or JSON.
 	 */
 	public static function save_blocking_rules(): void {
 		self::require_capability( 'manage_uccm_settings' );
 		check_admin_referer( 'uccm_save_blocking' );
-		$json  = self::request_value( $_POST, 'rules' );
-		$rules = self::sanitize_blocking_rules( $json );
+		$submitted_rows = isset( $_POST['uccm_rules'] ) && is_array( $_POST['uccm_rules'] )
+			? wp_unslash( $_POST['uccm_rules'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Field-level validation follows.
+			: null;
+		$rules          = is_array( $submitted_rows )
+			? self::sanitize_blocking_rule_rows( $submitted_rows )
+			: self::sanitize_blocking_rules( self::request_value( $_POST, 'rules' ) );
 
 		if ( is_wp_error( $rules ) ) {
 			wp_die( esc_html( $rules->get_error_message() ), '', array( 'response' => 400 ) );
@@ -189,18 +193,94 @@ final class Admin {
 	}
 
 	/**
-	 * Validate explicit resource rules submitted through administration.
+	 * Validate explicit resource rules submitted as a JSON object.
 	 *
 	 * @param string $json JSON rule map.
 	 * @return array<string, array<string, string>>|\WP_Error
 	 */
 	public static function sanitize_blocking_rules( string $json ): array|\WP_Error {
+		$object  = json_decode( $json );
 		$decoded = json_decode( $json, true );
 
-		if ( ! is_array( $decoded ) ) {
-			return new \WP_Error( 'uccm_invalid_rules_json', __( 'Blocking rules must be a JSON object.', 'uk-cookie-consent-manager' ) );
+		if ( ! is_object( $object ) || ! is_array( $decoded ) ) {
+			return new \WP_Error( 'uccm_invalid_rules_json', __( 'Advanced blocking rules must be a JSON object, such as {}.', 'uk-cookie-consent-manager' ) );
 		}
 
+		return self::sanitize_blocking_rule_map( $decoded );
+	}
+
+	/**
+	 * Validate rows submitted by the guided rule editor.
+	 *
+	 * @param array<int|string, mixed> $submitted_rows Submitted rule rows.
+	 * @return array<string, array<string, string>>|\WP_Error
+	 */
+	public static function sanitize_blocking_rule_rows( array $submitted_rows ): array|\WP_Error {
+		$rule_map = array();
+
+		foreach ( array_values( $submitted_rows ) as $index => $row ) {
+			if ( ! is_array( $row ) ) {
+				return self::blocking_rule_error(
+					'uccm_invalid_blocking_rule',
+					__( 'A blocking rule has an invalid format.', 'uk-cookie-consent-manager' ),
+					$index,
+					'rule'
+				);
+			}
+
+			$id       = trim( (string) ( $row['id'] ?? '' ) );
+			$type     = trim( (string) ( $row['type'] ?? '' ) );
+			$category = trim( (string) ( $row['category'] ?? '' ) );
+			$handle   = trim( (string) ( $row['handle'] ?? '' ) );
+			$source   = trim( (string) ( $row['source'] ?? '' ) );
+			$title    = trim( (string) ( $row['title'] ?? '' ) );
+
+			if ( '' === $id && '' === $type && '' === $category && '' === $handle && '' === $source && '' === $title ) {
+				continue;
+			}
+
+			if ( '' === $id ) {
+				return self::blocking_rule_error(
+					'uccm_missing_blocking_rule_id',
+					__( 'Rule ID is required.', 'uk-cookie-consent-manager' ),
+					$index,
+					'id'
+				);
+			}
+
+			$sanitized_id = sanitize_key( $id );
+
+			if ( '' === $sanitized_id ) {
+				return self::blocking_rule_error(
+					'uccm_invalid_blocking_rule_id',
+					__( 'Rule ID must contain letters, numbers, hyphens or underscores.', 'uk-cookie-consent-manager' ),
+					$index,
+					'id'
+				);
+			}
+
+			if ( isset( $rule_map[ $sanitized_id ] ) ) {
+				return self::blocking_rule_error(
+					'uccm_duplicate_blocking_rule_id',
+					__( 'Each Rule ID must be unique.', 'uk-cookie-consent-manager' ),
+					$index,
+					'id'
+				);
+			}
+
+			$rule_map[ $sanitized_id ] = compact( 'type', 'category', 'handle', 'source', 'title' );
+		}
+
+		return self::sanitize_blocking_rule_map( $rule_map );
+	}
+
+	/**
+	 * Validate and sanitise one keyed rule map.
+	 *
+	 * @param array<int|string, mixed> $decoded Rule map.
+	 * @return array<string, array<string, string>>|\WP_Error
+	 */
+	private static function sanitize_blocking_rule_map( array $decoded ): array|\WP_Error {
 		$rules = array();
 
 		foreach ( $decoded as $rule_id => $rule ) {
@@ -210,19 +290,78 @@ final class Admin {
 			$handle   = is_array( $rule ) ? sanitize_key( (string) ( $rule['handle'] ?? '' ) ) : '';
 			$source   = is_array( $rule ) ? esc_url_raw( (string) ( $rule['source'] ?? '' ) ) : '';
 			$title    = is_array( $rule ) ? sanitize_text_field( (string) ( $rule['title'] ?? '' ) ) : '';
+			$index    = count( $rules );
 
-			if ( '' === $id || ! in_array( $type, array( 'script', 'iframe', 'embed', 'pixel' ), true ) || ! in_array( $category, array( 'functional', 'analytics', 'marketing' ), true ) ) {
-				return new \WP_Error( 'uccm_invalid_blocking_rule', __( 'Each blocking rule needs a valid ID, type and optional category.', 'uk-cookie-consent-manager' ) );
+			if ( '' === $id ) {
+				return self::blocking_rule_error(
+					'uccm_missing_blocking_rule_id',
+					__( 'Rule ID is required.', 'uk-cookie-consent-manager' ),
+					$index,
+					'id'
+				);
+			}
+
+			if ( ! in_array( $type, array( 'script', 'iframe', 'embed', 'pixel' ), true ) ) {
+				return self::blocking_rule_error(
+					'uccm_invalid_blocking_type',
+					__( 'Choose Script, Iframe, Embed or Pixel.', 'uk-cookie-consent-manager' ),
+					$index,
+					'type'
+				);
+			}
+
+			if ( ! in_array( $category, array( 'functional', 'analytics', 'marketing' ), true ) ) {
+				return self::blocking_rule_error(
+					'uccm_invalid_blocking_category',
+					__( 'Choose Functional, Analytics or Marketing.', 'uk-cookie-consent-manager' ),
+					$index,
+					'category'
+				);
 			}
 
 			if ( ( 'script' === $type && '' === $handle && '' === $source ) || ( 'script' !== $type && '' === $source ) ) {
-				return new \WP_Error( 'uccm_invalid_blocking_source', __( 'Each blocking rule needs an applicable handle or HTTPS source.', 'uk-cookie-consent-manager' ) );
+				return self::blocking_rule_error(
+					'uccm_invalid_blocking_source',
+					'script' === $type
+						? __( 'Enter a WordPress handle or an HTTPS source for this script.', 'uk-cookie-consent-manager' )
+						: __( 'Enter an HTTPS source for this resource.', 'uk-cookie-consent-manager' ),
+					$index,
+					'script' === $type ? 'handle' : 'source'
+				);
+			}
+
+			if ( '' !== $source && 'https' !== strtolower( (string) wp_parse_url( $source, PHP_URL_SCHEME ) ) ) {
+				return self::blocking_rule_error(
+					'uccm_insecure_blocking_source',
+					__( 'Source must be a complete HTTPS URL.', 'uk-cookie-consent-manager' ),
+					$index,
+					'source'
+				);
 			}
 
 			$rules[ $id ] = compact( 'type', 'category', 'handle', 'source', 'title' );
 		}
 
 		return $rules;
+	}
+
+	/**
+	 * Return an error that identifies the invalid guided-editor field.
+	 */
+	private static function blocking_rule_error( string $code, string $message, int $index, string $field ): \WP_Error {
+		return new \WP_Error(
+			$code,
+			sprintf(
+				/* translators: 1: rule number, 2: validation message. */
+				__( 'Rule %1$d: %2$s', 'uk-cookie-consent-manager' ),
+				$index + 1,
+				$message
+			),
+			array(
+				'index' => $index,
+				'field' => $field,
+			)
+		);
 	}
 
 	/**
@@ -431,16 +570,100 @@ final class Admin {
 	 */
 	public static function render_blocking(): void {
 		self::require_capability( 'manage_uccm_settings' );
-		$rules   = get_option( Resource_Rules::OPTION_NAME, array() );
-		$encoded = wp_json_encode( is_array( $rules ) ? $rules : array(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+		$stored_rules = get_option( Resource_Rules::OPTION_NAME, array() );
+		$rules        = is_array( $stored_rules ) ? $stored_rules : array();
+		$encoded      = array() === $rules ? '{}' : wp_json_encode( $rules, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+		$encoded      = false === $encoded ? '{}' : $encoded;
+
+		wp_enqueue_script(
+			'uccm-blocking-editor',
+			plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/admin-blocking.js',
+			array(),
+			UCCM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'uccm-blocking-editor',
+			'UCCMBlockingEditor',
+			array(
+				'newRule'        => __( 'New rule', 'uk-cookie-consent-manager' ),
+				'ruleLabel'      => __( 'Rule', 'uk-cookie-consent-manager' ),
+				'handleOrSource' => __( 'Enter a WordPress handle or an HTTPS source.', 'uk-cookie-consent-manager' ),
+				'httpsSource'    => __( 'Enter a complete HTTPS source.', 'uk-cookie-consent-manager' ),
+				'duplicateId'    => __( 'Each Rule ID must be unique.', 'uk-cookie-consent-manager' ),
+			)
+		);
+
 		self::open_page( __( 'Script Blocking', 'uk-cookie-consent-manager' ) );
 		self::saved_notice();
-		echo '<p>' . esc_html__( 'Declare only known optional resources. Invalid or incomplete JSON is rejected.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'Add only optional resources you recognise. UCCM blocks a configured resource until the visitor allows its category.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Incorrect rules can stop site features from working. Test each rule before using it on a live site.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		self::form_open( 'uccm_save_blocking_rules', 'uccm_save_blocking' );
-		echo '<textarea class="large-text code" rows="18" name="rules">' . esc_textarea( false === $encoded ? '{}' : $encoded ) . '</textarea>';
+		echo '<div data-uccm-rule-editor>';
+		echo '<div data-uccm-rule-list>';
+
+		foreach ( $rules as $rule_id => $rule ) {
+			if ( is_array( $rule ) ) {
+				$rule['id'] = (string) $rule_id;
+				self::render_blocking_rule_fields( $rule, (string) $rule_id );
+			}
+		}
+
+		echo '</div>';
+		echo '<p data-uccm-empty ' . ( array() === $rules ? '' : 'hidden' ) . '>' . esc_html__( 'No blocking rules have been added yet.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p><button type="button" class="button button-secondary" data-uccm-add-rule>' . esc_html__( 'Add rule', 'uk-cookie-consent-manager' ) . '</button></p>';
+		echo '<details><summary>' . esc_html__( 'Advanced JSON view', 'uk-cookie-consent-manager' ) . '</summary>';
+		echo '<p class="description" id="uccm-blocking-json-description">' . esc_html__( 'This read-only view shows the validated object that will be saved. Use the fields above to make changes.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<textarea class="large-text code" rows="12" name="rules" data-uccm-rules-json aria-describedby="uccm-blocking-json-description" readonly>' . esc_textarea( $encoded ) . '</textarea>';
+		echo '</details>';
+		echo '<template data-uccm-rule-template>';
+		self::render_blocking_rule_fields( array(), '__INDEX__' );
+		echo '</template>';
+		echo '</div>';
 		submit_button( __( 'Save blocking rules', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 		self::close_page();
+	}
+
+	/**
+	 * Render one accessible blocking-rule editor row.
+	 *
+	 * @param array<string, mixed> $rule  Current values.
+	 * @param string               $index Stable form index.
+	 */
+	private static function render_blocking_rule_fields( array $rule, string $index ): void {
+		$id       = (string) ( $rule['id'] ?? '' );
+		$type     = (string) ( $rule['type'] ?? 'script' );
+		$category = (string) ( $rule['category'] ?? 'analytics' );
+		$handle   = (string) ( $rule['handle'] ?? '' );
+		$source   = (string) ( $rule['source'] ?? '' );
+		$title    = (string) ( $rule['title'] ?? '' );
+		$legend   = '' !== $title ? $title : ( '' !== $id ? $id : __( 'New rule', 'uk-cookie-consent-manager' ) );
+		$prefix   = 'uccm_rules[' . $index . ']';
+		$help_id  = 'uccm-rule-resource-' . $index;
+
+		echo '<fieldset class="uccm-blocking-rule" data-uccm-rule style="border:1px solid #c3c4c7;padding:12px;margin:0 0 12px;max-width:980px">';
+		echo '<legend><strong data-uccm-rule-legend>' . esc_html( $legend ) . '</strong></legend>';
+		echo '<p><label><strong>' . esc_html__( 'Rule ID', 'uk-cookie-consent-manager' ) . '</strong><br>';
+		echo '<input class="regular-text" name="' . esc_attr( $prefix . '[id]' ) . '" value="' . esc_attr( $id ) . '" pattern="[A-Za-z0-9_-]+" required data-uccm-field="id" aria-describedby="' . esc_attr( $help_id . '-id' ) . '"></label><br>';
+		echo '<span class="description" id="' . esc_attr( $help_id . '-id' ) . '">' . esc_html__( 'A unique name using letters, numbers, hyphens or underscores; for example analytics-test.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '<p><label><strong>' . esc_html__( 'Resource type', 'uk-cookie-consent-manager' ) . '</strong><br><select name="' . esc_attr( $prefix . '[type]' ) . '" data-uccm-field="type">';
+		self::options( array( 'script', 'iframe', 'embed', 'pixel' ), $type );
+		echo '</select></label></p>';
+		echo '<p><label><strong>' . esc_html__( 'Consent category', 'uk-cookie-consent-manager' ) . '</strong><br><select name="' . esc_attr( $prefix . '[category]' ) . '" data-uccm-field="category">';
+		self::options( array( 'functional', 'analytics', 'marketing' ), $category );
+		echo '</select></label></p>';
+		echo '<p><label><strong>' . esc_html__( 'WordPress script handle', 'uk-cookie-consent-manager' ) . '</strong><br>';
+		echo '<input class="regular-text" name="' . esc_attr( $prefix . '[handle]' ) . '" value="' . esc_attr( $handle ) . '" data-uccm-field="handle" aria-describedby="' . esc_attr( $help_id . '-handle' ) . '"></label><br>';
+		echo '<span class="description" id="' . esc_attr( $help_id . '-handle' ) . '">' . esc_html__( 'For scripts registered by WordPress. A script needs a handle, an HTTPS source, or both.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '<p><label><strong>' . esc_html__( 'HTTPS source', 'uk-cookie-consent-manager' ) . '</strong><br>';
+		echo '<input class="large-text" type="url" name="' . esc_attr( $prefix . '[source]' ) . '" value="' . esc_attr( $source ) . '" placeholder="https://example.com/resource.js" data-uccm-field="source" aria-describedby="' . esc_attr( $help_id . '-source' ) . '"></label><br>';
+		echo '<span class="description" id="' . esc_attr( $help_id . '-source' ) . '">' . esc_html__( 'Required for iframes, embeds and pixels. Scripts may use this instead of a WordPress handle.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '<p><label><strong>' . esc_html__( 'Title', 'uk-cookie-consent-manager' ) . '</strong><br>';
+		echo '<input class="regular-text" name="' . esc_attr( $prefix . '[title]' ) . '" value="' . esc_attr( $title ) . '" data-uccm-field="title"></label><br>';
+		echo '<span class="description">' . esc_html__( 'A recognisable administrator label, such as Analytics test script or Location map.', 'uk-cookie-consent-manager' ) . '</span></p>';
+		echo '<p><button type="button" class="button-link-delete" data-uccm-remove-rule>' . esc_html__( 'Remove rule', 'uk-cookie-consent-manager' ) . '</button></p>';
+		echo '</fieldset>';
 	}
 
 	/**
