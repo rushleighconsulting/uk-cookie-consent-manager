@@ -224,8 +224,10 @@ and can be dismissed or resolved; a genuine recurrence reopens the notice.
 Email delivery is disabled by default. An administrator can opt in under
 **Cookie Consent → Advanced** to send the same safe summary through WordPress
 `wp_mail()` to that site's configured administration email address. Identical
-problems are grouped and email is suppressed for six hours, while delivery
-attempt time and status are retained without message bodies.
+problems are grouped. The repeat-email suppression period is configurable in
+minutes under **Cookie Consent → Advanced**, defaults to 360 minutes and is
+bounded to a maximum of 1,440 minutes (24 hours). Delivery attempt time and
+status are retained without message bodies.
 
 
 ## Release 1 verification
