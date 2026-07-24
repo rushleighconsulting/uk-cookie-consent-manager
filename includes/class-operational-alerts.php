@@ -109,6 +109,38 @@ final class Operational_Alerts {
 	}
 
 	/**
+	 * Resolve every current alert for a component and optional scan run.
+	 */
+	public static function resolve_component( string $component, int $run_id = 0 ): int {
+		$component = self::component( $component );
+		$run_id    = max( 0, $run_id );
+		$records   = self::records();
+		$resolved  = 0;
+		$now       = gmdate( 'Y-m-d H:i:s' );
+
+		foreach ( $records as &$record ) {
+			if ( 'open' !== (string) ( $record['status'] ?? '' ) || $component !== (string) ( $record['component'] ?? '' ) ) {
+				continue;
+			}
+
+			if ( 0 < $run_id && $run_id !== (int) ( $record['run_id'] ?? 0 ) ) {
+				continue;
+			}
+
+			$record['status']      = 'resolved';
+			$record['resolved_at'] = $now;
+			++$resolved;
+		}
+		unset( $record );
+
+		if ( 0 < $resolved ) {
+			self::save( $records );
+		}
+
+		return $resolved;
+	}
+
+	/**
 	 * Dismiss one dashboard item while allowing a later recurrence to reopen it.
 	 */
 	public static function dismiss( string $id ): bool {
