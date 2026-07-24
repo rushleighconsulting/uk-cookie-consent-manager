@@ -347,6 +347,11 @@ final class Admin {
 
 	/**
 	 * Return an error that identifies the invalid guided-editor field.
+	 *
+	 * @param string $code    Stable error code.
+	 * @param string $message Field guidance.
+	 * @param int    $index   Zero-based row index.
+	 * @param string $field   Invalid field name.
 	 */
 	private static function blocking_rule_error( string $code, string $message, int $index, string $field ): \WP_Error {
 		return new \WP_Error(
