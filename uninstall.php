@@ -35,6 +35,7 @@ function uccm_uninstall_current_site(): void {
 	delete_option( 'uccm_schema_version' );
 	delete_option( 'uccm_settings' );
 	delete_option( 'uccm_update_credential' );
+	delete_option( 'uccm_update_status' );
 	delete_option( 'uccm_post_password' );
 	delete_option( 'uccm_operational_alerts' );
 	delete_site_transient( 'uccm_update_manifest' );

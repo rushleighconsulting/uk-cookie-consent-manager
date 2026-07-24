@@ -269,24 +269,28 @@ Install only the named versioned ZIP from a matching GitHub Release, verify its
 published checksum, and use the release candidate on a staging site only.
 
 
-## Secure private-repository updates
+## Secure WordPress updates
 
-UCCM-9 adds an opt-in update channel designed for a private GitHub repository:
+UCCM publishes signed packages through its public GitHub Releases channel:
 
-- Update metadata is fetched over HTTPS and must carry a valid Ed25519 signature.
+- The plugin declares an `Update URI`, so releases and automatic-update controls
+  appear in WordPress's normal Plugins interface.
+- Update metadata is fetched over HTTPS and must carry a valid Ed25519 signature
+  made by the official release key embedded in UCCM.
 - The release ZIP is accepted only when its SHA-256 checksum matches the signed
-  metadata. Any missing key, invalid signature, metadata mismatch, incompatible
-  version, failed request or checksum mismatch blocks the update.
-- A site-specific download credential can be stored from **Cookie Consent →
-  Advanced**. It is encrypted with a key derived from the site's WordPress salts,
-  is never displayed after saving, and is not included in release packages or
-  visitor-facing output.
-- Automatic updates are disabled until an administrator explicitly opts in.
-
-Before enabling the channel, configure the release public key and manifest URL in
-the Advanced screen. For a private repository, supply a least-privilege,
-site-specific credential that can read release assets. Rotating WordPress salts
-invalidates the encrypted credential, which must then be saved again.
+  metadata. Invalid metadata, signatures, compatibility requirements, package
+  URLs or checksums stop the update before installation.
+- No GitHub account, access token, manifest address or public-key setup is needed
+  on individual sites.
+- Administrators enable or disable automatic updates using WordPress's normal
+  Plugins control. UCCM does not override that choice.
+- Signed manifests may introduce a release to a deterministic percentage of
+  sites. A site stays in the same rollout group for that release, and older
+  manifests without rollout fields remain fully eligible.
+- WordPress 6.6 and later performs a loopback fatal-error check during automatic
+  plugin updates and restores the temporary backup when that check fails. UCCM's
+  Advanced screen reports backup, disk-space and loopback readiness and records
+  update or rollback problems through its operational alerts.
 
 ### Release procedure
 
@@ -298,8 +302,8 @@ assets in a new GitHub Release. Existing releases are never replaced.
 
 Repository administrators must configure `UCCM_MANIFEST_PRIVATE_KEY` as a
 GitHub Actions secret containing a base64 Ed25519 seed (32 bytes) or secret key
-(64 bytes). The corresponding base64 public key is configured on each WordPress
-site. The private key must never be committed or placed in the plugin ZIP.
+(64 bytes). The corresponding non-secret public key is embedded in the plugin.
+The private key must never be committed or placed in the plugin ZIP.
 
 
 ## WordPress privacy tools and security boundaries

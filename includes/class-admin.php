@@ -25,6 +25,7 @@ final class Admin {
 	public static function register(): void {
 		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_post_uccm_save_settings', array( self::class, 'save_settings' ) );
+		add_action( 'admin_post_uccm_check_updates', array( self::class, 'check_updates' ) );
 		add_action( 'admin_post_uccm_dismiss_operational_alert', array( self::class, 'dismiss_operational_alert' ) );
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
 		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
@@ -152,23 +153,10 @@ final class Admin {
 		} elseif ( 'advanced' === $section ) {
 			Settings::update(
 				array(
-					'update_manifest_url'             => $submitted['update_manifest_url'] ?? '',
-					'update_public_key'               => $submitted['update_public_key'] ?? '',
-					'auto_update'                     => $submitted['auto_update'] ?? false,
 					'error_email_enabled'             => $submitted['error_email_enabled'] ?? false,
 					'error_email_suppression_minutes' => $submitted['error_email_suppression_minutes'] ?? Settings::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES,
 				)
 			);
-
-			if ( ! empty( $submitted['clear_update_credential'] ) ) {
-				Secure_Updater::clear_credential();
-			} elseif ( isset( $submitted['update_credential'] ) && '' !== trim( (string) $submitted['update_credential'] ) ) {
-				$credential_result = Secure_Updater::save_credential( (string) $submitted['update_credential'] );
-
-				if ( is_wp_error( $credential_result ) ) {
-					wp_die( esc_html( $credential_result->get_error_message() ), '', array( 'response' => 400 ) );
-				}
-			}
 
 			update_option( 'uccm_delete_data_on_uninstall', ! empty( $submitted['delete_data_on_uninstall'] ), false );
 		} else {
@@ -178,6 +166,15 @@ final class Admin {
 		self::redirect( 'uccm-' . $section, 'saved' );
 	}
 
+	/**
+	 * Run an authenticated update check immediately.
+	 */
+	public static function check_updates(): void {
+		self::require_capability( 'update_plugins' );
+		check_admin_referer( 'uccm_check_updates' );
+		Secure_Updater::refresh();
+		self::redirect( 'uccm-advanced', 'updates-checked' );
+	}
 
 	/**
 	 * Dismiss one capability- and nonce-protected dashboard occurrence.
@@ -1111,18 +1108,74 @@ final class Admin {
 	 */
 	public static function render_advanced(): void {
 		self::require_capability( 'manage_uccm_settings' );
-		$settings = Settings::current();
+		$settings    = Settings::current();
+		$status      = Secure_Updater::status();
+		$diagnostics = Secure_Updater::diagnostics();
+		$plugins_url = is_multisite() ? network_admin_url( 'plugins.php' ) : admin_url( 'plugins.php' );
+		$free_bytes  = $diagnostics['free_bytes'] ?? null;
+
+		if ( null === $free_bytes ) {
+			$disk_message = __( 'Free disk space could not be measured.', 'uk-cookie-consent-manager' );
+		} elseif ( ! empty( $diagnostics['disk_space_usable'] ) ) {
+			$disk_message = sprintf(
+				/* translators: %s: Human-readable free disk space. */
+				__( '%s of free disk space is available.', 'uk-cookie-consent-manager' ),
+				size_format( (int) $free_bytes )
+			);
+		} else {
+			$disk_message = sprintf(
+				/* translators: %s: Human-readable free disk space. */
+				__( 'Only %s of free disk space is available; make more space before updating.', 'uk-cookie-consent-manager' ),
+				size_format( (int) $free_bytes )
+			);
+		}
+
+		if ( 'available' === (string) ( $diagnostics['loopback'] ?? '' ) ) {
+			$loopback_message = __( 'The WordPress loopback check succeeded.', 'uk-cookie-consent-manager' );
+		} elseif ( 'unavailable' === (string) ( $diagnostics['loopback'] ?? '' ) ) {
+			$loopback_message = __( 'The WordPress loopback check failed; fatal-error rollback may not work.', 'uk-cookie-consent-manager' );
+		} else {
+			$loopback_message = __( 'Use “Check for updates now” to test the WordPress loopback connection.', 'uk-cookie-consent-manager' );
+		}
+
 		self::open_page( __( 'Advanced', 'uk-cookie-consent-manager' ) );
 		self::saved_notice();
+
+		echo '<h2>' . esc_html__( 'Updates', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<table class="widefat striped" style="max-width:900px"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Installed version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) $status['installed_version'] ) . '</code></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Latest authenticated version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Update channel', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( (string) $status['channel'] ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Last successful check (UTC)', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['last_successful_check_at'] ? (string) $status['last_successful_check_at'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Last update outcome', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['last_update_outcome'] ? (string) $status['last_update_outcome'] : __( 'No update recorded yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
+		echo '</tbody></table>';
+
+		if ( '' !== (string) $status['last_error_code'] ) {
+			echo '<div class="notice notice-error inline"><p><strong>' . esc_html__( 'Last update check problem:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( (string) $status['last_error_message'] ) . ' <code>' . esc_html( (string) $status['last_error_code'] ) . '</code></p></div>';
+		}
+
+		if ( ! $status['rollout_eligible'] && '' !== (string) $status['latest_version'] && version_compare( (string) $status['latest_version'], UCCM_VERSION, '>' ) ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'A newer release is being introduced gradually. This site will continue using its current version until its rollout group is enabled.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		}
+
+		if ( current_user_can( 'update_plugins' ) ) {
+			echo '<p><a class="button" href="' . esc_url( $plugins_url ) . '">' . esc_html__( 'Manage automatic updates in WordPress', 'uk-cookie-consent-manager' ) . '</a></p>';
+			self::form_open( 'uccm_check_updates', 'uccm_check_updates' );
+			submit_button( __( 'Check for updates now', 'uk-cookie-consent-manager' ), 'secondary', 'submit', false );
+			self::form_close();
+		} else {
+			echo '<p>' . esc_html__( 'A WordPress administrator with plugin-update permission controls automatic updates and immediate checks.', 'uk-cookie-consent-manager' ) . '</p>';
+		}
+
+		echo '<h3>' . esc_html__( 'Update recovery readiness', 'uk-cookie-consent-manager' ) . '</h3><ul>';
+		echo '<li>' . esc_html( ! empty( $diagnostics['rollback_supported'] ) ? __( 'WordPress fatal-error rollback is available.', 'uk-cookie-consent-manager' ) : __( 'This WordPress version does not provide the required plugin fatal-error rollback.', 'uk-cookie-consent-manager' ) ) . '</li>';
+		echo '<li>' . esc_html( ! empty( $diagnostics['backup_writable'] ) ? __( 'The temporary backup location is writable.', 'uk-cookie-consent-manager' ) : __( 'The temporary backup location is not writable.', 'uk-cookie-consent-manager' ) ) . '</li>';
+		echo '<li>' . esc_html( $disk_message ) . '</li>';
+		echo '<li>' . esc_html( $loopback_message ) . '</li></ul>';
+
 		self::form_open( 'uccm_save_settings', 'uccm_save_advanced' );
 		echo '<input type="hidden" name="section" value="advanced">';
-		echo '<h2>' . esc_html__( 'Secure private-repository updates', 'uk-cookie-consent-manager' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Updates are offered only when an HTTPS manifest has a valid Ed25519 signature and the downloaded ZIP matches its SHA-256 checksum.', 'uk-cookie-consent-manager' ) . '</p>';
-		echo '<p><label for="uccm-update-manifest"><strong>' . esc_html__( 'Manifest URL', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-manifest" class="large-text code" type="url" required name="uccm[update_manifest_url]" value="' . esc_attr( (string) $settings['update_manifest_url'] ) . '"></p>';
-		echo '<p><label for="uccm-update-key"><strong>' . esc_html__( 'Ed25519 public key (base64)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-key" class="large-text code" type="text" autocomplete="off" name="uccm[update_public_key]" value="' . esc_attr( (string) $settings['update_public_key'] ) . '"></p>';
-		echo '<p><label for="uccm-update-credential"><strong>' . esc_html__( 'Site-specific download credential', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-credential" class="regular-text" type="password" autocomplete="new-password" name="uccm[update_credential]" value="" placeholder="' . esc_attr__( 'Leave blank to keep the stored credential', 'uk-cookie-consent-manager' ) . '"><br><small>' . esc_html( Secure_Updater::has_credential() ? __( 'An encrypted credential is configured.', 'uk-cookie-consent-manager' ) : __( 'No credential is configured.', 'uk-cookie-consent-manager' ) ) . '</small></p>';
-		self::checkbox_field( 'clear_update_credential', __( 'Remove the stored update credential', 'uk-cookie-consent-manager' ), false, __( 'The credential is never displayed after saving.', 'uk-cookie-consent-manager' ) );
-		self::checkbox_field( 'auto_update', __( 'Automatically install authenticated UCCM updates', 'uk-cookie-consent-manager' ), ! empty( $settings['auto_update'] ), __( 'Opt in only after testing your backup and recovery process.', 'uk-cookie-consent-manager' ) );
 		echo '<hr><h2>' . esc_html__( 'Operational error notifications', 'uk-cookie-consent-manager' ) . '</h2>';
 		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials.', 'uk-cookie-consent-manager' ) );
 		echo '<p><label for="uccm-error-email-suppression"><strong>' . esc_html__( 'Repeat email suppression (minutes)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-error-email-suppression" class="small-text" type="number" min="1" max="' . esc_attr( (string) Settings::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES ) . '" step="1" name="uccm[error_email_suppression_minutes]" value="' . esc_attr( (string) $settings['error_email_suppression_minutes'] ) . '"><br><small>' . esc_html__( 'Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours).', 'uk-cookie-consent-manager' ) . '</small></p>';
@@ -1397,8 +1450,12 @@ final class Admin {
 	 */
 	private static function saved_notice(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded notice state.
-		if ( 'saved' === self::request_value( $_GET, 'uccm_notice' ) ) {
+		$notice = self::request_value( $_GET, 'uccm_notice' );
+
+		if ( 'saved' === $notice ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		} elseif ( 'updates-checked' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'The update check finished. The latest result is shown below.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		}
 	}
 

@@ -21,12 +21,16 @@ if ( ! function_exists( 'sodium_crypto_sign_detached' ) ) {
 	exit( 2 );
 }
 
-$version     = $argv[1];
-$package_url = $argv[2];
-$sha256      = strtolower( $argv[3] );
-$output      = $argv[4];
-$encoded_key = getenv( 'UCCM_MANIFEST_PRIVATE_KEY' );
-$key_bytes   = is_string( $encoded_key ) ? base64_decode( $encoded_key, true ) : false;
+$version      = $argv[1];
+$package_url  = $argv[2];
+$sha256       = strtolower( $argv[3] );
+$output       = $argv[4];
+$encoded_key  = getenv( 'UCCM_MANIFEST_PRIVATE_KEY' );
+$rollout      = getenv( 'UCCM_ROLLOUT_PERCENTAGE' );
+$rollout      = false === $rollout || '' === trim( $rollout ) ? '100' : trim( $rollout );
+$rollout_seed = getenv( 'UCCM_ROLLOUT_SEED' );
+$rollout_seed = false === $rollout_seed || '' === trim( $rollout_seed ) ? $version : trim( $rollout_seed );
+$key_bytes    = is_string( $encoded_key ) ? base64_decode( $encoded_key, true ) : false;
 
 if ( false === $key_bytes ) {
 	fwrite( STDERR, "UCCM_MANIFEST_PRIVATE_KEY must be valid base64.\n" );
@@ -43,13 +47,20 @@ if ( SODIUM_CRYPTO_SIGN_SECRETKEYBYTES !== strlen( $key_bytes ) ) {
 	exit( 2 );
 }
 
+if ( 1 !== preg_match( '/^(100|[1-9]?[0-9])$/', $rollout ) || 1 !== preg_match( '/^[0-9A-Za-z._-]{1,80}$/', $rollout_seed ) ) {
+	fwrite( STDERR, "UCCM staged rollout values are invalid.\n" );
+	exit( 2 );
+}
+
 $manifest = array(
-	'slug'         => 'uk-cookie-consent-manager',
-	'version'      => $version,
-	'package_url'  => $package_url,
-	'sha256'       => $sha256,
-	'requires_php' => '8.2',
-	'requires_wp'  => '6.8',
+	'slug'               => 'uk-cookie-consent-manager',
+	'version'            => $version,
+	'package_url'        => $package_url,
+	'sha256'             => $sha256,
+	'requires_php'       => '8.2',
+	'requires_wp'        => '6.8',
+	'rollout_percentage' => $rollout,
+	'rollout_seed'       => $rollout_seed,
 );
 
 $payload = json_encode( $manifest, JSON_UNESCAPED_SLASHES );

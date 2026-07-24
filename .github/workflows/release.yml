@@ -50,6 +50,8 @@ jobs:
       - name: Release check - create signed update manifest
         env:
           UCCM_MANIFEST_PRIVATE_KEY: ${{ secrets.UCCM_MANIFEST_PRIVATE_KEY }}
+          UCCM_ROLLOUT_PERCENTAGE: ${{ vars.UCCM_ROLLOUT_PERCENTAGE }}
+          UCCM_ROLLOUT_SEED: ${{ github.ref_name }}
         run: |
           version="${{ steps.version.outputs.version }}"
           package_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/uk-cookie-consent-manager-${version}.zip"

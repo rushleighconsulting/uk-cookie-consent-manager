@@ -18,7 +18,7 @@ staging acceptance. It is not approved for production use.
 Release 1 provides an accessible consent banner, granular preferences, prior
 blocking for configured non-essential technologies, cookie inventory and
 scanning, privacy-preserving consent records, WordPress privacy-tool integration
-and signed private-repository updates.
+and signed updates through WordPress's normal plugin-update interface.
 
 This plugin supports a site's compliance work. It does not provide legal advice
 or guarantee compliance.
@@ -88,5 +88,5 @@ Do not install GitHub's automatic Source code archives.
 * Adds administration, curated cookie inventory and CSV export.
 * Adds bounded manual and 30-day scheduled scans with human-reviewed findings.
 * Adds WordPress personal-data export, erasure and suggested policy text.
-* Adds signed, checksum-verified private-repository update support.
+* Adds signed, checksum-verified plugin update support.
 * Adds desktop/mobile browser tests and packaged-ZIP compatibility checks.

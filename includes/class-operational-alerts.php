@@ -274,7 +274,7 @@ final class Operational_Alerts {
 	 */
 	private static function component( string $component ): string {
 		$component = sanitize_key( $component );
-		return in_array( $component, array( 'scanner', 'browser-check', 'system' ), true ) ? $component : 'system';
+		return in_array( $component, array( 'scanner', 'browser-check', 'updater', 'system' ), true ) ? $component : 'system';
 	}
 
 	/**
@@ -286,6 +286,22 @@ final class Operational_Alerts {
 	private static function message( string $code, string $component ): string {
 		if ( 'uccm_scan_stalled' === $code ) {
 			return __( 'A background cookie scan has stopped progressing.', 'uk-cookie-consent-manager' );
+		}
+
+		if ( 'uccm_update_rollback_failed' === $code ) {
+			return __( 'A plugin update failed and WordPress could not restore the previous UCCM version.', 'uk-cookie-consent-manager' );
+		}
+
+		if ( 'uccm_update_rolled_back' === $code ) {
+			return __( 'WordPress restored the previous UCCM version after an update caused a fatal error.', 'uk-cookie-consent-manager' );
+		}
+
+		if ( 'uccm_update_failed' === $code ) {
+			return __( 'An attempted UCCM update did not complete successfully.', 'uk-cookie-consent-manager' );
+		}
+
+		if ( 'updater' === $component ) {
+			return __( 'UCCM could not verify or retrieve its update information.', 'uk-cookie-consent-manager' );
 		}
 
 		if ( 'browser-check' === $component ) {
@@ -360,6 +376,10 @@ final class Operational_Alerts {
 	 * @param array<string, mixed> $record Alert record.
 	 */
 	private static function review_url( array $record ): string {
+		if ( 'updater' === (string) ( $record['component'] ?? '' ) ) {
+			return admin_url( 'admin.php?page=uccm-advanced' );
+		}
+
 		$run_id = max( 0, (int) ( $record['run_id'] ?? 0 ) );
 		return admin_url( 'admin.php?page=uccm-scans' . ( 0 < $run_id ? '&scan_id=' . $run_id : '' ) );
 	}

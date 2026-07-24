@@ -509,6 +509,11 @@ function set_site_transient( string $name, mixed $value, int $expiration ): bool
 	return true;
 }
 
+function delete_site_transient( string $name ): bool {
+	unset( $GLOBALS['uccm_test_site_transients'][ $name ] );
+	return true;
+}
+
 function plugin_basename( string $file ): string {
 	return basename( dirname( $file ) ) . '/' . basename( $file );
 }
