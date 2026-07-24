@@ -128,9 +128,10 @@ the current site's **Administration Email Address**. On Multisite, both the
 setting and recipient remain scoped to the affected site.
 
 Repeated instances of the same code, component and scan are grouped into one
-bounded record. Another email is permitted only after a six-hour suppression
-window. UCCM retains the attempt time, count and delivery status, but never the
-message body. Notices and emails exclude consent records, IP addresses or
+bounded record. **Repeat email suppression (minutes)** controls when another
+email may be sent for that same problem. It defaults to 360 minutes, accepts
+whole-minute values from 1 to 1,440, and cannot exceed 24 hours. UCCM retains
+the attempt time, count and delivery status, but never the message body. Notices and emails exclude consent records, IP addresses or
 fingerprints, passwords, update credentials, authentication cookies, cookie
 values, page content, form values and stack traces.
 
