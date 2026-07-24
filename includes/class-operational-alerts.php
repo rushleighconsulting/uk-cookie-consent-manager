@@ -58,11 +58,11 @@ final class Operational_Alerts {
 		$id        = self::identifier( $code, $component, $run_id );
 		$records   = self::records();
 		$record    = $records[ $id ] ?? array(
-			'id'                 => $id,
-			'code'               => $code,
-			'component'          => $component,
-			'message'            => self::message( $code, $component ),
-			'run_id'             => $run_id,
+			'id'                  => $id,
+			'code'                => $code,
+			'component'           => $component,
+			'message'             => self::message( $code, $component ),
+			'run_id'              => $run_id,
 			'first_seen_at'       => $now,
 			'last_seen_at'        => $now,
 			'occurrences'         => 0,
@@ -93,6 +93,10 @@ final class Operational_Alerts {
 
 	/**
 	 * Mark an exact underlying problem resolved while retaining its bounded audit record.
+	 *
+	 * @param string $code      Stable machine-readable error code.
+	 * @param string $component Affected plugin component.
+	 * @param int    $run_id    Optional scan run identifier.
 	 */
 	public static function resolve( string $code, string $component, int $run_id = 0 ): bool {
 		$records = self::records();
@@ -110,6 +114,9 @@ final class Operational_Alerts {
 
 	/**
 	 * Resolve every current alert for a component and optional scan run.
+	 *
+	 * @param string $component Affected plugin component.
+	 * @param int    $run_id    Optional scan run identifier.
 	 */
 	public static function resolve_component( string $component, int $run_id = 0 ): int {
 		$component = self::component( $component );
@@ -119,11 +126,11 @@ final class Operational_Alerts {
 		$now       = gmdate( 'Y-m-d H:i:s' );
 
 		foreach ( $records as &$record ) {
-			if ( 'open' !== (string) ( $record['status'] ?? '' ) || $component !== (string) ( $record['component'] ?? '' ) ) {
+			if ( 'open' !== (string) ( $record['status'] ?? '' ) || (string) ( $record['component'] ?? '' ) !== $component ) {
 				continue;
 			}
 
-			if ( 0 < $run_id && $run_id !== (int) ( $record['run_id'] ?? 0 ) ) {
+			if ( 0 < $run_id && (int) ( $record['run_id'] ?? 0 ) !== $run_id ) {
 				continue;
 			}
 
@@ -142,6 +149,8 @@ final class Operational_Alerts {
 
 	/**
 	 * Dismiss one dashboard item while allowing a later recurrence to reopen it.
+	 *
+	 * @param string $id Stable alert identifier.
 	 */
 	public static function dismiss( string $id ): bool {
 		$id      = substr( sanitize_key( $id ), 0, 64 );
@@ -190,7 +199,7 @@ final class Operational_Alerts {
 			"SELECT id FROM {$table} WHERE status IN ('queued', 'running') AND started_at < %s ORDER BY id DESC LIMIT 20", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is plugin-owned and values are prepared.
 			$threshold
 		);
-		$run_ids   = $wpdb->get_col( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Reads bounded plugin-owned operational state.
+		$run_ids   = $wpdb->get_col( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Query is prepared above and reads bounded plugin-owned operational state.
 
 		foreach ( $run_ids as $run_id ) {
 			self::report( 'uccm_scan_stalled', 'scanner', (int) $run_id );
@@ -244,6 +253,10 @@ final class Operational_Alerts {
 
 	/**
 	 * Create a site-, problem- and run-bounded identifier.
+	 *
+	 * @param string $code      Stable machine-readable error code.
+	 * @param string $component Affected plugin component.
+	 * @param int    $run_id    Optional scan run identifier.
 	 */
 	private static function identifier( string $code, string $component, int $run_id ): string {
 		return hash( 'sha256', get_current_blog_id() . '|' . $component . '|' . $code . '|' . $run_id );
@@ -251,6 +264,8 @@ final class Operational_Alerts {
 
 	/**
 	 * Accept stable plugin error codes only, never caller-supplied detail.
+	 *
+	 * @param string $code Proposed error code.
 	 */
 	private static function code( string $code ): string {
 		$code = substr( sanitize_key( $code ), 0, 50 );
@@ -259,6 +274,8 @@ final class Operational_Alerts {
 
 	/**
 	 * Restrict component names to a small public contract.
+	 *
+	 * @param string $component Proposed component name.
 	 */
 	private static function component( string $component ): string {
 		$component = sanitize_key( $component );
@@ -267,6 +284,9 @@ final class Operational_Alerts {
 
 	/**
 	 * Return a fixed plain-language message without caller-supplied detail.
+	 *
+	 * @param string $code      Stable machine-readable error code.
+	 * @param string $component Affected plugin component.
 	 */
 	private static function message( string $code, string $component ): string {
 		if ( 'uccm_scan_stalled' === $code ) {
@@ -301,11 +321,15 @@ final class Operational_Alerts {
 	 * @return array<string, mixed>
 	 */
 	private static function send_email( array $record ): array {
-		$now                              = gmdate( 'Y-m-d H:i:s' );
-		$record['email_attempted_at']      = $now;
-		$record['email_attempt_count']     = min( PHP_INT_MAX, max( 0, (int) ( $record['email_attempt_count'] ?? 0 ) ) + 1 );
-		$recipient                        = sanitize_email( (string) get_option( 'admin_email', '' ) );
-		$record['email_status']           = 'invalid-recipient';
+		$now = gmdate( 'Y-m-d H:i:s' );
+
+		$record['email_attempted_at'] = $now;
+
+		$record['email_attempt_count'] = min( PHP_INT_MAX, max( 0, (int) ( $record['email_attempt_count'] ?? 0 ) ) + 1 );
+
+		$recipient = sanitize_email( (string) get_option( 'admin_email', '' ) );
+
+		$record['email_status'] = 'invalid-recipient';
 
 		if ( '' === $recipient ) {
 			return $record;
@@ -317,9 +341,12 @@ final class Operational_Alerts {
 		$message .= __( 'Component:', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['component'] . "\n";
 		$message .= __( 'Time (UTC):', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['last_seen_at'] . "\n";
 		$message .= __( 'Review:', 'uk-cookie-consent-manager' ) . ' ' . self::review_url( $record );
-		$sent                          = wp_mail( $recipient, $subject, $message );
-		$record['email_status']        = $sent ? 'sent' : 'failed';
-		$record['last_email_at']       = $now;
+
+		$sent = wp_mail( $recipient, $subject, $message );
+
+		$record['email_status'] = $sent ? 'sent' : 'failed';
+		$record['last_email_at'] = $now;
+
 		return $record;
 	}
 
