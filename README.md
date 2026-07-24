@@ -172,6 +172,16 @@ and processes configurable batches up to the 1,024-page hard ceiling. Progress,
 frontier, visited pages, warnings, cancellation and resumable failure state remain
 visible in the scan record.
 
+UCCM-21 seeds that frontier from the current site's published WordPress pages and
+posts as well as the homepage. Draft, pending, scheduled, trashed, private,
+password-protected and attachment records are excluded; `noindex` and
+`nofollow` do not exclude otherwise published content. Link discovery ignores
+direct media, attachment routes, archives, search and pagination by default,
+while explicitly configured same-origin URLs remain eligible. Tracking-only and
+trailing-slash variants are de-duplicated without collapsing meaningful query
+values. Scan progress separates seeded pages/posts, other accepted links, ignored
+links, checked URLs and remaining URLs.
+
 Completed server crawls can be followed by the packaged administrator browser
 runner. It inspects up to 100 successfully visited same-origin pages for
 accessible cookie names, local-storage keys, scripts, iframes and pixels and

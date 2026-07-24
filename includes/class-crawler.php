@@ -10,7 +10,7 @@ namespace UCCM;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Extracts, canonicalises and filters crawl targets without fetching them.
+ * Extracts, canonicalises, classifies and filters crawl targets without fetching them.
  */
 final class Crawler {
 
@@ -26,6 +26,22 @@ final class Crawler {
 	);
 
 	/**
+	 * Empty ignored-link counters.
+	 *
+	 * @return array<string, int>
+	 */
+	public static function empty_ignored_counts(): array {
+		return array(
+			'media'      => 0,
+			'attachment' => 0,
+			'archive'    => 0,
+			'variant'    => 0,
+			'excluded'   => 0,
+			'invalid'    => 0,
+		);
+	}
+
+	/**
 	 * Discover unique eligible links in one HTML response.
 	 *
 	 * @param string   $html              Bounded response body.
@@ -34,25 +50,62 @@ final class Crawler {
 	 * @return string[]
 	 */
 	public static function discover( string $html, string $base_url, array $excluded_patterns = array() ): array {
+		$inspection = self::inspect( $html, $base_url, $excluded_patterns );
+		return $inspection['accepted'];
+	}
+
+	/**
+	 * Inspect links and return accepted URLs with non-sensitive classification counts.
+	 *
+	 * @param string   $html              Bounded response body.
+	 * @param string   $base_url          URL that supplied the response.
+	 * @param string[] $excluded_patterns Administrator-configured path patterns.
+	 * @return array{accepted: string[], ignored: array<string, int>}
+	 */
+	public static function inspect( string $html, string $base_url, array $excluded_patterns = array() ): array {
+		$result = array(
+			'accepted' => array(),
+			'ignored'  => self::empty_ignored_counts(),
+		);
+
 		if ( '' === trim( $html ) ) {
-			return array();
+			return $result;
 		}
 
 		$matches = array();
 		preg_match_all( '/<a\b[^>]*\bhref\s*=\s*(["\'])(.*?)\1/is', $html, $matches );
-		$links = array();
+		$accepted = array();
 
 		foreach ( array_slice( $matches[2], 0, Scanner::MAX_TARGETS * 2 ) as $href ) {
 			$target = self::canonicalize( (string) $href, $base_url );
 
-			if ( is_wp_error( $target ) || self::is_excluded( $target, $excluded_patterns ) ) {
+			if ( is_wp_error( $target ) ) {
+				++$result['ignored']['invalid'];
 				continue;
 			}
 
-			$links[] = $target;
+			if ( self::is_excluded( $target, $excluded_patterns ) ) {
+				++$result['ignored']['excluded'];
+				continue;
+			}
+
+			$class = self::classify( $target );
+
+			if ( 'html' !== $class ) {
+				++$result['ignored'][ $class ];
+				continue;
+			}
+
+			if ( isset( $accepted[ $target ] ) ) {
+				++$result['ignored']['variant'];
+				continue;
+			}
+
+			$accepted[ $target ] = true;
 		}
 
-		return array_values( array_unique( $links ) );
+		$result['accepted'] = array_keys( $accepted );
+		return $result;
 	}
 
 	/**
@@ -104,9 +157,10 @@ final class Crawler {
 			}
 
 			$candidate = $authority . self::normalize_path( $path );
+			$query     = self::normalize_query( (string) ( $relative['query'] ?? '' ) );
 
-			if ( isset( $relative['query'] ) && '' !== (string) $relative['query'] ) {
-				$candidate .= '?' . $relative['query'];
+			if ( '' !== $query ) {
+				$candidate .= '?' . $query;
 			}
 		}
 
@@ -126,13 +180,54 @@ final class Crawler {
 			$url .= ':' . $port;
 		}
 
-		$url .= $path;
+		$url  .= $path;
+		$query = self::normalize_query( (string) ( $parts['query'] ?? '' ) );
 
-		if ( isset( $parts['query'] ) && '' !== (string) $parts['query'] ) {
-			$url .= '?' . $parts['query'];
+		if ( '' !== $query ) {
+			$url .= '?' . $query;
 		}
 
 		return Scanner::validate_target( $url );
+	}
+
+	/**
+	 * Classify an accepted same-origin URL.
+	 *
+	 * Explicit administrator targets bypass this discovery-only classification.
+	 *
+	 * @param string $url Canonical URL.
+	 * @return string html, media, attachment or archive.
+	 */
+	public static function classify( string $url ): string {
+		$path  = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+		$query = strtolower( (string) wp_parse_url( $url, PHP_URL_QUERY ) );
+
+		if ( preg_match( '/\.(?:avif|bmp|css|csv|docx?|eot|gif|ico|jpe?g|js|json|m4a|mov|mp3|mp4|mpeg|ogg|ogv|pdf|png|pptx?|svg|tiff?|ttf|wav|webm|webp|woff2?|xlsx?|xml|zip)$/i', $path ) ) {
+			return 'media';
+		}
+
+		if ( preg_match( '#(?:^|/)attachment(?:/|$)#i', $path ) || preg_match( '/(?:^|&)attachment_id=\d+(?:&|$)/i', $query ) ) {
+			return 'attachment';
+		}
+
+		if ( function_exists( 'url_to_postid' ) && function_exists( 'get_post_type' ) ) {
+			$post_id = (int) url_to_postid( $url );
+
+			if ( 0 < $post_id && 'attachment' === get_post_type( $post_id ) ) {
+				return 'attachment';
+			}
+		}
+
+		if (
+			preg_match( '#/(?:category|tag|author|search)/#i', $path )
+			|| preg_match( '#/\d{4}(?:/\d{1,2})?(?:/\d{1,2})?/?$#', $path )
+			|| preg_match( '#/page/\d+/?$#i', $path )
+			|| preg_match( '/(?:^|&)(?:s|paged|cat|tag|author|m|year|monthnum|day)=/i', $query )
+		) {
+			return 'archive';
+		}
+
+		return 'html';
 	}
 
 	/**
@@ -162,7 +257,7 @@ final class Crawler {
 	}
 
 	/**
-	 * Collapse dot segments and repeated separators in a URL path.
+	 * Collapse dot segments, repeated separators and harmless trailing slashes.
 	 *
 	 * @param string $path URL path.
 	 */
@@ -183,12 +278,37 @@ final class Crawler {
 			$clean[] = $segment;
 		}
 
-		$normalized = '/' . implode( '/', $clean );
+		return '/' . implode( '/', $clean );
+	}
 
-		if ( '/' !== $path && str_ends_with( $path, '/' ) ) {
-			$normalized .= '/';
+	/**
+	 * Remove known tracking parameters while preserving material query values.
+	 *
+	 * @param string $query Raw query string.
+	 */
+	private static function normalize_query( string $query ): string {
+		if ( '' === $query ) {
+			return '';
 		}
 
-		return $normalized;
+		$pairs = array();
+
+		foreach ( explode( '&', $query ) as $pair ) {
+			if ( '' === $pair ) {
+				continue;
+			}
+
+			$key = explode( '=', $pair, 2 )[0];
+			$key = strtolower( rawurldecode( str_replace( '+', ' ', $key ) ) );
+
+			if ( preg_match( '/^(?:utm_[a-z0-9_]+|gclid|dclid|fbclid|msclkid|mc_cid|mc_eid|_ga)$/', $key ) ) {
+				continue;
+			}
+
+			$pairs[] = $pair;
+		}
+
+		sort( $pairs, SORT_STRING );
+		return implode( '&', $pairs );
 	}
 }

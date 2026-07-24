@@ -53,11 +53,25 @@ decision.
 
 Run a manual scan after installation and after material theme, plugin, tag
 manager or content changes. Starting a scan returns immediately. WP-Cron resumes a
-persisted frontier in bounded batches, beginning with the homepage and any configured
-same-origin seeds and discovering eligible same-origin links up to the configured limit
-(maximum 1,024 unique URLs). Cross-origin, private, credential-bearing and unsafe URLs
-are rejected. Administration, login, REST and feed paths are always excluded; additional
-path patterns can be configured on the Scans screen.
+persisted frontier in bounded batches. Targets are ordered predictably: the homepage
+first, then the current site's published WordPress pages and posts ordered by content
+type and WordPress ID, then administrator-configured URLs. The configured limit applies
+to the whole queue and cannot exceed 1,024 URLs.
+
+Published pages and posts are seeded even when they are unlinked or carry `noindex`
+or `nofollow`. Draft, pending, auto-draft, future, trashed, private,
+password-protected and attachment records are not seeded. Link discovery continues
+from eligible HTML but ignores direct media files, WordPress attachments, category,
+tag, author, date and search archives, and pagination by default. An archive or other
+same-origin public URL entered explicitly by an administrator remains eligible.
+Trailing-slash and known tracking-query variants are de-duplicated; meaningful query
+values remain separate targets. Cross-origin, private, credential-bearing and unsafe
+URLs are rejected. Administration, login, REST and feed paths are always excluded;
+additional path patterns can be configured on the Scans screen.
+
+Progress reports distinguish eligible WordPress pages/posts, other accepted links,
+ignored links, checked URLs and URLs still waiting. Ignored-link evidence is stored only
+as non-sensitive summary counts.
 
 If a batch is interrupted, its saved progress remains visible and a failed run can be
 resumed. A queued or running scan can be cancelled without deleting its evidence. After
