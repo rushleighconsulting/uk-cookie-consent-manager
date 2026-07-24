@@ -58,6 +58,14 @@ UCCM-4 adds:
 - Diagnostics for invalid or unknown declarations rather than guessed
   categories.
 
+### Managing blocking rules
+
+Use **Cookie Consent → Script Blocking** to add, edit and remove rules through
+labelled fields. Each rule needs a unique ID, a resource type, an optional consent
+category and either a WordPress script handle or a complete HTTPS source. The
+advanced JSON section is a read-only expert view of the object that will be saved;
+a clean installation displays `{}`, never `[]`.
+
 ### Blocking rule format
 
 Rules are allowlisted declarations. UCCM never rewrites arbitrary page HTML.

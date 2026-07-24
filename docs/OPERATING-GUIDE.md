@@ -31,9 +31,11 @@ the versioned plugin ZIP produced by the Release workflow.
 - **View Categories:** review the fixed Necessary, Functional, Analytics and
   Marketing definitions. Necessary is always enabled; optional categories default
   to denied.
-- **Script Blocking:** explicitly map every optional script, iframe, embed or
-  pixel. Test both denial and grant. UCCM does not guess a category or rewrite
-  arbitrary HTML.
+- **Script Blocking:** add each recognised optional script, iframe, embed or
+  pixel through the guided rule editor. Give it a unique Rule ID, choose its type
+  and category, then provide a WordPress handle or complete HTTPS source. The
+  Advanced JSON section is a read-only expert view. Test both denial and grant;
+  UCCM does not guess a category or rewrite arbitrary HTML.
 - **Privacy:** keep complete-IP storage disabled unless a documented lawful
   purpose requires it. If proxy headers are enabled, allowlist only the exact
   reverse-proxy addresses.
