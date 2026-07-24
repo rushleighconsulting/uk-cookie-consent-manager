@@ -60,7 +60,12 @@ to the whole queue and cannot exceed 1,024 URLs.
 
 Published pages and posts are seeded even when they are unlinked or carry `noindex`
 or `nofollow`. Draft, pending, auto-draft, future, trashed, private,
-password-protected and attachment records are not seeded. Link discovery continues
+password-protected and attachment records are not seeded by default. On the Scans
+screen, an administrator with the scan capability may explicitly enable protected
+content and save one WordPress post password. The password is encrypted using
+site-held WordPress salt material and is never displayed again. Only published pages
+and posts unlocked by that exact password become eligible; all other protected,
+unpublished and authenticated content remains excluded. Link discovery continues
 from eligible HTML but ignores direct media files, WordPress attachments, category,
 tag, author, date and search archives, and pagination by default. An archive or other
 same-origin public URL entered explicitly by an administrator remains eligible.
@@ -68,6 +73,13 @@ Trailing-slash and known tracking-query variants are de-duplicated; meaningful q
 values remain separate targets. Cross-origin, private, credential-bearing and unsafe
 URLs are rejected. Administration, login, REST and feed paths are always excluded;
 additional path patterns can be configured on the Scans screen.
+
+To replace the protected-content password, enter a new value and save. To remove it,
+select **Remove the stored post password** and save. Rotating WordPress authentication
+salts deliberately makes the encrypted password unusable; enter it again if protected
+scanning is still required. The setting and encrypted value are per site on Multisite.
+The scanner never uses WordPress user accounts, HTTP Basic credentials, identity
+providers or cross-origin credentials.
 
 Progress reports distinguish eligible WordPress pages/posts, other accepted links,
 ignored links, checked URLs and URLs still waiting. Ignored-link evidence is stored only
@@ -87,7 +99,9 @@ observable `Set-Cookie` response headers, while the authenticated browser-runner
 boundary can report allowlisted cookies, local-storage keys, scripts, iframes and
 pixels. A scan may miss conditional, authenticated, geo-specific, delayed,
 interaction-triggered, blocked, consent-dependent or third-party behaviour. It
-does not capture consent records, cookie values, form values or page content.
+does not capture consent records, cookie values, form values or page content. The
+stored post password and native WordPress post-password cookie are also excluded from
+findings, database evidence, email, logs, REST responses and exports.
 Repeat representative manual journeys and use browser developer tools alongside
 the scanner.
 
