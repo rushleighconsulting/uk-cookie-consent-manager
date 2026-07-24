@@ -18,7 +18,12 @@ const fixture = `
 			<button type="button" class="uccm-button" data-uccm-action="manage">Manage preferences</button>
 		</div>
 	</section>
-	<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" hidden>Cookie settings</button>
+	<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" aria-label="Cookie settings" data-uccm-label="Cookie settings" hidden>
+		<svg class="uccm-settings__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+			<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-3.87A4 4 0 0 1 12.13 3 4 4 0 0 1 12 2Z"></path>
+			<path d="M8.5 8.5h.01M16 15.5h.01M10.5 16.5h.01"></path>
+		</svg>
+	</button>
 	<dialog id="uccm-preferences" class="uccm-dialog" aria-labelledby="uccm-preferences-title">
 		<div class="uccm-dialog__inner">
 			<div class="uccm-dialog__header">
@@ -115,7 +120,20 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 	await page.getByRole( 'button', { name: 'Accept all' } ).click();
 
 	await expect( banner ).toBeHidden();
-	await expect( page.getByRole( 'button', { name: 'Cookie settings' } ) ).toBeVisible();
+	const settingsButton = page.getByRole( 'button', { name: 'Cookie settings' } );
+	await expect( settingsButton ).toBeVisible();
+	await expect( settingsButton.locator( '.uccm-settings__icon' ) ).toBeVisible();
+
+	const settingsBox = await settingsButton.boundingBox();
+	expect( settingsBox ).not.toBeNull();
+	expect( settingsBox.width ).toBeGreaterThanOrEqual( 44 );
+	expect( settingsBox.width ).toBeLessThanOrEqual( 52 );
+	expect( settingsBox.height ).toBeGreaterThanOrEqual( 44 );
+	expect( settingsBox.height ).toBeLessThanOrEqual( 52 );
+
+	await settingsButton.focus();
+	await expect( settingsButton ).toBeFocused();
+	expect( await settingsButton.evaluate( ( element ) => getComputedStyle( element, '::after' ).opacity ) ).toBe( '1' );
 	await expect.poll( () => receipts.length ).toBe( 1 );
 	expect( receipts[0].action ).toBe( 'grant' );
 	expect( receipts[0].categories ).toEqual( {
