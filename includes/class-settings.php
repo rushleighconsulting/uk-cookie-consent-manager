@@ -35,7 +35,8 @@ final class Settings {
 			'scan_urls'              => array(),
 			'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
 			'scan_page_limit'        => Scanner::MAX_TARGETS,
-			'scan_batch_size'        => Scanner::DEFAULT_BATCH_SIZE,
+			'scan_batch_size'                 => Scanner::DEFAULT_BATCH_SIZE,
+			'scan_protected_content_enabled' => false,
 			'update_manifest_url'    => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
 			'update_public_key'      => '',
 			'auto_update'            => false,
@@ -84,7 +85,7 @@ final class Settings {
 			$settings['scan_batch_size'] = max( 1, min( 25, (int) $input['scan_batch_size'] ) );
 		}
 
-		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'auto_update' ) as $flag ) {
+		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'scan_protected_content_enabled', 'auto_update' ) as $flag ) {
 			if ( array_key_exists( $flag, $input ) ) {
 				$settings[ $flag ] = self::boolean( $input[ $flag ] );
 			}
