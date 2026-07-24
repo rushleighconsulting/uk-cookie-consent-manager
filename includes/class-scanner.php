@@ -251,9 +251,9 @@ final class Scanner {
 	 * @return array{targets: string[], wordpress_content_count: int, protected_targets: string[]}|\WP_Error
 	 */
 	private static function target_plan( int $limit ): array|\WP_Error {
-		$settings   = Settings::current();
-		$configured = is_array( $settings['scan_urls'] ?? null ) ? $settings['scan_urls'] : array();
-		$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
+		$settings       = Settings::current();
+		$configured     = is_array( $settings['scan_urls'] ?? null ) ? $settings['scan_urls'] : array();
+		$excluded       = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
 		$wordpress_plan = self::eligible_wordpress_targets( $excluded );
 		$wordpress      = $wordpress_plan['targets'];
 
@@ -1227,6 +1227,7 @@ final class Scanner {
 	/**
 	 * Return bounded safe-HTTP arguments.
 	 *
+	 * @param string $target Validated same-origin target.
 	 * @return array<string, mixed>
 	 */
 	private static function request_arguments( string $target ): array {
