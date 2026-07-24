@@ -105,7 +105,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Install Chromium and WebKit
-        run: npx playwright install chromium webkit
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Run consent and operational scanner browser flows
         run: npm run test:browser
