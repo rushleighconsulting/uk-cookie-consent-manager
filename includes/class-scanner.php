@@ -355,14 +355,14 @@ final class Scanner {
 
 		$records = array();
 
-		foreach ( is_array( $post_ids ) ? $post_ids : array() as $post_id ) {
+		foreach ( $post_ids as $post_id ) {
 			$post = get_post( (int) $post_id );
 
 			if (
-				! is_object( $post )
-				|| 'publish' !== (string) ( $post->post_status ?? '' )
-				|| ! in_array( (string) ( $post->post_type ?? '' ), array( 'page', 'post' ), true )
-				|| '' !== (string) ( $post->post_password ?? '' )
+				null === $post
+				|| 'publish' !== $post->post_status
+				|| ! in_array( $post->post_type, array( 'page', 'post' ), true )
+				|| '' !== $post->post_password
 			) {
 				continue;
 			}
