@@ -213,6 +213,23 @@ UCCM-8 adds:
 - Bounded findings filtering by scan and explicit pending/reviewed status
   presentation in the Scans administration screen.
 
+
+UCCM-23 adds bounded operational error reporting. Safely handled scan failures,
+stalled background work and unsuccessful browser checks appear on the main
+WordPress Dashboard for authorised administrators, with a stable code, UTC time
+and a link to the relevant scan. Records are per site, contain no consent data,
+IP data, credentials, cookie values, page content, form values or stack traces,
+and can be dismissed or resolved; a genuine recurrence reopens the notice.
+
+Email delivery is disabled by default. An administrator can opt in under
+**Cookie Consent → Advanced** to send the same safe summary through WordPress
+`wp_mail()` to that site's configured administration email address. Identical
+problems are grouped. The repeat-email suppression period is configurable in
+minutes under **Cookie Consent → Advanced**, defaults to 360 minutes and is
+bounded to a maximum of 1,440 minutes (24 hours). Delivery attempt time and
+status are retained without message bodies.
+
+
 ## Release 1 verification
 
 UCCM-11 adds independently reported source-quality, unit/integration, browser,

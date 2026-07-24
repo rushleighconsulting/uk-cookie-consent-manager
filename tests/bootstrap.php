@@ -52,6 +52,7 @@ $GLOBALS['uccm_test_posts']              = array();
 $GLOBALS['uccm_test_url_post_ids']       = array();
 $GLOBALS['uccm_test_get_posts_arguments'] = array();
 $GLOBALS['uccm_test_salt']                = 'test-site-secret';
+$GLOBALS['uccm_test_current_blog_id']     = 1;
 
 /**
  * Minimal wpdb test double.
@@ -124,6 +125,18 @@ class wpdb {
 
 		$row = $GLOBALS['uccm_test_db_rows'][0] ?? null;
 		return is_array( $row ) ? $row : null;
+	}
+
+	/** @return array<int, mixed> */
+	public function get_col( string $query ): array {
+		$this->queries[] = $query;
+
+		if ( array() !== $GLOBALS['uccm_test_db_results_queue'] ) {
+			$rows = array_shift( $GLOBALS['uccm_test_db_results_queue'] );
+			return array_map( static fn ( mixed $row ): mixed => is_array( $row ) ? reset( $row ) : $row, $rows );
+		}
+
+		return array_map( static fn ( mixed $row ): mixed => is_array( $row ) ? reset( $row ) : $row, $GLOBALS['uccm_test_db_rows'] );
 	}
 
 	public function get_var( string $query ): mixed {
@@ -428,7 +441,7 @@ function get_users( array $arguments = array() ): array {
 }
 
 function get_current_blog_id(): int {
-	return 1;
+	return (int) $GLOBALS['uccm_test_current_blog_id'];
 }
 
 function home_url( string $path = '' ): string {
@@ -621,6 +634,7 @@ require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-crawler.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-post-password-access.php';
+require_once dirname( __DIR__ ) . '/includes/class-operational-alerts.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
 require_once dirname( __DIR__ ) . '/includes/class-scan-findings.php';

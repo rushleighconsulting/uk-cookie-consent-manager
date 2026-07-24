@@ -110,6 +110,36 @@ running scans and use the resume control if a batch reports failure. The 1,024-p
 remains a hard ceiling rather than a completeness guarantee. The administrator browser
 pass is limited to 100 pages per session and can be prevented by a page's framing policy.
 
+
+## Operational errors and notifications
+
+Safely handled scan failures, background scans which have not progressed for 30
+minutes, and failed or partial administrator browser checks appear on the main
+WordPress Dashboard for users with the UCCM settings capability. Each notice
+contains a plain-language summary, stable error code, last-seen UTC time and a
+link to the affected scan. Dismissing a notice hides that occurrence; completing,
+resuming or cancelling the affected work resolves it. A later recurrence can
+open it again.
+
+Email is off by default on clean installation and upgrade. To opt in, open
+**Cookie Consent → Advanced**, enable **Email operational error notifications to
+the site administrator**, and save. UCCM sends through WordPress `wp_mail()` to
+the current site's **Administration Email Address**. On Multisite, both the
+setting and recipient remain scoped to the affected site.
+
+Repeated instances of the same code, component and scan are grouped into one
+bounded record. **Repeat email suppression (minutes)** controls when another
+email may be sent for that same problem. It defaults to 360 minutes, accepts
+whole-minute values from 1 to 1,440, and cannot exceed 24 hours. UCCM retains
+the attempt time, count and delivery status, but never the message body. Notices and emails exclude consent records, IP addresses or
+fingerprints, passwords, update credentials, authentication cookies, cookie
+values, page content, form values and stack traces.
+
+If delivery fails, confirm the site's administration email, then test the
+WordPress mail configuration or its SMTP provider. The Dashboard notice remains
+the authoritative recovery route even when email is unavailable.
+
+
 ## Consent records and privacy requests
 
 Consent records are stored on the WordPress site. Default evidence includes a
