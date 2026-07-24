@@ -20,6 +20,11 @@ final class Secure_Updater {
 	private const MANIFEST_TRANSIENT = 'uccm_update_manifest';
 
 	/**
+	 * Short-lived guard for the first Plugins-screen metadata check.
+	 */
+	private const BOOTSTRAP_TRANSIENT = 'uccm_update_bootstrap';
+
+	/**
 	 * Per-site update health and outcome option.
 	 */
 	public const STATUS_OPTION = 'uccm_update_status';
@@ -56,8 +61,39 @@ final class Secure_Updater {
 		add_filter( 'update_plugins_github.com', array( self::class, 'update_offer' ), 10, 4 );
 		add_filter( 'plugins_api', array( self::class, 'plugin_information' ), 20, 3 );
 		add_filter( 'upgrader_pre_download', array( self::class, 'verify_download' ), 10, 4 );
+		add_action( 'load-plugins.php', array( self::class, 'prime_native_update_controls' ), 5 );
 		add_action( 'automatic_updates_complete', array( self::class, 'automatic_updates_complete' ) );
 		add_action( 'upgrader_process_complete', array( self::class, 'upgrader_process_complete' ), 10, 2 );
+	}
+
+	/**
+	 * Populate WordPress's external-update cache on the first Plugins-screen visit.
+	 *
+	 * WordPress does not display its native auto-update control for an external
+	 * plugin until that plugin has supplied update metadata. Prime the cache once
+	 * for administrators so normal activation does not require a hidden manual
+	 * step in UCCM's Advanced screen.
+	 */
+	public static function prime_native_update_controls(): void {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+
+		$status = self::status();
+
+		if (
+			'' !== $status['last_successful_check_at'] ||
+			false !== get_site_transient( self::BOOTSTRAP_TRANSIENT )
+		) {
+			return;
+		}
+
+		set_site_transient( self::BOOTSTRAP_TRANSIENT, '1', 15 * MINUTE_IN_SECONDS );
+		delete_site_transient( 'update_plugins' );
+
+		if ( function_exists( 'wp_update_plugins' ) ) {
+			wp_update_plugins();
+		}
 	}
 
 	/**

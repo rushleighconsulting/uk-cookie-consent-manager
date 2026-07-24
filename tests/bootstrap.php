@@ -31,6 +31,7 @@ $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
 $GLOBALS['uccm_test_spawn_cron_calls'] = array();
+$GLOBALS['uccm_test_wp_update_plugins_calls'] = 0;
 $GLOBALS['uccm_test_transients']       = array();
 $GLOBALS['uccm_test_site_transients']  = array();
 $GLOBALS['uccm_test_http_validity']    = true;
@@ -518,6 +519,10 @@ function set_site_transient( string $name, mixed $value, int $expiration ): bool
 function delete_site_transient( string $name ): bool {
 	unset( $GLOBALS['uccm_test_site_transients'][ $name ] );
 	return true;
+}
+
+function wp_update_plugins(): void {
+	++$GLOBALS['uccm_test_wp_update_plugins_calls'];
 }
 
 function plugin_basename( string $file ): string {

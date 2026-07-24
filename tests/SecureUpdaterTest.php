@@ -17,6 +17,8 @@ final class SecureUpdaterTest extends TestCase {
 		$GLOBALS['uccm_test_site_transients'] = array();
 		$GLOBALS['uccm_test_actions']         = array();
 		$GLOBALS['uccm_test_filters']         = array();
+		$GLOBALS['uccm_test_capabilities']    = array();
+		$GLOBALS['uccm_test_wp_update_plugins_calls'] = 0;
 	}
 
 	public function test_valid_signature_and_newer_compatible_release_are_accepted(): void {
@@ -71,7 +73,39 @@ final class SecureUpdaterTest extends TestCase {
 
 		self::assertArrayHasKey( 'update_plugins_github.com', $GLOBALS['uccm_test_filters'] );
 		self::assertArrayNotHasKey( 'auto_update_plugin', $GLOBALS['uccm_test_filters'] );
+		self::assertArrayHasKey( 'load-plugins.php', $GLOBALS['uccm_test_actions'] );
 		self::assertArrayHasKey( 'automatic_updates_complete', $GLOBALS['uccm_test_actions'] );
+	}
+
+	public function test_first_plugins_screen_visit_primes_wordpress_update_metadata_once(): void {
+		$GLOBALS['uccm_test_capabilities']['update_plugins']       = true;
+		$GLOBALS['uccm_test_site_transients']['update_plugins']    = array( 'checked' => array() );
+
+		Secure_Updater::prime_native_update_controls();
+		Secure_Updater::prime_native_update_controls();
+
+		self::assertSame( 1, $GLOBALS['uccm_test_wp_update_plugins_calls'] );
+		self::assertArrayNotHasKey( 'update_plugins', $GLOBALS['uccm_test_site_transients'] );
+		self::assertSame( '1', $GLOBALS['uccm_test_site_transients']['uccm_update_bootstrap'] );
+	}
+
+	public function test_update_metadata_bootstrap_requires_update_capability(): void {
+		Secure_Updater::prime_native_update_controls();
+
+		self::assertSame( 0, $GLOBALS['uccm_test_wp_update_plugins_calls'] );
+		self::assertArrayNotHasKey( 'uccm_update_bootstrap', $GLOBALS['uccm_test_site_transients'] );
+	}
+
+	public function test_successful_authenticated_check_skips_update_metadata_bootstrap(): void {
+		$GLOBALS['uccm_test_capabilities']['update_plugins'] = true;
+		$GLOBALS['uccm_test_options'][ Secure_Updater::STATUS_OPTION ] = array(
+			'last_successful_check_at' => '2026-07-24 12:47:57',
+		);
+
+		Secure_Updater::prime_native_update_controls();
+
+		self::assertSame( 0, $GLOBALS['uccm_test_wp_update_plugins_calls'] );
+		self::assertArrayNotHasKey( 'uccm_update_bootstrap', $GLOBALS['uccm_test_site_transients'] );
 	}
 
 	public function test_native_update_uri_offer_uses_authenticated_cached_manifest(): void {
