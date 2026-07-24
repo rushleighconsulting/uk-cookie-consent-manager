@@ -87,10 +87,13 @@ as non-sensitive summary counts.
 
 If a batch is interrupted, its saved progress remains visible and a failed run can be
 resumed. A queued or running scan can be cancelled without deleting its evidence. After
-the server crawl completes, open that run and choose **Run browser observations** to
-inspect up to 100 successfully visited pages for accessible cookie names, local-storage
-keys, scripts, iframes and pixels. Review new and changed findings, then mark them
-reviewed, ignored or resolved as appropriate.
+the server crawl completes, open that run and choose **Run browser check** to inspect up
+to 100 successfully visited pages for accessible cookie names, local-storage keys,
+scripts, iframes and pixels. For privacy, this isolated visitor check currently requires
+a current Chrome, Edge or other Chromium-based browser. Safari and Firefox show the
+requirement and keep the action disabled instead of starting an unsafe or unsupported
+check. Review new and changed findings, then mark them reviewed, ignored or resolved as
+appropriate.
 
 ### Scan limitations
 
