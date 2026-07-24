@@ -12,6 +12,7 @@ define( 'UCCM_VERSION', '0.1.0-dev' );
 define( 'UCCM_PLUGIN_FILE', dirname( __DIR__ ) . '/uk-cookie-consent-manager.php' );
 define( 'UCCM_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
 define( 'UCCM_PLUGIN_URL', 'https://example.test/wp-content/plugins/uk-cookie-consent-manager/' );
+define( 'WP_CONTENT_DIR', dirname( __DIR__ ) . '/tests/fixtures/wp-content' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'MINUTE_IN_SECONDS', 60 );
@@ -217,6 +218,11 @@ class WP_Error {
 
 	public function get_error_message(): string {
 		return $this->message;
+	}
+
+	/** @return string[] */
+	public function get_error_codes(): array {
+		return array( $this->code );
 	}
 
 	public function get_error_data(): mixed {

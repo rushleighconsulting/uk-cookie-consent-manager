@@ -402,7 +402,7 @@ final class Secure_Updater {
 	public static function diagnostics( bool $probe_loopback = false ): array {
 		$status      = self::status();
 		$previous    = is_array( $status['diagnostics'] ?? null ) ? $status['diagnostics'] : array();
-		$content_dir = defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : dirname( UCCM_PLUGIN_DIR );
+		$content_dir = WP_CONTENT_DIR;
 		$backup_dir  = rtrim( $content_dir, '/\\' ) . '/upgrade-temp-backup';
 		$parent      = is_dir( $backup_dir ) ? $backup_dir : $content_dir;
 		$free_bytes  = function_exists( 'disk_free_space' ) ? disk_free_space( $content_dir ) : false;
@@ -489,7 +489,7 @@ final class Secure_Updater {
 		$version = sanitize_text_field( (string) ( $item->new_version ?? $item->version ?? '' ) );
 		$now     = gmdate( 'Y-m-d H:i:s' );
 
-		if ( true === $result || ( is_array( $result ) && ! is_wp_error( $result ) ) ) {
+		if ( true === $result || is_array( $result ) ) {
 			self::store_status(
 				array(
 					'last_update_at'      => $now,
@@ -501,9 +501,9 @@ final class Secure_Updater {
 			return;
 		}
 
-		$codes = is_wp_error( $result ) && method_exists( $result, 'get_error_codes' )
+		$codes = is_wp_error( $result )
 			? array_map( 'strval', $result->get_error_codes() )
-			: array( is_wp_error( $result ) ? (string) $result->get_error_code() : 'update_failed' );
+			: array( 'update_failed' );
 
 		$rollback_failed = in_array( 'plugin_update_fatal_error_rollback_failed', $codes, true );
 		$rollback_ok     = in_array( 'plugin_update_fatal_error_rollback_successful', $codes, true );
@@ -576,10 +576,6 @@ final class Secure_Updater {
 		}
 
 		$url = self::MANIFEST_URL;
-
-		if ( 'https' !== strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ) {
-			return self::record_error( new \WP_Error( 'uccm_update_url_invalid', __( 'The official update address is invalid.', 'uk-cookie-consent-manager' ) ) );
-		}
 
 		$response = wp_safe_remote_get(
 			$url,
