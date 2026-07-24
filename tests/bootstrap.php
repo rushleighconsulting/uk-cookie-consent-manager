@@ -536,6 +536,10 @@ function wp_json_encode( mixed $value, int $flags = 0 ): string|false {
 	return json_encode( $value, $flags );
 }
 
+function wp_unslash( mixed $value ): mixed {
+	return $value;
+}
+
 function rest_url( string $path = '' ): string {
 	return 'https://example.test/wp-json/' . ltrim( $path, '/' );
 }
