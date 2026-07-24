@@ -42,6 +42,22 @@ final class AdminInventoryTest extends TestCase {
 		self::assertCount( 9, $GLOBALS['uccm_test_admin_submenus'] );
 	}
 
+	public function test_overview_uses_plain_language_for_actions_and_scan_results(): void {
+		$GLOBALS['uccm_test_capabilities']['manage_uccm_settings'] = true;
+
+		ob_start();
+		Admin::render_overview();
+		$markup = (string) ob_get_clean();
+
+		self::assertStringContainsString( 'Set up your cookie banner, review what your site stores, and check visitors’ choices.', $markup );
+		self::assertStringContainsString( 'Scans continue in the background.', $markup );
+		self::assertStringContainsString( 'Anything new is listed for you to review before it is added to your cookie list.', $markup );
+		self::assertStringNotContainsString( 'observed storage', $markup );
+		self::assertStringNotContainsString( 'privacy-preserving evidence', $markup );
+		self::assertStringNotContainsString( 'resumable background batches', $markup );
+		self::assertStringNotContainsString( 'curated inventory', $markup );
+	}
+
 	public function test_settings_are_bounded_and_proxy_addresses_are_validated(): void {
 		$settings = Settings::sanitize(
 			array(
