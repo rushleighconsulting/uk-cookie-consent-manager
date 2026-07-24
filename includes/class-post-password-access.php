@@ -192,7 +192,7 @@ final class Post_Password_Access {
 		$targets = is_array( $record ) && is_array( $record['targets'] ?? null ) ? $record['targets'] : array();
 
 		return is_array( $record )
-			&& $run_id === (int) ( $record['run_id'] ?? 0 )
+			&& (int) ( $record['run_id'] ?? 0 ) === $run_id
 			&& hash_equals( home_url( '/' ), (string) ( $record['site'] ?? '' ) )
 			&& in_array( $target, $targets, true );
 	}
