@@ -53,7 +53,7 @@ final class PostPasswordAccessTest extends TestCase {
 				'post_status'   => 'publish',
 				'post_type'     => 'page',
 				'post_password' => 'shared-view-key',
-				'permalink'     => 'https://example.test/protected-match/',
+				'permalink'     => 'https://example.test/protected-match',
 			),
 			3 => (object) array(
 				'post_status'   => 'publish',
@@ -68,16 +68,16 @@ final class PostPasswordAccessTest extends TestCase {
 				'permalink'     => 'https://example.test/draft-protected/',
 			),
 		);
-		$GLOBALS['uccm_test_url_post_ids']['https://example.test/protected-match/'] = 2;
+		$GLOBALS['uccm_test_url_post_ids']['https://example.test/protected-match'] = 2;
 
 		$targets = Scanner::targets();
 
 		self::assertIsArray( $targets );
-		self::assertContains( 'https://example.test/protected-match/', $targets );
+		self::assertContains( 'https://example.test/protected-match', $targets );
 		self::assertNotContains( 'https://example.test/protected-other/', $targets );
 		self::assertNotContains( 'https://example.test/draft-protected/', $targets );
 		self::assertArrayNotHasKey( 'has_password', $GLOBALS['uccm_test_get_posts_arguments'][0] );
-		self::assertTrue( Post_Password_Access::target_is_unlocked( 'https://example.test/protected-match/' ) );
+		self::assertTrue( Post_Password_Access::target_is_unlocked( 'https://example.test/protected-match' ) );
 	}
 
 	public function test_native_cookie_header_contains_only_a_hash_and_salt_rotation_fails_closed(): void {
