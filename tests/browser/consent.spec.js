@@ -133,7 +133,9 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 
 	await settingsButton.focus();
 	await expect( settingsButton ).toBeFocused();
-	expect( await settingsButton.evaluate( ( element ) => getComputedStyle( element, '::after' ).opacity ) ).toBe( '1' );
+	await expect.poll(
+		() => settingsButton.evaluate( ( element ) => getComputedStyle( element, '::after' ).opacity )
+	).toBe( '1' );
 	await expect.poll( () => receipts.length ).toBe( 1 );
 	expect( receipts[0].action ).toBe( 'grant' );
 	expect( receipts[0].categories ).toEqual( {
