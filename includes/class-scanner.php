@@ -332,7 +332,7 @@ final class Scanner {
 	 * Search-engine robots metadata is deliberately not consulted.
 	 *
 	 * @param string[] $excluded Administrator-configured path exclusions.
-	 * @return string[]
+	 * @return array{targets: string[], protected_targets: string[]}
 	 */
 	private static function eligible_wordpress_targets( array $excluded ): array {
 		$protected_access = Post_Password_Access::enabled();
