@@ -20,11 +20,6 @@ final class Operational_Alerts {
 	public const OPTION_NAME = 'uccm_operational_alerts';
 
 	/**
-	 * Suppress repeat email for the same underlying problem for six hours.
-	 */
-	public const EMAIL_SUPPRESSION_SECONDS = 6 * HOUR_IN_SECONDS;
-
-	/**
 	 * A queued or running scan is considered stalled after thirty minutes.
 	 */
 	public const STALLED_AFTER_SECONDS = 30 * MINUTE_IN_SECONDS;
@@ -311,7 +306,16 @@ final class Operational_Alerts {
 	 */
 	private static function email_due( array $record ): bool {
 		$last_email = strtotime( (string) ( $record['last_email_at'] ?? '' ) );
-		return false === $last_email || $last_email <= time() - self::EMAIL_SUPPRESSION_SECONDS;
+		$settings   = Settings::current();
+		$minutes    = max(
+			1,
+			min(
+				Settings::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES,
+				(int) ( $settings['error_email_suppression_minutes'] ?? Settings::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES )
+			)
+		);
+
+		return false === $last_email || $last_email <= time() - ( $minutes * MINUTE_IN_SECONDS );
 	}
 
 	/**
