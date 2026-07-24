@@ -803,6 +803,21 @@ final class Scanner {
 			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to add browser observations.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
 
+		$browser_status = sanitize_key( (string) ( $payload['status'] ?? 'completed' ) );
+
+		if ( ! in_array( $browser_status, array( 'running', 'completed', 'partial', 'failed' ), true ) ) {
+			return new \WP_Error( 'uccm_browser_scan_invalid_status', __( 'The browser check status is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+		}
+
+		/*
+		 * Report an authenticated failure before reopening or updating the scan.
+		 * The alert must survive a missing, stale or unwritable scan record.
+		 */
+		if ( in_array( $browser_status, array( 'partial', 'failed' ), true ) ) {
+			$problem = substr( sanitize_key( (string) ( $payload['problem'] ?? 'browser_check_failed' ) ), 0, 35 );
+			Operational_Alerts::report( 'uccm_browser_' . ( '' === $problem ? 'check_failed' : $problem ), 'browser-check', $run_id );
+		}
+
 		$run = self::run_record( $run_id );
 
 		if ( is_wp_error( $run ) ) {
@@ -811,12 +826,6 @@ final class Scanner {
 
 		if ( 'completed' !== (string) $run['status'] ) {
 			return new \WP_Error( 'uccm_browser_scan_not_ready', __( 'The server crawl must complete before browser observations are added.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
-		}
-
-		$browser_status = sanitize_key( (string) ( $payload['status'] ?? 'completed' ) );
-
-		if ( ! in_array( $browser_status, array( 'running', 'completed', 'partial', 'failed' ), true ) ) {
-			return new \WP_Error( 'uccm_browser_scan_invalid_status', __( 'The browser check status is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
 		}
 
 		$coverage = self::decoded_array( $run['coverage'] ?? '' );
@@ -865,10 +874,7 @@ final class Scanner {
 			return new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 		}
 
-		if ( in_array( $browser_status, array( 'partial', 'failed' ), true ) ) {
-			$problem = substr( sanitize_key( (string) ( $payload['problem'] ?? 'browser_check_failed' ) ), 0, 35 );
-			Operational_Alerts::report( 'uccm_browser_' . ( '' === $problem ? 'check_failed' : $problem ), 'browser-check', $run_id );
-		} elseif ( 'completed' === $browser_status ) {
+		if ( 'completed' === $browser_status ) {
 			Operational_Alerts::resolve_component( 'browser-check', $run_id );
 		}
 
