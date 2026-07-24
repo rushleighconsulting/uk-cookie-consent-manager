@@ -27,6 +27,9 @@ final class ScannerTest extends TestCase {
 		$GLOBALS['uccm_test_remote_responses']   = array();
 		$GLOBALS['uccm_test_db_rows']            = array();
 		$GLOBALS['uccm_test_db_row_queue']       = array();
+		$GLOBALS['uccm_test_posts']              = array();
+		$GLOBALS['uccm_test_url_post_ids']       = array();
+		$GLOBALS['uccm_test_get_posts_arguments'] = array();
 	}
 
 	public function test_monthly_schedule_is_idempotent_and_deactivation_clears_it(): void {
@@ -184,6 +187,97 @@ final class ScannerTest extends TestCase {
 		self::assertCount( 1, $GLOBALS['uccm_test_spawn_cron_calls'] );
 	}
 
+	public function test_start_seeds_only_eligible_published_wordpress_content(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$GLOBALS['uccm_test_posts'] = array(
+			11 => (object) array(
+				'post_status'   => 'publish',
+				'post_type'     => 'page',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/unlinked-noindex/',
+				'robots'        => 'noindex,nofollow',
+			),
+			12 => (object) array(
+				'post_status'   => 'publish',
+				'post_type'     => 'post',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/news/story/',
+			),
+			13 => (object) array(
+				'post_status'   => 'draft',
+				'post_type'     => 'page',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/draft/',
+			),
+			14 => (object) array(
+				'post_status'   => 'publish',
+				'post_type'     => 'page',
+				'post_password' => 'secret',
+				'permalink'     => 'https://example.test/protected/',
+			),
+			15 => (object) array(
+				'post_status'   => 'publish',
+				'post_type'     => 'attachment',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/media/photo/',
+			),
+			16 => (object) array(
+				'post_status'   => 'private',
+				'post_type'     => 'post',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/private/',
+			),
+			17 => (object) array(
+				'post_status'   => 'pending',
+				'post_type'     => 'post',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/pending/',
+			),
+			18 => (object) array(
+				'post_status'   => 'auto-draft',
+				'post_type'     => 'page',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/auto-draft/',
+			),
+			19 => (object) array(
+				'post_status'   => 'future',
+				'post_type'     => 'post',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/scheduled/',
+			),
+			20 => (object) array(
+				'post_status'   => 'trash',
+				'post_type'     => 'page',
+				'post_password' => '',
+				'permalink'     => 'https://example.test/trashed/',
+			),
+		);
+		$GLOBALS['uccm_test_options'][ Settings::OPTION_NAME ] = Settings::sanitize(
+			array(
+				'scan_page_limit' => 10,
+				'scan_urls'       => array( 'https://example.test/category/news/' ),
+			),
+			array()
+		);
+
+		Scanner::start();
+
+		$coverage = json_decode( (string) $GLOBALS['wpdb']->inserts[0]['data']['coverage'], true );
+		self::assertSame(
+			array(
+				'https://example.test/',
+				'https://example.test/unlinked-noindex',
+				'https://example.test/news/story',
+				'https://example.test/category/news',
+			),
+			$coverage['frontier']
+		);
+		self::assertSame( 2, $coverage['wordpress_content_count'] );
+		self::assertSame( 0, $coverage['accepted_link_count'] );
+		self::assertSame( 'publish', $GLOBALS['uccm_test_get_posts_arguments'][0]['post_status'] );
+		self::assertFalse( $GLOBALS['uccm_test_get_posts_arguments'][0]['has_password'] );
+	}
+
 	public function test_background_batch_discovers_links_and_persists_resumable_progress(): void {
 		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
 		$run_id = Scanner::start();
@@ -209,6 +303,8 @@ final class ScannerTest extends TestCase {
 		self::assertSame( 'running', $first_update['status'] );
 		self::assertSame( 1, $coverage['visited_count'] );
 		self::assertSame( 2, $coverage['discovered_count'] );
+		self::assertSame( 1, $coverage['accepted_link_count'] );
+		self::assertSame( 1, $coverage['ignored_counts']['variant'] );
 		self::assertSame( array( 'https://example.test/about' ), $coverage['frontier'] );
 
 		$GLOBALS['uccm_test_db_rows'] = array( array_merge( $run, $first_update ) );
