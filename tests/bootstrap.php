@@ -48,6 +48,9 @@ $GLOBALS['uccm_test_admin_menus']       = array();
 $GLOBALS['uccm_test_admin_submenus']    = array();
 $GLOBALS['uccm_test_users_by_email']     = array();
 $GLOBALS['uccm_test_privacy_content']    = array();
+$GLOBALS['uccm_test_posts']              = array();
+$GLOBALS['uccm_test_url_post_ids']       = array();
+$GLOBALS['uccm_test_get_posts_arguments'] = array();
 
 /**
  * Minimal wpdb test double.
@@ -429,6 +432,31 @@ function get_current_blog_id(): int {
 
 function home_url( string $path = '' ): string {
 	return 'https://example.test' . $path;
+}
+
+/** @return int[] */
+function get_posts( array $arguments = array() ): array {
+	$GLOBALS['uccm_test_get_posts_arguments'][] = $arguments;
+	return array_map( 'intval', array_keys( $GLOBALS['uccm_test_posts'] ) );
+}
+
+function get_post( int $post_id ): ?object {
+	$post = $GLOBALS['uccm_test_posts'][ $post_id ] ?? null;
+	return is_object( $post ) ? $post : null;
+}
+
+function get_permalink( int $post_id ): string|false {
+	$post = get_post( $post_id );
+	return is_object( $post ) && isset( $post->permalink ) ? (string) $post->permalink : false;
+}
+
+function url_to_postid( string $url ): int {
+	return (int) ( $GLOBALS['uccm_test_url_post_ids'][ $url ] ?? 0 );
+}
+
+function get_post_type( int $post_id ): string|false {
+	$post = get_post( $post_id );
+	return is_object( $post ) && isset( $post->post_type ) ? (string) $post->post_type : false;
 }
 
 function wp_parse_url( string $url, int $component = -1 ): array|string|int|null|false {
