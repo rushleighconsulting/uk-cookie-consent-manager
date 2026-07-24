@@ -69,6 +69,11 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'data-uccm-action="accept-all"', $markup );
 		self::assertStringContainsString( 'data-uccm-action="reject-optional"', $markup );
 		self::assertStringContainsString( 'data-uccm-action="manage"', $markup );
+		self::assertStringContainsString( 'class="uccm-settings"', $markup );
+		self::assertStringContainsString( 'aria-label="Cookie settings"', $markup );
+		self::assertStringContainsString( 'data-uccm-label="Cookie settings"', $markup );
+		self::assertStringContainsString( 'class="uccm-settings__icon"', $markup );
+		self::assertStringContainsString( 'aria-hidden="true"', $markup );
 		self::assertStringContainsString( '<dialog id="uccm-preferences"', $markup );
 		self::assertStringContainsString( 'name="necessary" checked disabled', $markup );
 		self::assertStringContainsString( 'name="functional"', $markup );

@@ -82,8 +82,11 @@ final class Consent_Interface {
 				</div>
 			</section>
 
-			<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" hidden>
-				<?php esc_html_e( 'Cookie settings', 'uk-cookie-consent-manager' ); ?>
+			<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" aria-label="<?php esc_attr_e( 'Cookie settings', 'uk-cookie-consent-manager' ); ?>" data-uccm-label="<?php esc_attr_e( 'Cookie settings', 'uk-cookie-consent-manager' ); ?>" hidden>
+				<svg class="uccm-settings__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-3.87A4 4 0 0 1 12.13 3 4 4 0 0 1 12 2Z"></path>
+					<path d="M8.5 8.5h.01M16 15.5h.01M10.5 16.5h.01"></path>
+				</svg>
 			</button>
 
 			<dialog id="uccm-preferences" class="uccm-dialog" aria-labelledby="uccm-preferences-title">
