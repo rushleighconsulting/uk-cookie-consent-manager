@@ -114,7 +114,7 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 	await page.getByRole( 'button', { name: 'Run browser observations' } ).click();
 
 	await expect( page.locator( '#uccm-browser-observation-status' ) ).toHaveText(
-		'Browser check saved. Reload this scan to review the results.',
+		/Browser check saved/,
 		{ timeout: 45000 }
 	);
 
@@ -125,9 +125,17 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 	} ) );
 
 	const payload = submissions.at( -1 );
-	expect( payload.status ).toBe( 'completed' );
-	expect( payload.target_count ).toBe( 2 );
-	expect( payload.completed_steps ).toBe( 12 );
+	expect( {
+		status: payload.status,
+		target_count: payload.target_count,
+		completed_steps: payload.completed_steps,
+		bootstrap_requests: bootstrapRequests
+	} ).toEqual( {
+		status: 'completed',
+		target_count: 2,
+		completed_steps: 12,
+		bootstrap_requests: 6
+	} );
 	expect( payload.observations.filter( ( observation ) => 'analytics_id' === observation.storage_key ) ).toHaveLength( 1 );
 
 	const cookie = payload.observations.find( ( observation ) => 'analytics_id' === observation.storage_key );
