@@ -231,27 +231,161 @@ final class Scanner {
 	}
 
 	/**
-	 * Return the validated homepage and configured public targets.
+	 * Return deterministic validated scan targets.
+	 *
+	 * Ordering is homepage, published WordPress pages/posts by type and ID, then
+	 * administrator-configured URLs. The current site's query supplies the
+	 * multisite boundary.
 	 *
 	 * @return string[]|\WP_Error
 	 */
 	public static function targets(): array|\WP_Error {
+		$plan = self::target_plan( self::MAX_TARGETS );
+		return is_wp_error( $plan ) ? $plan : $plan['targets'];
+	}
+
+	/**
+	 * Build a bounded target plan and its coverage metadata.
+	 *
+	 * @param int $limit Maximum target count.
+	 * @return array{targets: string[], wordpress_content_count: int}|\WP_Error
+	 */
+	private static function target_plan( int $limit ): array|\WP_Error {
 		$settings   = Settings::current();
 		$configured = is_array( $settings['scan_urls'] ?? null ) ? $settings['scan_urls'] : array();
-		$candidates = array_slice( array_merge( array( home_url( '/' ) ), $configured ), 0, self::MAX_TARGETS );
-		$targets    = array();
+		$excluded   = is_array( $settings['scan_excluded_paths'] ?? null ) ? $settings['scan_excluded_paths'] : Crawler::DEFAULT_EXCLUDED_PATHS;
+		$wordpress  = self::eligible_wordpress_targets( $excluded );
+		$candidates = array_merge(
+			array( array( 'url' => home_url( '/' ), 'source' => 'homepage' ) ),
+			array_map(
+				static fn ( string $url ): array => array( 'url' => $url, 'source' => 'wordpress' ),
+				$wordpress
+			),
+			array_map(
+				static fn ( mixed $url ): array => array( 'url' => (string) $url, 'source' => 'configured' ),
+				$configured
+			)
+		);
+		$targets          = array();
+		$sources          = array();
+		$wordpress_lookup = array_fill_keys( $wordpress, true );
 
-		foreach ( array_unique( $candidates ) as $candidate ) {
-			$validated = self::validate_target( (string) $candidate );
+		foreach ( $candidates as $candidate ) {
+			$raw       = (string) $candidate['url'];
+			$validated = Crawler::canonicalize( $raw, home_url( '/' ) );
 
 			if ( is_wp_error( $validated ) ) {
-				return self::target_error( $validated, (string) $candidate );
+				if ( 'configured' === $candidate['source'] || 'homepage' === $candidate['source'] ) {
+					return self::target_error( $validated, $raw );
+				}
+
+				continue;
 			}
 
-			$targets[] = $validated;
+			if ( isset( $sources[ $validated ] ) ) {
+				if ( 'wordpress' === $candidate['source'] ) {
+					$wordpress_lookup[ $validated ] = true;
+				}
+				continue;
+			}
+
+			if ( count( $targets ) >= $limit ) {
+				break;
+			}
+
+			$targets[]             = $validated;
+			$sources[ $validated ] = (string) $candidate['source'];
 		}
 
-		return $targets;
+		$wordpress_count = 0;
+
+		foreach ( $targets as $target ) {
+			if ( isset( $wordpress_lookup[ $target ] ) ) {
+				++$wordpress_count;
+			}
+		}
+
+		return array(
+			'targets'                   => $targets,
+			'wordpress_content_count'   => $wordpress_count,
+		);
+	}
+
+	/**
+	 * Return eligible published pages and posts for the current WordPress site.
+	 *
+	 * Search-engine robots metadata is deliberately not consulted.
+	 *
+	 * @param string[] $excluded Administrator-configured path exclusions.
+	 * @return string[]
+	 */
+	private static function eligible_wordpress_targets( array $excluded ): array {
+		$post_ids = get_posts(
+			array(
+				'post_type'              => array( 'page', 'post' ),
+				'post_status'            => 'publish',
+				'has_password'           => false,
+				'numberposts'            => self::MAX_TARGETS,
+				'posts_per_page'         => self::MAX_TARGETS,
+				'orderby'                => array(
+					'post_type' => 'ASC',
+					'ID'        => 'ASC',
+				),
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'suppress_filters'       => false,
+				'ignore_sticky_posts'    => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+		$records = array();
+
+		foreach ( is_array( $post_ids ) ? $post_ids : array() as $post_id ) {
+			$post = get_post( (int) $post_id );
+
+			if (
+				! is_object( $post )
+				|| 'publish' !== (string) ( $post->post_status ?? '' )
+				|| ! in_array( (string) ( $post->post_type ?? '' ), array( 'page', 'post' ), true )
+				|| '' !== (string) ( $post->post_password ?? '' )
+			) {
+				continue;
+			}
+
+			$records[] = array(
+				'id'   => (int) $post_id,
+				'type' => (string) $post->post_type,
+			);
+		}
+
+		usort(
+			$records,
+			static function ( array $left, array $right ): int {
+				$type_order = strcmp( $left['type'], $right['type'] );
+				return 0 !== $type_order ? $type_order : $left['id'] <=> $right['id'];
+			}
+		);
+
+		$targets = array();
+
+		foreach ( $records as $record ) {
+			$permalink = get_permalink( $record['id'] );
+
+			if ( ! is_string( $permalink ) || '' === $permalink ) {
+				continue;
+			}
+
+			$target = Crawler::canonicalize( $permalink, home_url( '/' ) );
+
+			if ( is_wp_error( $target ) || Crawler::is_excluded( $target, $excluded ) ) {
+				continue;
+			}
+
+			$targets[ $target ] = true;
+		}
+
+		return array_keys( $targets );
 	}
 
 	/**
@@ -268,22 +402,25 @@ final class Scanner {
 			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
 		}
 
-		$targets = self::targets();
-
-		if ( is_wp_error( $targets ) ) {
-			self::record_failed_run( $targets );
-			return $targets;
-		}
-
 		$settings   = Settings::current();
 		$max_pages  = max( 1, min( self::MAX_TARGETS, (int) ( $settings['scan_page_limit'] ?? self::MAX_TARGETS ) ) );
 		$batch_size = max( 1, min( 25, (int) ( $settings['scan_batch_size'] ?? self::DEFAULT_BATCH_SIZE ) ) );
-		$targets    = array_slice( $targets, 0, $max_pages );
+		$plan       = self::target_plan( $max_pages );
+
+		if ( is_wp_error( $plan ) ) {
+			self::record_failed_run( $plan );
+			return $plan;
+		}
+
+		$targets = $plan['targets'];
 		$methods    = array( 'same-origin-set-cookie', 'administrator-browser-observations' );
 		$now        = gmdate( 'Y-m-d H:i:s' );
 		$coverage   = array(
 			'target_count'              => count( $targets ),
 			'discovered_count'          => count( $targets ),
+			'wordpress_content_count'   => (int) $plan['wordpress_content_count'],
+			'accepted_link_count'       => 0,
+			'ignored_counts'            => Crawler::empty_ignored_counts(),
 			'visited_count'             => 0,
 			'remaining_count'           => count( $targets ),
 			'max_pages'                 => $max_pages,
@@ -298,9 +435,9 @@ final class Scanner {
 			'finding_counts' => self::empty_finding_counts(),
 			'warnings'       => array(),
 			'limitations'    => array(
-				'Only same-origin public links discovered from eligible HTML responses are crawled.',
-				'Browser observations require an administrator to run the packaged browser pass.',
-				'Authenticated, personalised and geographically varied journeys are not exhaustive.',
+				'Published WordPress pages and posts are checked alongside eligible same-site links.',
+				'Media files, attachment records, archives, pagination and tracking-only URL variants are ignored unless explicitly configured.',
+				'Password-protected, unpublished, authenticated, personalised and geographically varied journeys are not included.',
 			),
 		);
 
@@ -456,18 +593,29 @@ final class Scanner {
 				}
 
 				if ( '' === $content_type || str_contains( $content_type, 'text/html' ) ) {
-					foreach ( Crawler::discover( wp_remote_retrieve_body( $response ), $validated, $excluded ) as $discovered ) {
+					$inspection = Crawler::inspect( wp_remote_retrieve_body( $response ), $validated, $excluded );
+					$ignored    = is_array( $coverage['ignored_counts'] ?? null ) ? $coverage['ignored_counts'] : Crawler::empty_ignored_counts();
+
+					foreach ( Crawler::empty_ignored_counts() as $class => $count ) {
+						$ignored[ $class ] = (int) ( $ignored[ $class ] ?? 0 ) + (int) ( $inspection['ignored'][ $class ] ?? 0 );
+					}
+
+					foreach ( $inspection['accepted'] as $discovered ) {
+						if ( isset( $seen[ $discovered ] ) ) {
+							++$ignored['variant'];
+							continue;
+						}
+
 						if ( count( $seen ) >= $max_pages ) {
 							break;
 						}
 
-						if ( isset( $seen[ $discovered ] ) ) {
-							continue;
-						}
-
 						$seen[ $discovered ] = true;
 						$frontier[]          = $discovered;
+						$coverage['accepted_link_count'] = (int) ( $coverage['accepted_link_count'] ?? 0 ) + 1;
 					}
+
+					$coverage['ignored_counts'] = $ignored;
 				}
 			}
 
