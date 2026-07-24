@@ -508,7 +508,9 @@ final class Admin {
 		}
 
 		setcookie( Post_Password_Access::cookie_name(), $value, $options );
-		wp_safe_redirect( $target );
+		nocache_headers();
+		header( 'Content-Type: text/html; charset=UTF-8' );
+		echo '<!doctype html><meta charset="utf-8"><title>' . esc_html__( 'Protected page access prepared', 'uk-cookie-consent-manager' ) . '</title>';
 		exit;
 	}
 
