@@ -25,6 +25,7 @@ final class Admin {
 	public static function register(): void {
 		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_post_uccm_save_settings', array( self::class, 'save_settings' ) );
+		add_action( 'admin_post_uccm_dismiss_operational_alert', array( self::class, 'dismiss_operational_alert' ) );
 		add_action( 'admin_post_uccm_save_blocking_rules', array( self::class, 'save_blocking_rules' ) );
 		add_action( 'admin_post_uccm_save_scan_settings', array( self::class, 'save_scan_settings' ) );
 		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
@@ -151,6 +152,7 @@ final class Admin {
 					'update_manifest_url' => $submitted['update_manifest_url'] ?? '',
 					'update_public_key'   => $submitted['update_public_key'] ?? '',
 					'auto_update'         => $submitted['auto_update'] ?? false,
+					'error_email_enabled' => $submitted['error_email_enabled'] ?? false,
 				)
 			);
 
@@ -171,6 +173,20 @@ final class Admin {
 
 		self::redirect( 'uccm-' . $section, 'saved' );
 	}
+
+
+	/**
+	 * Dismiss one capability- and nonce-protected dashboard occurrence.
+	 */
+	public static function dismiss_operational_alert(): void {
+		self::require_capability( 'manage_uccm_settings' );
+		$alert_id = self::request_value( $_POST, 'alert_id' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified immediately below.
+		check_admin_referer( 'uccm_dismiss_operational_alert_' . $alert_id );
+		Operational_Alerts::dismiss( $alert_id );
+		wp_safe_redirect( admin_url() );
+		exit;
+	}
+
 
 	/**
 	 * Persist explicitly declared resource rules from the guided editor or JSON.
@@ -1087,6 +1103,8 @@ final class Admin {
 		echo '<p><label for="uccm-update-credential"><strong>' . esc_html__( 'Site-specific download credential', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-update-credential" class="regular-text" type="password" autocomplete="new-password" name="uccm[update_credential]" value="" placeholder="' . esc_attr__( 'Leave blank to keep the stored credential', 'uk-cookie-consent-manager' ) . '"><br><small>' . esc_html( Secure_Updater::has_credential() ? __( 'An encrypted credential is configured.', 'uk-cookie-consent-manager' ) : __( 'No credential is configured.', 'uk-cookie-consent-manager' ) ) . '</small></p>';
 		self::checkbox_field( 'clear_update_credential', __( 'Remove the stored update credential', 'uk-cookie-consent-manager' ), false, __( 'The credential is never displayed after saving.', 'uk-cookie-consent-manager' ) );
 		self::checkbox_field( 'auto_update', __( 'Automatically install authenticated UCCM updates', 'uk-cookie-consent-manager' ), ! empty( $settings['auto_update'] ), __( 'Opt in only after testing your backup and recovery process.', 'uk-cookie-consent-manager' ) );
+		echo '<hr><h2>' . esc_html__( 'Operational error notifications', 'uk-cookie-consent-manager' ) . '</h2>';
+		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery, contain no consent records or credentials, and repeated problems are suppressed for six hours.', 'uk-cookie-consent-manager' ) );
 		echo '<hr>';
 		self::checkbox_field( 'delete_data_on_uninstall', __( 'Delete all UCCM data when the plugin is uninstalled', 'uk-cookie-consent-manager' ), true === get_option( 'uccm_delete_data_on_uninstall', false ), __( 'Leave disabled to retain settings and evidence by default.', 'uk-cookie-consent-manager' ) );
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
