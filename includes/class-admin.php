@@ -819,7 +819,7 @@ final class Admin {
 		} elseif ( array() === $runs ) {
 			echo '<p>' . esc_html__( 'No scan runs have been recorded yet.', 'uk-cookie-consent-manager' ) . '</p>';
 		} else {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Pages checked', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Browser check', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Items to review', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Problems', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Run', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Status', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Started (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Scan coverage', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Browser check', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Items to review', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Problems', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 			foreach ( $runs as $run ) {
 				$summary          = json_decode( (string) $run['summary'], true );
@@ -836,13 +836,30 @@ final class Admin {
 					),
 					admin_url( 'admin.php' )
 				);
-				$visited_count    = (int) ( $coverage['visited_count'] ?? count( $pages ) );
-				$discovered_count = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
-				$remaining_count  = (int) ( $coverage['remaining_count'] ?? 0 );
-				$browser_status   = (string) ( $coverage['browser_status'] ?? 'not-run' );
+				$visited_count     = (int) ( $coverage['visited_count'] ?? count( $pages ) );
+				$discovered_count  = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
+				$remaining_count   = (int) ( $coverage['remaining_count'] ?? 0 );
+				$wordpress_count   = (int) ( $coverage['wordpress_content_count'] ?? 0 );
+				$accepted_count    = (int) ( $coverage['accepted_link_count'] ?? max( 0, $discovered_count - (int) ( $coverage['target_count'] ?? 0 ) ) );
+				$ignored_counts    = is_array( $coverage['ignored_counts'] ?? null ) ? $coverage['ignored_counts'] : array();
+				$ignored_count     = array_sum( array_map( 'intval', $ignored_counts ) );
+				$browser_status    = (string) ( $coverage['browser_status'] ?? 'not-run' );
 				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td>';
-				/* translators: 1: visited pages, 2: discovered pages, 3: remaining pages. */
-				echo '<td>' . esc_html( sprintf( __( '%1$d of %2$d page addresses found; %3$d waiting', 'uk-cookie-consent-manager' ), $visited_count, $discovered_count, $remaining_count ) ) . '</td>';
+				if ( array_key_exists( 'wordpress_content_count', $coverage ) ) {
+					/* translators: 1: eligible WordPress pages/posts, 2: other accepted links, 3: ignored links, 4: checked URLs, 5: remaining URLs. */
+					$progress = sprintf(
+						__( '%1$d pages/posts; %2$d other links; %3$d ignored; %4$d checked; %5$d remaining', 'uk-cookie-consent-manager' ),
+						$wordpress_count,
+						$accepted_count,
+						$ignored_count,
+						$visited_count,
+						$remaining_count
+					);
+				} else {
+					/* translators: 1: checked URLs, 2: accepted URLs, 3: remaining URLs. */
+					$progress = sprintf( __( '%1$d checked; %2$d accepted; %3$d remaining', 'uk-cookie-consent-manager' ), $visited_count, $discovered_count, $remaining_count );
+				}
+				echo '<td>' . esc_html( $progress ) . '</td>';
 				echo '<td>' . esc_html( $browser_status ) . '</td><td>' . esc_html( (string) (int) ( $summary['findings'] ?? 0 ) ) . '</td><td>' . esc_html( (string) count( $warnings ) ) . '</td><td>';
 
 				if ( in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
