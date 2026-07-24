@@ -131,7 +131,7 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 	expect( settingsBox.height ).toBeGreaterThanOrEqual( 44 );
 	expect( settingsBox.height ).toBeLessThanOrEqual( 52 );
 
-	await settingsButton.focus();
+	await page.keyboard.press( 'Tab' );
 	await expect( settingsButton ).toBeFocused();
 	await expect.poll(
 		() => settingsButton.evaluate( ( element ) => getComputedStyle( element, '::after' ).opacity )
