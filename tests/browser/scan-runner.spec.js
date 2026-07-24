@@ -73,12 +73,12 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 				expect( submitted.get( 'scan_id' ) ).toBe( '42' );
 				expect( submitted.get( 'target' ) ).toBe( 'https://example.test/page-two' );
 				await route.fulfill( {
-					status: 302,
+					status: 200,
 					headers: {
-						location: 'https://example.test/page-two',
+						'content-type': 'text/html; charset=UTF-8',
 						'set-cookie': 'wp-postpass_test=%24P%24Bhash; Path=/; HttpOnly; SameSite=Lax'
 					},
-					body: ''
+					body: '<!doctype html><title>Protected page access prepared</title>'
 				} );
 				return;
 			}
