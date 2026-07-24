@@ -4,7 +4,7 @@ const { test, expect } = require( '@playwright/test' );
 const fixture = `
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Consent test</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Consent test</title></head>
 <body>
 <div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
 	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
@@ -95,6 +95,21 @@ async function boot( page ) {
 	return receipts;
 }
 
+async function expectBannerWithinViewport( page ) {
+	const viewport = page.viewportSize();
+	const banner = page.locator( '#uccm-banner' );
+	const bannerBox = await banner.boundingBox();
+
+	expect( viewport ).not.toBeNull();
+	expect( bannerBox ).not.toBeNull();
+	expect( bannerBox.x ).toBeGreaterThanOrEqual( 0 );
+	expect( bannerBox.y ).toBeGreaterThanOrEqual( 0 );
+	expect( bannerBox.x + bannerBox.width ).toBeLessThanOrEqual( viewport.width + 1 );
+	expect( bannerBox.y + bannerBox.height ).toBeLessThanOrEqual( viewport.height + 1 );
+	await expect( page.locator( '#uccm-banner-title' ) ).toBeVisible();
+	await expect( banner.locator( '.uccm-copy' ) ).toBeVisible();
+}
+
 test( 'first visit remains blocked until an equally prominent decision is made', async ( { page } ) => {
 	const receipts = await boot( page );
 	const banner = page.locator( '#uccm-banner' );
@@ -145,6 +160,61 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 		marketing: true,
 	} );
 	await expect.poll( () => page.evaluate( () => window.analyticsExecutions || 0 ) ).toBe( 1 );
+} );
+
+test( 'mobile portrait keeps compact actions and the complete banner within the viewport', async ( { page } ) => {
+	await page.setViewportSize( { width: 390, height: 844 } );
+	await boot( page );
+	await expectBannerWithinViewport( page );
+
+	const actions = page.locator( '#uccm-banner .uccm-actions--primary button' );
+	const actionBoxes = await actions.evaluateAll( ( buttons ) => buttons.map( ( button ) => {
+		const box = button.getBoundingClientRect();
+
+		return {
+			height: box.height,
+			width: box.width,
+		};
+	} ) );
+
+	expect( actionBoxes ).toHaveLength( 3 );
+	expect( actionBoxes.every( ( box ) => box.height >= 44 && box.height <= 72 ) ).toBe( true );
+	expect( new Set( actionBoxes.map( ( box ) => box.height ) ).size ).toBe( 1 );
+	expect( new Set( actionBoxes.map( ( box ) => box.width ) ).size ).toBe( 1 );
+} );
+
+test( 'mobile landscape remains compact and fully visible', async ( { page } ) => {
+	await page.setViewportSize( { width: 844, height: 390 } );
+	await boot( page );
+	await expectBannerWithinViewport( page );
+
+	const actions = page.locator( '#uccm-banner .uccm-actions--primary button' );
+	const actionHeights = await actions.evaluateAll( ( buttons ) => (
+		buttons.map( ( button ) => button.getBoundingClientRect().height )
+	) );
+
+	expect( actionHeights.every( ( height ) => height >= 44 && height <= 72 ) ).toBe( true );
+} );
+
+test( 'constrained portrait view keeps enlarged content reachable by touch scrolling', async ( { page } ) => {
+	await page.setViewportSize( { width: 390, height: 500 } );
+	await boot( page );
+	await page.addStyleTag( { content: 'html { font-size: 200%; }' } );
+	await expectBannerWithinViewport( page );
+
+	const banner = page.locator( '#uccm-banner' );
+	const overflow = await banner.evaluate( ( element ) => ( {
+		clientHeight: element.clientHeight,
+		scrollHeight: element.scrollHeight,
+	} ) );
+
+	expect( overflow.scrollHeight ).toBeGreaterThan( overflow.clientHeight );
+
+	const finalAction = page.getByRole( 'button', { name: 'Manage preferences' } );
+	await finalAction.scrollIntoViewIfNeeded();
+	await expect( finalAction ).toBeVisible();
+	await finalAction.click();
+	await expect( page.locator( '#uccm-preferences' ) ).toHaveAttribute( 'open', '' );
 } );
 
 test( 'rejecting optional cookies stores and discloses the necessary choice cookie', async ( { page } ) => {

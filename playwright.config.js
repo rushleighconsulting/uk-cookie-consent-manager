@@ -16,5 +16,10 @@ module.exports = defineConfig( {
 			name: 'mobile',
 			use: { ...devices['Pixel 7'] },
 		},
+		{
+			name: 'mobile-safari',
+			testMatch: /consent\.spec\.js/,
+			use: { ...devices['iPhone 13'] },
+		},
 	],
 } );
