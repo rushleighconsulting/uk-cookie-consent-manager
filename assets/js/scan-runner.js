@@ -15,6 +15,8 @@
 	];
 	var sourceLimit = 20;
 	var protectedLookup = {};
+	var isolatedContextAvailable = 'credentialless' in HTMLIFrameElement.prototype;
+	var browserRequirement = 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.';
 
 	if ( ! button || ! status || ! Array.isArray( config.targets ) ) {
 		return;
@@ -24,6 +26,13 @@
 		config.protectedTargets.forEach( function ( target ) {
 			protectedLookup[ String( target ) ] = true;
 		} );
+	}
+
+	if ( ! isolatedContextAvailable ) {
+		button.disabled = true;
+		button.setAttribute( 'aria-disabled', 'true' );
+		announce( browserRequirement );
+		return;
 	}
 
 	function announce( message ) {
@@ -330,17 +339,6 @@
 		var completedSteps = 0;
 		var failedSteps = 0;
 		var totalSteps = targets.length * scenarios.length;
-
-		if ( ! ( 'credentialless' in HTMLIFrameElement.prototype ) ) {
-			try {
-				await submit( { status: 'failed', problem: 'isolated-context-unavailable', observations: [], target_count: 0, scenario_count: 0 } );
-			} catch ( error ) {
-				// The visible message remains the primary failure report.
-			}
-			announce( 'This browser cannot run the separate visitor check safely. Try a current Chromium-based browser.' );
-			button.disabled = false;
-			return;
-		}
 
 		try {
 			await submit( { status: 'running', observations: [], target_count: targets.length, scenario_count: scenarios.length } );

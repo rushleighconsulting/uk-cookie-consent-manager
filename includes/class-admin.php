@@ -981,10 +981,14 @@ final class Admin {
 			echo '<p><strong>' . esc_html__( 'Browser check status:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( (string) ( $runner_coverage['browser_status'] ?? 'not-run' ) ) . '</p>';
 
 			if ( ! empty( $runner_coverage['browser_problem'] ) ) {
-				echo '<p><strong>' . esc_html__( 'Browser check note:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( str_replace( '-', ' ', (string) $runner_coverage['browser_problem'] ) ) . '</p>';
+				$browser_problem = (string) $runner_coverage['browser_problem'];
+				$browser_note    = 'isolated-context-unavailable' === $browser_problem
+					? __( 'This browser cannot run the separate visitor check safely. Use a current Chrome, Edge or other Chromium browser.', 'uk-cookie-consent-manager' )
+					: str_replace( '-', ' ', $browser_problem );
+				echo '<p><strong>' . esc_html__( 'Browser check note:', 'uk-cookie-consent-manager' ) . '</strong> ' . esc_html( $browser_note ) . '</p>';
 			}
-			echo '<button type="button" class="button button-secondary" id="uccm-run-browser-observations">' . esc_html__( 'Run browser check', 'uk-cookie-consent-manager' ) . '</button>';
-			echo '<p id="uccm-browser-observation-status" aria-live="polite"></p>';
+			echo '<button type="button" class="button button-secondary" id="uccm-run-browser-observations" aria-describedby="uccm-browser-observation-status">' . esc_html__( 'Run browser check', 'uk-cookie-consent-manager' ) . '</button>';
+			echo '<p id="uccm-browser-observation-status" aria-live="polite">' . esc_html__( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'uk-cookie-consent-manager' ) . '</p>';
 			echo '<div id="uccm-browser-observation-frames" hidden></div>';
 		}
 

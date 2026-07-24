@@ -196,8 +196,10 @@ cross-origin authentication are intentionally out of scope.
 Completed server crawls can be followed by the packaged administrator browser
 runner. It inspects up to 100 successfully visited same-origin pages for
 accessible cookie names, local-storage keys, scripts, iframes and pixels and
-records whether the browser pass ran. HttpOnly cookie values, page content, form
-values and consent records are never collected.
+records whether the browser pass ran. The isolated visitor check currently requires
+a current Chrome, Edge or other Chromium-based browser; Safari and Firefox display
+that requirement and keep the action disabled before a check can start. HttpOnly
+cookie values, page content, form values and consent records are never collected.
 
 UCCM-8 adds:
 
