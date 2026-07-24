@@ -866,8 +866,8 @@ final class Scanner {
 		}
 
 		if ( in_array( $browser_status, array( 'partial', 'failed' ), true ) ) {
-			$problem = substr( sanitize_key( (string) ( $payload['problem'] ?? 'uccm_browser_check_failed' ) ), 0, 50 );
-			Operational_Alerts::report( '' === $problem ? 'uccm_browser_check_failed' : $problem, 'browser-check', $run_id );
+			$problem = substr( sanitize_key( (string) ( $payload['problem'] ?? 'browser_check_failed' ) ), 0, 35 );
+			Operational_Alerts::report( 'uccm_browser_' . ( '' === $problem ? 'check_failed' : $problem ), 'browser-check', $run_id );
 		} elseif ( 'completed' === $browser_status ) {
 			Operational_Alerts::resolve_component( 'browser-check', $run_id );
 		}
