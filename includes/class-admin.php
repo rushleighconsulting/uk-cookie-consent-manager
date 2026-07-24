@@ -149,9 +149,9 @@ final class Admin {
 		} elseif ( 'advanced' === $section ) {
 			Settings::update(
 				array(
-					'update_manifest_url' => $submitted['update_manifest_url'] ?? '',
-					'update_public_key'   => $submitted['update_public_key'] ?? '',
-					'auto_update'         => $submitted['auto_update'] ?? false,
+					'update_manifest_url'             => $submitted['update_manifest_url'] ?? '',
+					'update_public_key'               => $submitted['update_public_key'] ?? '',
+					'auto_update'                     => $submitted['auto_update'] ?? false,
 					'error_email_enabled'             => $submitted['error_email_enabled'] ?? false,
 					'error_email_suppression_minutes' => $submitted['error_email_suppression_minutes'] ?? Settings::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES,
 				)
