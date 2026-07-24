@@ -33,10 +33,16 @@ final class OperationalAlertsTest extends TestCase {
 		self::assertCount( 1, Operational_Alerts::current() );
 		self::assertSame( array(), $GLOBALS['uccm_test_mail'] );
 		self::assertFalse( Settings::current()['error_email_enabled'] );
+		self::assertSame( 360, Settings::current()['error_email_suppression_minutes'] );
 	}
 
 	public function test_enabled_email_uses_site_administrator_and_suppresses_repeats(): void {
-		Settings::update( array( 'error_email_enabled' => true ) );
+		Settings::update(
+			array(
+				'error_email_enabled'             => true,
+				'error_email_suppression_minutes' => 10,
+			)
+		);
 		$first = Operational_Alerts::report( 'uccm_scan_progress_not_saved', 'scanner', 7 );
 		Operational_Alerts::report( 'uccm_scan_progress_not_saved', 'scanner', 7 );
 
@@ -48,12 +54,20 @@ final class OperationalAlertsTest extends TestCase {
 
 		$records = $GLOBALS['uccm_test_options'][ Operational_Alerts::OPTION_NAME ];
 		$id      = array_key_first( $records );
-		$records[ $id ]['last_email_at'] = gmdate( 'Y-m-d H:i:s', time() - Operational_Alerts::EMAIL_SUPPRESSION_SECONDS - 1 );
+		$records[ $id ]['last_email_at'] = gmdate( 'Y-m-d H:i:s', time() - ( 10 * MINUTE_IN_SECONDS ) - 1 );
 		$GLOBALS['uccm_test_options'][ Operational_Alerts::OPTION_NAME ] = $records;
 		Operational_Alerts::report( 'uccm_scan_progress_not_saved', 'scanner', 7 );
 
 		self::assertCount( 2, $GLOBALS['uccm_test_mail'] );
 		self::assertSame( 3, Operational_Alerts::current()[0]['occurrences'] );
+	}
+
+	public function test_suppression_minutes_are_bounded_to_one_day(): void {
+		$minimum = Settings::sanitize( array( 'error_email_suppression_minutes' => 0 ), array() );
+		$maximum = Settings::sanitize( array( 'error_email_suppression_minutes' => 2000 ), array() );
+
+		self::assertSame( 1, $minimum['error_email_suppression_minutes'] );
+		self::assertSame( 1440, $maximum['error_email_suppression_minutes'] );
 	}
 
 	public function test_resolution_and_dismissal_clear_current_notice_but_recurrence_reopens_it(): void {
