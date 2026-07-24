@@ -12,6 +12,8 @@ const adminFixture = `
 </html>
 `;
 
+const browserRequirement = 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.';
+
 const targetFixture = `
 <!doctype html>
 <html lang="en">
@@ -34,6 +36,45 @@ const targetFixture = `
 </body>
 </html>
 `;
+
+test( 'runner disables the action before use when isolated visitor frames are unavailable', async ( { page } ) => {
+	let submissions = 0;
+
+	await page.addInitScript( () => {
+		delete HTMLIFrameElement.prototype.credentialless;
+		window.UCCMScanRunner = {
+			ajaxUrl: 'https://example.test/wp-admin/admin-ajax.php',
+			nonce: 'test-nonce',
+			runId: 43,
+			targets: [ 'https://example.test/page-one' ]
+		};
+	} );
+
+	await page.route( '**/*', async ( route ) => {
+		const request = route.request();
+
+		if ( 'POST' === request.method() ) {
+			submissions += 1;
+			await route.fulfill( {
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify( { success: true } )
+			} );
+			return;
+		}
+
+		await route.fulfill( { status: 200, contentType: 'text/html', body: adminFixture } );
+	} );
+
+	await page.goto( 'https://example.test/wp-admin/admin.php?page=uccm-scans&scan_id=43' );
+	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/scan-runner.js' ) } );
+
+	const button = page.getByRole( 'button', { name: 'Run browser observations' } );
+	await expect( button ).toBeDisabled();
+	await expect( button ).toHaveAttribute( 'aria-disabled', 'true' );
+	await expect( page.locator( '#uccm-browser-observation-status' ) ).toHaveText( browserRequirement );
+	expect( submissions ).toBe( 0 );
+} );
 
 test( 'runner isolates administrator state, uses bounded post-password bootstrap and groups affected pages', async ( { page } ) => {
 	const submissions = [];
