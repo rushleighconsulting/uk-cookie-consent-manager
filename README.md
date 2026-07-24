@@ -182,6 +182,17 @@ trailing-slash variants are de-duplicated without collapsing meaningful query
 values. Scan progress separates seeded pages/posts, other accepted links, ignored
 links, checked URLs and remaining URLs.
 
+UCCM-22 adds an optional, disabled-by-default path for WordPress's built-in
+post-password protection. One site-local password can be saved encrypted with
+WordPress salt material, replaced or removed without ever being displayed, logged,
+exported or included in scan evidence. When enabled, only published pages and posts
+whose WordPress post password matches become eligible. Server requests use a fresh
+native `wp-postpass_` cookie only for matching same-origin targets. The isolated
+administrator browser pass establishes the same native HttpOnly cookie through a
+short-lived, target-bounded bootstrap token; neither the password nor cookie value is
+returned to JavaScript. WordPress user login, HTTP Basic, identity-provider and
+cross-origin authentication are intentionally out of scope.
+
 Completed server crawls can be followed by the packaged administrator browser
 runner. It inspects up to 100 successfully visited same-origin pages for
 accessible cookie names, local-storage keys, scripts, iframes and pixels and

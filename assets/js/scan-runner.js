@@ -14,9 +14,16 @@
 		{ name: 'marketing', action: 'grant', allowed: [ 'marketing' ] }
 	];
 	var sourceLimit = 20;
+	var protectedLookup = {};
 
 	if ( ! button || ! status || ! Array.isArray( config.targets ) ) {
 		return;
+	}
+
+	if ( Array.isArray( config.protectedTargets ) ) {
+		config.protectedTargets.forEach( function ( target ) {
+			protectedLookup[ String( target ) ] = true;
+		} );
 	}
 
 	function announce( message ) {
@@ -205,7 +212,7 @@
 		} );
 	}
 
-	function inspectScenario( target, scenario, collected ) {
+	function inspectScenario( target, scenario, collected, protectedTarget ) {
 		return new Promise( function ( resolve, reject ) {
 			var frame = document.createElement( 'iframe' );
 			var phase = 'prepare';
@@ -222,10 +229,7 @@
 				error ? reject( error ) : resolve();
 			}
 
-			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
-			frame.credentialless = true;
-			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
-			frame.addEventListener( 'load', function () {
+			function handleObservationLoad() {
 				window.setTimeout( function () {
 					try {
 						if ( 'prepare' === phase ) {
@@ -243,10 +247,54 @@
 						finish( error instanceof Error ? error : new Error( 'page-observation-failed' ) );
 					}
 				}, 'prepare' === phase ? 50 : 750 );
-			} );
+			}
+
+			function submitProtectedBootstrap() {
+				frame.removeEventListener( 'load', submitProtectedBootstrap );
+				frame.addEventListener( 'load', handleObservationLoad );
+
+				var frameDocument = frame.contentDocument;
+				if ( ! frameDocument || ! frameDocument.body ) {
+					finish( new Error( 'protected-page-frame-unavailable' ) );
+					return;
+				}
+
+				var form = frameDocument.createElement( 'form' );
+				form.method = 'post';
+				form.action = String( config.ajaxUrl || '' );
+				form.hidden = true;
+				[ [ 'action', 'uccm_post_password_bootstrap' ], [ 'token', config.postPasswordToken ], [ 'scan_id', config.runId ], [ 'target', target ] ].forEach( function ( field ) {
+					var input = frameDocument.createElement( 'input' );
+					input.type = 'hidden';
+					input.name = field[ 0 ];
+					input.value = String( field[ 1 ] || '' );
+					form.appendChild( input );
+				} );
+				frameDocument.body.appendChild( form );
+				form.submit();
+			}
+
+			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
+			frame.credentialless = true;
+			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
 			timer = window.setTimeout( function () {
 				finish( new Error( 'page-observation-timed-out' ) );
 			}, 15000 );
+
+			if ( protectedTarget ) {
+				if ( ! config.postPasswordToken ) {
+					finish( new Error( 'protected-page-access-unavailable' ) );
+					return;
+				}
+
+				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
+				frame.addEventListener( 'load', submitProtectedBootstrap );
+				frame.srcdoc = '<!doctype html><title>Cookie scan preparation</title>';
+				document.body.appendChild( frame );
+				return;
+			}
+
+			frame.addEventListener( 'load', handleObservationLoad );
 			frame.src = target;
 			document.body.appendChild( frame );
 		} );
@@ -301,7 +349,7 @@
 				for ( var scenarioIndex = 0; scenarioIndex < scenarios.length; scenarioIndex += 1 ) {
 					announce( 'Checking page ' + ( targetIndex + 1 ) + ' of ' + targets.length + ' (' + scenarios[ scenarioIndex ].name + ')…' );
 					try {
-						await inspectScenario( targets[ targetIndex ], scenarios[ scenarioIndex ], collected );
+						await inspectScenario( targets[ targetIndex ], scenarios[ scenarioIndex ], collected, !! protectedLookup[ targets[ targetIndex ] ] );
 						completedSteps += 1;
 					} catch ( error ) {
 						failedSteps += 1;

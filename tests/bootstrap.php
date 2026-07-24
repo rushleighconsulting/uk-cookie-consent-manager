@@ -51,6 +51,7 @@ $GLOBALS['uccm_test_privacy_content']    = array();
 $GLOBALS['uccm_test_posts']              = array();
 $GLOBALS['uccm_test_url_post_ids']       = array();
 $GLOBALS['uccm_test_get_posts_arguments'] = array();
+$GLOBALS['uccm_test_salt']                = 'test-site-secret';
 
 /**
  * Minimal wpdb test double.
@@ -515,7 +516,7 @@ function wp_delete_file( string $file ): void {
 }
 
 function wp_salt( string $scheme = 'auth' ): string {
-	return 'test-site-secret-' . $scheme;
+	return (string) $GLOBALS['uccm_test_salt'] . '-' . $scheme;
 }
 
 function wp_json_encode( mixed $value, int $flags = 0 ): string|false {
@@ -619,6 +620,7 @@ require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-crawler.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
+require_once dirname( __DIR__ ) . '/includes/class-post-password-access.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';
 require_once dirname( __DIR__ ) . '/includes/class-cookie-inventory.php';
 require_once dirname( __DIR__ ) . '/includes/class-scan-findings.php';
