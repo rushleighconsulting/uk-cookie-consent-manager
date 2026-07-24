@@ -38,7 +38,9 @@ the versioned plugin ZIP produced by the Release workflow.
   UCCM does not guess a category or rewrite arbitrary HTML.
 - **Privacy:** keep complete-IP storage disabled unless a documented lawful
   purpose requires it. If proxy headers are enabled, allowlist only the exact
-  reverse-proxy addresses.
+  reverse-proxy addresses. The allowlist field is available only while
+  forwarded-header trust is selected; turning trust off preserves the saved
+  addresses but keeps forwarded headers ignored.
 - **Retention:** confirm the consent-record retention period. Cleanup runs daily
   through WP-Cron and defaults to 365 days.
 - **Advanced:** leave automatic updates disabled until the signed manifest URL,

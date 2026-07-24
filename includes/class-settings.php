@@ -107,7 +107,7 @@ final class Settings {
 			}
 		}
 
-		if ( array_key_exists( 'trusted_proxy_ips', $input ) ) {
+		if ( array_key_exists( 'trusted_proxy_ips', $input ) && ! empty( $settings['trust_proxy_headers'] ) ) {
 			$settings['trusted_proxy_ips'] = self::trusted_proxy_ips( $input['trusted_proxy_ips'] );
 		}
 

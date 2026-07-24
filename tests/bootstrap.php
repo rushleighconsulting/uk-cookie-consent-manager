@@ -536,6 +536,10 @@ function wp_json_encode( mixed $value, int $flags = 0 ): string|false {
 	return json_encode( $value, $flags );
 }
 
+function wp_unslash( mixed $value ): mixed {
+	return $value;
+}
+
 function rest_url( string $path = '' ): string {
 	return 'https://example.test/wp-json/' . ltrim( $path, '/' );
 }
@@ -602,8 +606,41 @@ function __( string $text, string $domain = 'default' ): string {
 	return $text;
 }
 
+function esc_html__( string $text, string $domain = 'default' ): string {
+	return esc_html( __( $text, $domain ) );
+}
+
 function esc_html( string $text ): string {
 	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+}
+
+function esc_textarea( string $text ): string {
+	return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+}
+
+function checked( mixed $checked, mixed $current = true, bool $display = true ): string {
+	$result = $checked == $current ? 'checked="checked"' : ''; // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual -- Mirrors WordPress checked().
+
+	if ( $display ) {
+		echo $result;
+	}
+
+	return $result;
+}
+
+function wp_nonce_field( string $action = '-1', string $name = '_wpnonce', bool $referer = true, bool $display = true ): string {
+	unset( $referer );
+	$field = '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $action ) . '">';
+
+	if ( $display ) {
+		echo $field;
+	}
+
+	return $field;
+}
+
+function submit_button( string $text = 'Save Changes' ): void {
+	echo '<p class="submit"><button type="submit">' . esc_html( $text ) . '</button></p>';
 }
 
 function esc_html_e( string $text, string $domain = 'default' ): void {
