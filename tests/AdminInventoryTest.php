@@ -185,6 +185,82 @@ final class AdminInventoryTest extends TestCase {
 		self::assertSame( 'https://example.test/a.js', $valid['tracker']['source'] );
 	}
 
+
+	public function test_empty_and_guided_blocking_rules_use_the_object_contract(): void {
+		$empty = Admin::sanitize_blocking_rules( '{}' );
+		self::assertSame( array(), $empty );
+
+		$array = Admin::sanitize_blocking_rules( '[]' );
+		self::assertInstanceOf( WP_Error::class, $array );
+		self::assertSame( 'uccm_invalid_rules_json', $array->get_error_code() );
+
+		$guided = Admin::sanitize_blocking_rule_rows(
+			array(
+				array(
+					'id'       => 'analytics-test',
+					'type'     => 'script',
+					'category' => 'analytics',
+					'handle'   => 'analytics-test',
+					'source'   => '',
+					'title'    => 'Analytics test script',
+				),
+			)
+		);
+
+		self::assertIsArray( $guided );
+		self::assertSame( 'analytics-test', $guided['analytics-test']['handle'] );
+		self::assertSame( 'Analytics test script', $guided['analytics-test']['title'] );
+	}
+
+	public function test_guided_blocking_rules_return_field_specific_errors(): void {
+		$insecure = Admin::sanitize_blocking_rule_rows(
+			array(
+				array(
+					'id'       => 'map',
+					'type'     => 'iframe',
+					'category' => 'functional',
+					'source'   => 'http://maps.example.test/embed',
+				),
+			)
+		);
+
+		self::assertInstanceOf( WP_Error::class, $insecure );
+		self::assertSame( 'uccm_insecure_blocking_source', $insecure->get_error_code() );
+		self::assertSame( 'source', $insecure->get_error_data()['field'] );
+		self::assertStringContainsString( 'Rule 1', $insecure->get_error_message() );
+
+		$duplicate = Admin::sanitize_blocking_rule_rows(
+			array(
+				array(
+					'id'       => 'analytics-test',
+					'type'     => 'script',
+					'category' => 'analytics',
+					'handle'   => 'analytics-one',
+				),
+				array(
+					'id'       => 'analytics-test',
+					'type'     => 'script',
+					'category' => 'analytics',
+					'handle'   => 'analytics-two',
+				),
+			)
+		);
+
+		self::assertInstanceOf( WP_Error::class, $duplicate );
+		self::assertSame( 'uccm_duplicate_blocking_rule_id', $duplicate->get_error_code() );
+		self::assertSame( 'id', $duplicate->get_error_data()['field'] );
+	}
+
+	public function test_blocking_editor_assets_cover_guided_add_remove_and_validation(): void {
+		$script = file_get_contents( dirname( __DIR__ ) . '/assets/js/admin-blocking.js' );
+
+		self::assertIsString( $script );
+		self::assertStringContainsString( '[data-uccm-add-rule]', $script );
+		self::assertStringContainsString( '[data-uccm-remove-rule]', $script );
+		self::assertStringContainsString( 'setCustomValidity', $script );
+		self::assertStringContainsString( "JSON.stringify( rulesObject(), null, 2 )", $script );
+	}
+
 	/**
 	 * Return a complete valid inventory item.
 	 *
