@@ -34,7 +34,7 @@ test( 'proxy addresses are available only while forwarded headers are trusted', 
 	await boot( page );
 
 	const trustHeaders = page.getByRole( 'checkbox', { name: 'Trust forwarded IP headers' } );
-	const proxyAddresses = page.getByRole( 'textbox', { name: 'Trusted proxy IPs' } );
+	const proxyAddresses = page.locator( '#uccm-trusted-proxies' );
 	const proxySettings = page.locator( '[data-uccm-trusted-proxies-settings]' );
 
 	await expect( proxySettings ).toBeHidden();
