@@ -129,12 +129,14 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 		status: payload.status,
 		target_count: payload.target_count,
 		completed_steps: payload.completed_steps,
-		bootstrap_requests: bootstrapRequests
+		bootstrap_requests: bootstrapRequests,
+		failed_problems: payload.failed_problems
 	} ).toEqual( {
 		status: 'completed',
 		target_count: 2,
 		completed_steps: 12,
-		bootstrap_requests: 6
+		bootstrap_requests: 6,
+		failed_problems: []
 	} );
 	expect( payload.observations.filter( ( observation ) => 'analytics_id' === observation.storage_key ) ).toHaveLength( 1 );
 
