@@ -329,6 +329,7 @@
 		var collected = {};
 		var completedSteps = 0;
 		var failedSteps = 0;
+		var failedProblems = [];
 		var totalSteps = targets.length * scenarios.length;
 
 		if ( ! ( 'credentialless' in HTMLIFrameElement.prototype ) ) {
@@ -353,6 +354,7 @@
 						completedSteps += 1;
 					} catch ( error ) {
 						failedSteps += 1;
+						failedProblems.push( safeName( error instanceof Error ? error.message : 'page-observation-failed' ) );
 					}
 				}
 			}
@@ -371,6 +373,7 @@
 				target_count: targets.length,
 				scenario_count: scenarios.length,
 				completed_steps: completedSteps,
+				failed_problems: failedProblems,
 				total_steps: totalSteps
 			} );
 
