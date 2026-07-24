@@ -175,7 +175,7 @@ final class Operational_Alerts {
 		$open = array_values(
 			array_filter(
 				self::records(),
-				static fn ( mixed $record ): bool => is_array( $record ) && 'open' === (string) ( $record['status'] ?? '' )
+				static fn ( array $record ): bool => 'open' === (string) ( $record['status'] ?? '' )
 			)
 		);
 
@@ -216,7 +216,7 @@ final class Operational_Alerts {
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! is_object( $screen ) || 'dashboard' !== (string) ( $screen->id ?? '' ) ) {
+		if ( ! is_object( $screen ) || 'dashboard' !== (string) $screen->id ) {
 			return;
 		}
 
