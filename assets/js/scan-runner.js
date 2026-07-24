@@ -253,21 +253,25 @@
 				frame.removeEventListener( 'load', submitProtectedBootstrap );
 				frame.addEventListener( 'load', handleObservationLoad );
 
-				var form = document.createElement( 'form' );
+				var frameDocument = frame.contentDocument;
+				if ( ! frameDocument || ! frameDocument.body ) {
+					finish( new Error( 'protected-page-frame-unavailable' ) );
+					return;
+				}
+
+				var form = frameDocument.createElement( 'form' );
 				form.method = 'post';
 				form.action = String( config.ajaxUrl || '' );
-				form.target = frame.name;
 				form.hidden = true;
 				[ [ 'action', 'uccm_post_password_bootstrap' ], [ 'token', config.postPasswordToken ], [ 'scan_id', config.runId ], [ 'target', target ] ].forEach( function ( field ) {
-					var input = document.createElement( 'input' );
+					var input = frameDocument.createElement( 'input' );
 					input.type = 'hidden';
 					input.name = field[ 0 ];
 					input.value = String( field[ 1 ] || '' );
 					form.appendChild( input );
 				} );
-				document.body.appendChild( form );
+				frameDocument.body.appendChild( form );
 				form.submit();
-				form.remove();
 			}
 
 			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
