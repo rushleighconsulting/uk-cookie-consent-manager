@@ -475,8 +475,11 @@ final class Admin {
 	 * completed scan. Neither the password nor cookie value is returned as data.
 	 */
 	public static function post_password_bootstrap(): void {
-		$token  = self::request_value( $_POST, 'token' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- A short-lived target-bounded opaque token authorises this credentialless iframe request.
+		$token = self::request_value( $_POST, 'token' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The run ID is verified against the opaque token.
 		$run_id = (int) self::request_value( $_POST, 'scan_id' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The exact target is verified against the opaque token and same-origin validator.
 		$target = self::request_value( $_POST, 'target' );
 		$target = Scanner::validate_target( $target );
 
@@ -769,15 +772,15 @@ final class Admin {
 	 */
 	public static function render_scans(): void {
 		self::require_capability( 'run_uccm_scans' );
-		$settings       = Settings::current();
-		$urls           = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
-		$excluded_paths = is_array( $settings['scan_excluded_paths'] ?? null ) ? implode( "\n", $settings['scan_excluded_paths'] ) : '';
-		$page_limit     = (int) ( $settings['scan_page_limit'] ?? Scanner::MAX_TARGETS );
-		$batch_size     = (int) ( $settings['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE );
-		$protected_enabled = ! empty( $settings['scan_protected_content_enabled'] );
+		$settings           = Settings::current();
+		$urls               = is_array( $settings['scan_urls'] ?? null ) ? implode( "\n", $settings['scan_urls'] ) : '';
+		$excluded_paths     = is_array( $settings['scan_excluded_paths'] ?? null ) ? implode( "\n", $settings['scan_excluded_paths'] ) : '';
+		$page_limit         = (int) ( $settings['scan_page_limit'] ?? Scanner::MAX_TARGETS );
+		$batch_size         = (int) ( $settings['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE );
+		$protected_enabled  = ! empty( $settings['scan_protected_content_enabled'] );
 		$protected_password = Post_Password_Access::has_password();
-		$runs           = Scanner::recent_runs( 20 );
-		$next           = wp_next_scheduled( Scanner::HOOK );
+		$runs               = Scanner::recent_runs( 20 );
+		$next               = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
@@ -797,8 +800,8 @@ final class Admin {
 		}
 
 		if ( is_array( $runner_run ) && 'completed' === (string) $runner_run['status'] ) {
-			$runner_pages   = json_decode( (string) $runner_run['pages_visited'], true );
-			$runner_pages   = is_array( $runner_pages ) ? $runner_pages : array();
+			$runner_pages      = json_decode( (string) $runner_run['pages_visited'], true );
+			$runner_pages      = is_array( $runner_pages ) ? $runner_pages : array();
 			$runner_targets    = Scanner::browser_targets( $runner_pages );
 			$protected_targets = array_values( array_filter( $runner_targets, array( Post_Password_Access::class, 'target_is_unlocked' ) ) );
 			$browser_token     = Post_Password_Access::issue_browser_token( $scan_id, $protected_targets );
@@ -809,18 +812,18 @@ final class Admin {
 				'uccm-scan-runner',
 				'UCCMScanRunner',
 				array(
-					'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-					'nonce'         => wp_create_nonce( 'uccm_browser_scan' ),
-					'runId'         => $scan_id,
+					'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+					'nonce'             => wp_create_nonce( 'uccm_browser_scan' ),
+					'runId'             => $scan_id,
 					'targets'           => $runner_targets,
 					'protectedTargets'  => $protected_targets,
 					'postPasswordToken' => $browser_token,
 					'maxTargets'        => Scanner::BROWSER_MAX_TARGETS,
-					'cookieName'    => (string) $consent_config['cookieName'],
-					'cookiePath'    => (string) $consent_config['cookiePath'],
-					'policyVersion' => (string) $consent_config['policyVersion'],
-					'pluginVersion' => (string) $consent_config['pluginVersion'],
-					'lifetimeDays'  => (int) $consent_config['lifetimeDays'],
+					'cookieName'        => (string) $consent_config['cookieName'],
+					'cookiePath'        => (string) $consent_config['cookiePath'],
+					'policyVersion'     => (string) $consent_config['policyVersion'],
+					'pluginVersion'     => (string) $consent_config['pluginVersion'],
+					'lifetimeDays'      => (int) $consent_config['lifetimeDays'],
 				)
 			);
 		}
