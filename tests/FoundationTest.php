@@ -34,7 +34,7 @@ final class FoundationTest extends TestCase {
 		self::assertSame( 1, preg_match( '/^ \* Version:\\s*(\\S+)$/m', $plugin, $header ) );
 		self::assertSame( 1, preg_match( "/^define\\( 'UCCM_VERSION', '([^']+)' \\);$/m", $plugin, $constant ) );
 		self::assertSame( 1, preg_match( '/^Stable tag:\\s*(\\S+)$/m', $readme, $stable ) );
-		self::assertSame( '0.1.0-rc.9', $header[1] );
+		self::assertSame( '0.1.0-rc.10', $header[1] );
 		self::assertSame( $header[1], $constant[1] );
 		self::assertSame( $header[1], $stable[1] );
 	}
