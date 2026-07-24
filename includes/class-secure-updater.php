@@ -227,7 +227,7 @@ final class Secure_Updater {
 
 		if ( $has_rollout_percentage ) {
 			$validated['rollout_percentage'] = trim( (string) $manifest['rollout_percentage'] );
-			$validated['rollout_seed']       = sanitize_key( (string) $manifest['rollout_seed'] );
+			$validated['rollout_seed']       = trim( (string) $manifest['rollout_seed'] );
 		}
 
 		if (
@@ -237,7 +237,7 @@ final class Secure_Updater {
 			1 !== preg_match( '/^[a-f0-9]{64}$/', $validated['sha256'] ) ||
 			1 !== preg_match( '/^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/', $validated['requires_php'] ) ||
 			1 !== preg_match( '/^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/', $validated['requires_wp'] ) ||
-			( $has_rollout_percentage && ( 1 !== preg_match( '/^(100|[1-9]?[0-9])$/', $validated['rollout_percentage'] ) || '' === $validated['rollout_seed'] ) )
+			( $has_rollout_percentage && ( 1 !== preg_match( '/^(100|[1-9]?[0-9])$/', $validated['rollout_percentage'] ) || 1 !== preg_match( '/^[0-9A-Za-z._-]{1,80}$/', $validated['rollout_seed'] ) ) )
 		) {
 			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest contains invalid release data.', 'uk-cookie-consent-manager' ) );
 		}
@@ -294,6 +294,9 @@ final class Secure_Updater {
 
 	/**
 	 * Restrict signed packages to immutable assets in the official repository.
+	 *
+	 * @param string $url     Candidate package URL.
+	 * @param string $version Authenticated release version.
 	 */
 	private static function valid_package_url( string $url, string $version ): bool {
 		$parts         = wp_parse_url( $url );
@@ -302,7 +305,7 @@ final class Secure_Updater {
 		return is_array( $parts )
 			&& 'https' === strtolower( (string) ( $parts['scheme'] ?? '' ) )
 			&& 'github.com' === strtolower( (string) ( $parts['host'] ?? '' ) )
-			&& $expected_path === (string) ( $parts['path'] ?? '' )
+			&& (string) ( $parts['path'] ?? '' ) === $expected_path
 			&& ! isset( $parts['user'] )
 			&& ! isset( $parts['pass'] )
 			&& ! isset( $parts['query'] )
@@ -420,7 +423,7 @@ final class Secure_Updater {
 
 		$diagnostics = array(
 			'rollback_supported' => version_compare( get_bloginfo( 'version' ), '6.6', '>=' ),
-			'backup_writable'    => is_dir( $parent ) && is_writable( $parent ),
+			'backup_writable'    => is_dir( $parent ) && wp_is_writable( $parent ),
 			'free_bytes'         => false === $free_bytes ? null : max( 0, (int) $free_bytes ),
 			'disk_space_usable'  => false !== $free_bytes && self::MIN_FREE_BYTES <= (int) $free_bytes,
 			'loopback'           => $loopback,
@@ -639,5 +642,4 @@ final class Secure_Updater {
 
 		return false === $payload ? '' : $payload;
 	}
-
 }
