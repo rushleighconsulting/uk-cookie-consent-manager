@@ -20,6 +20,16 @@ final class Settings {
 	public const OPTION_NAME = 'uccm_settings';
 
 	/**
+	 * Default repeat-email suppression period in minutes.
+	 */
+	public const DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES = 360;
+
+	/**
+	 * Maximum repeat-email suppression period in minutes.
+	 */
+	public const MAX_ERROR_EMAIL_SUPPRESSION_MINUTES = 1440;
+
+	/**
 	 * Return privacy-preserving defaults.
 	 *
 	 * @return array<string, mixed>
@@ -38,6 +48,7 @@ final class Settings {
 			'scan_batch_size'                => Scanner::DEFAULT_BATCH_SIZE,
 			'scan_protected_content_enabled' => false,
 			'error_email_enabled'            => false,
+			'error_email_suppression_minutes' => self::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES,
 			'update_manifest_url'            => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/latest/download/update-manifest.json',
 			'update_public_key'              => '',
 			'auto_update'                    => false,
@@ -84,6 +95,10 @@ final class Settings {
 
 		if ( array_key_exists( 'scan_batch_size', $input ) ) {
 			$settings['scan_batch_size'] = max( 1, min( 25, (int) $input['scan_batch_size'] ) );
+		}
+
+		if ( array_key_exists( 'error_email_suppression_minutes', $input ) ) {
+			$settings['error_email_suppression_minutes'] = max( 1, min( self::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES, (int) $input['error_email_suppression_minutes'] ) );
 		}
 
 		foreach ( array( 'store_full_ip', 'trust_proxy_headers', 'scan_protected_content_enabled', 'error_email_enabled', 'auto_update' ) as $flag ) {
