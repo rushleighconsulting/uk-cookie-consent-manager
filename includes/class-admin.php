@@ -836,18 +836,18 @@ final class Admin {
 					),
 					admin_url( 'admin.php' )
 				);
-				$visited_count     = (int) ( $coverage['visited_count'] ?? count( $pages ) );
-				$discovered_count  = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
-				$remaining_count   = (int) ( $coverage['remaining_count'] ?? 0 );
-				$wordpress_count   = (int) ( $coverage['wordpress_content_count'] ?? 0 );
-				$accepted_count    = (int) ( $coverage['accepted_link_count'] ?? max( 0, $discovered_count - (int) ( $coverage['target_count'] ?? 0 ) ) );
-				$ignored_counts    = is_array( $coverage['ignored_counts'] ?? null ) ? $coverage['ignored_counts'] : array();
-				$ignored_count     = array_sum( array_map( 'intval', $ignored_counts ) );
-				$browser_status    = (string) ( $coverage['browser_status'] ?? 'not-run' );
+				$visited_count    = (int) ( $coverage['visited_count'] ?? count( $pages ) );
+				$discovered_count = (int) ( $coverage['discovered_count'] ?? count( $pages ) );
+				$remaining_count  = (int) ( $coverage['remaining_count'] ?? 0 );
+				$wordpress_count  = (int) ( $coverage['wordpress_content_count'] ?? 0 );
+				$accepted_count   = (int) ( $coverage['accepted_link_count'] ?? max( 0, $discovered_count - (int) ( $coverage['target_count'] ?? 0 ) ) );
+				$ignored_counts   = is_array( $coverage['ignored_counts'] ?? null ) ? $coverage['ignored_counts'] : array();
+				$ignored_count    = array_sum( array_map( 'intval', $ignored_counts ) );
+				$browser_status   = (string) ( $coverage['browser_status'] ?? 'not-run' );
 				echo '<tr><td><a href="' . esc_url( $run_url ) . '">' . esc_html( (string) $run['id'] ) . '</a></td><td>' . esc_html( (string) $run['status'] ) . '</td><td>' . esc_html( (string) $run['started_at'] ) . '</td>';
 				if ( array_key_exists( 'wordpress_content_count', $coverage ) ) {
-					/* translators: 1: eligible WordPress pages/posts, 2: other accepted links, 3: ignored links, 4: checked URLs, 5: remaining URLs. */
 					$progress = sprintf(
+						/* translators: 1: eligible WordPress pages/posts, 2: other accepted links, 3: ignored links, 4: checked URLs, 5: remaining URLs. */
 						__( '%1$d pages/posts; %2$d other links; %3$d ignored; %4$d checked; %5$d remaining', 'uk-cookie-consent-manager' ),
 						$wordpress_count,
 						$accepted_count,
