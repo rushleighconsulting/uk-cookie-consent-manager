@@ -494,6 +494,7 @@ final class Scanner {
 		);
 
 		if ( false === $created ) {
+			Operational_Alerts::report( 'uccm_scan_not_created', 'scanner' );
 			return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 		}
 
@@ -689,6 +690,8 @@ final class Scanner {
 
 			if ( 'running' === $status && $schedule_next ) {
 				self::schedule_batch( $run_id );
+			} elseif ( 'completed' === $status ) {
+				Operational_Alerts::resolve_component( 'scanner', $run_id );
 			}
 
 			return true;
@@ -725,7 +728,7 @@ final class Scanner {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
-		return false !== $wpdb->update(
+		$cancelled = false !== $wpdb->update(
 			Database::table_names()['scan_runs'],
 			array(
 				'status'       => 'cancelled',
@@ -734,6 +737,12 @@ final class Scanner {
 			),
 			array( 'id' => $run_id )
 		);
+
+		if ( $cancelled ) {
+			Operational_Alerts::resolve_component( 'scanner', $run_id );
+		}
+
+		return $cancelled;
 	}
 
 	/**
@@ -774,6 +783,7 @@ final class Scanner {
 			return new \WP_Error( 'uccm_scan_not_resumed', __( 'The scan could not be resumed.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 		}
 
+		Operational_Alerts::resolve_component( 'scanner', $run_id );
 		self::schedule_batch( $run_id );
 		return true;
 	}
@@ -850,9 +860,19 @@ final class Scanner {
 			array( 'id' => $run_id )
 		);
 
-		return false === $updated
-			? new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) )
-			: $counts;
+		if ( false === $updated ) {
+			Operational_Alerts::report( 'uccm_browser_scan_not_saved', 'browser-check', $run_id );
+			return new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+		}
+
+		if ( in_array( $browser_status, array( 'partial', 'failed' ), true ) ) {
+			$problem = substr( sanitize_key( (string) ( $payload['problem'] ?? 'uccm_browser_check_failed' ) ), 0, 50 );
+			Operational_Alerts::report( '' === $problem ? 'uccm_browser_check_failed' : $problem, 'browser-check', $run_id );
+		} elseif ( 'completed' === $browser_status ) {
+			Operational_Alerts::resolve_component( 'browser-check', $run_id );
+		}
+
+		return $counts;
 	}
 
 	/**
@@ -1126,6 +1146,7 @@ final class Scanner {
 			),
 			array( 'id' => $run_id )
 		);
+		Operational_Alerts::report( $error_code, 'scanner', $run_id );
 	}
 
 	/**
