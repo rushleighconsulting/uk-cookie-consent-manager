@@ -100,9 +100,9 @@ final class Post_Password_Access {
 		$post    = 0 < $post_id ? get_post( $post_id ) : null;
 
 		return is_object( $post )
-			&& 'publish' === (string) ( $post->post_status ?? '' )
-			&& in_array( (string) ( $post->post_type ?? '' ), array( 'page', 'post' ), true )
-			&& self::matches( (string) ( $post->post_password ?? '' ) );
+			&& 'publish' === (string) $post->post_status
+			&& in_array( (string) $post->post_type, array( 'page', 'post' ), true )
+			&& self::matches( (string) $post->post_password );
 	}
 
 	/**
