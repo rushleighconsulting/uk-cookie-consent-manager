@@ -96,10 +96,38 @@ final class SecureUpdaterTest extends TestCase {
 		self::assertArrayNotHasKey( 'uccm_update_bootstrap', $GLOBALS['uccm_test_site_transients'] );
 	}
 
-	public function test_successful_authenticated_check_skips_update_metadata_bootstrap(): void {
+	public function test_historical_success_does_not_skip_bootstrap_when_wordpress_cache_is_missing_plugin(): void {
 		$GLOBALS['uccm_test_capabilities']['update_plugins'] = true;
 		$GLOBALS['uccm_test_options'][ Secure_Updater::STATUS_OPTION ] = array(
 			'last_successful_check_at' => '2026-07-24 12:47:57',
+		);
+
+		Secure_Updater::prime_native_update_controls();
+
+		self::assertSame( 1, $GLOBALS['uccm_test_wp_update_plugins_calls'] );
+		self::assertSame( '1', $GLOBALS['uccm_test_site_transients']['uccm_update_bootstrap'] );
+	}
+
+	public function test_current_no_update_entry_skips_update_metadata_bootstrap(): void {
+		$GLOBALS['uccm_test_capabilities']['update_plugins']    = true;
+		$GLOBALS['uccm_test_site_transients']['update_plugins'] = (object) array(
+			'no_update' => array(
+				'uk-cookie-consent-manager/uk-cookie-consent-manager.php' => (object) array(),
+			),
+		);
+
+		Secure_Updater::prime_native_update_controls();
+
+		self::assertSame( 0, $GLOBALS['uccm_test_wp_update_plugins_calls'] );
+		self::assertArrayNotHasKey( 'uccm_update_bootstrap', $GLOBALS['uccm_test_site_transients'] );
+	}
+
+	public function test_current_update_response_entry_skips_update_metadata_bootstrap(): void {
+		$GLOBALS['uccm_test_capabilities']['update_plugins']    = true;
+		$GLOBALS['uccm_test_site_transients']['update_plugins'] = (object) array(
+			'response' => array(
+				'uk-cookie-consent-manager/uk-cookie-consent-manager.php' => (object) array(),
+			),
 		);
 
 		Secure_Updater::prime_native_update_controls();
