@@ -20,7 +20,7 @@ final class Secure_Updater {
 	private const MANIFEST_TRANSIENT = 'uccm_update_manifest';
 
 	/**
-	 * Short-lived guard for the first Plugins-screen metadata check.
+	 * Short-lived guard for a Plugins-screen metadata check.
 	 */
 	private const BOOTSTRAP_TRANSIENT = 'uccm_update_bootstrap';
 
@@ -67,22 +67,23 @@ final class Secure_Updater {
 	}
 
 	/**
-	 * Populate WordPress's external-update cache on the first Plugins-screen visit.
+	 * Populate WordPress's external-update cache when its UCCM entry is missing.
 	 *
 	 * WordPress does not display its native auto-update control for an external
-	 * plugin until that plugin has supplied update metadata. Prime the cache once
-	 * for administrators so normal activation does not require a hidden manual
-	 * step in UCCM's Advanced screen.
+	 * plugin until that plugin has supplied update metadata. Prime a missing cache
+	 * entry for administrators so activation or cache expiry does not require a
+	 * hidden manual step in UCCM's Advanced screen.
 	 */
 	public static function prime_native_update_controls(): void {
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			return;
 		}
 
-		$status = self::status();
+		$updates     = get_site_transient( 'update_plugins' );
+		$plugin_file = plugin_basename( UCCM_PLUGIN_FILE );
 
 		if (
-			'' !== $status['last_successful_check_at'] ||
+			self::update_cache_contains_plugin( $updates, $plugin_file ) ||
 			false !== get_site_transient( self::BOOTSTRAP_TRANSIENT )
 		) {
 			return;
@@ -94,6 +95,29 @@ final class Secure_Updater {
 		if ( function_exists( 'wp_update_plugins' ) ) {
 			wp_update_plugins();
 		}
+	}
+
+	/**
+	 * Determine whether WordPress's current update cache supports this plugin.
+	 *
+	 * WordPress displays its native auto-update control only when the plugin is
+	 * present in either the available-update or no-update collection.
+	 *
+	 * @param mixed  $updates     Current update_plugins site transient.
+	 * @param string $plugin_file Plugin basename.
+	 */
+	private static function update_cache_contains_plugin( mixed $updates, string $plugin_file ): bool {
+		if ( is_object( $updates ) ) {
+			$response  = is_array( $updates->response ?? null ) ? $updates->response : array();
+			$no_update = is_array( $updates->no_update ?? null ) ? $updates->no_update : array();
+		} elseif ( is_array( $updates ) ) {
+			$response  = is_array( $updates['response'] ?? null ) ? $updates['response'] : array();
+			$no_update = is_array( $updates['no_update'] ?? null ) ? $updates['no_update'] : array();
+		} else {
+			return false;
+		}
+
+		return array_key_exists( $plugin_file, $response ) || array_key_exists( $plugin_file, $no_update );
 	}
 
 	/**
