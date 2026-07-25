@@ -163,6 +163,7 @@
 }
 
 .uccm-dialog {
+	display: none;
 	width: min(42rem, calc(100% - 2rem));
 	max-height: calc(100% - 2rem);
 	padding: 0;
@@ -172,6 +173,10 @@
 	border-radius: 0.75rem;
 	box-shadow: var(--uccm-shadow);
 	font: 400 1rem/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.uccm-dialog[open][data-uccm-explicit-open="true"] {
+	display: block;
 }
 
 .uccm-dialog::backdrop {
