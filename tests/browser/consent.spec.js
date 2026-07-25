@@ -16,13 +16,6 @@ const fixture = `
 	<link rel="stylesheet" href="/assets/css/consent.css">
 </head>
 <body>
-<nav aria-label="Test pages">
-	<a href="/page-1">Page 1</a>
-	<a href="/page-2">Page 2</a>
-	<a href="/page-3">Page 3</a>
-	<a href="/page-4">Page 4</a>
-	<a href="/page-5">Page 5</a>
-</nav>
 <div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
 	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
 		<div class="uccm-banner__content">
@@ -57,6 +50,13 @@ const fixture = `
 	</dialog>
 	<p data-uccm-status role="status" aria-live="polite"></p>
 </div>
+<nav aria-label="Test pages">
+	<a href="/page-1">Page 1</a>
+	<a href="/page-2">Page 2</a>
+	<a href="/page-3">Page 3</a>
+	<a href="/page-4">Page 4</a>
+	<a href="/page-5">Page 5</a>
+</nav>
 <script type="text/plain" data-uccm-blocked="script" data-uccm-category="analytics" data-uccm-rule="analytics-inline">
 	window.analyticsExecutions = ( window.analyticsExecutions || 0 ) + 1;
 </script>
