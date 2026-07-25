@@ -1,11 +1,28 @@
+const fs = require( 'node:fs' );
 const path = require( 'node:path' );
 const { test, expect } = require( '@playwright/test' );
+
+const consentCss = fs.readFileSync( path.join( process.cwd(), 'assets/css/consent.css' ), 'utf8' );
+const blockerScript = fs.readFileSync( path.join( process.cwd(), 'assets/js/blocker.js' ), 'utf8' );
+const consentScript = fs.readFileSync( path.join( process.cwd(), 'assets/js/consent.js' ), 'utf8' );
 
 const fixture = `
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Consent test</title></head>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Consent test</title>
+	<link rel="stylesheet" href="/assets/css/consent.css">
+</head>
 <body>
+<nav aria-label="Test pages">
+	<a href="/page-1">Page 1</a>
+	<a href="/page-2">Page 2</a>
+	<a href="/page-3">Page 3</a>
+	<a href="/page-4">Page 4</a>
+	<a href="/page-5">Page 5</a>
+</nav>
 <div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
 	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
 		<div class="uccm-banner__content">
@@ -44,12 +61,17 @@ const fixture = `
 	window.analyticsExecutions = ( window.analyticsExecutions || 0 ) + 1;
 </script>
 <iframe title="Functional fixture" data-uccm-blocked="iframe" data-uccm-category="functional" data-uccm-rule="functional-frame" data-uccm-src="https://example.test/functional"></iframe>
+<script src="/assets/js/blocker.js"></script>
+<script src="/assets/js/consent.js"></script>
 </body>
 </html>
 `;
 
-async function boot( page ) {
+async function boot( page, options = {} ) {
 	const receipts = [];
+	const pageFixture = options.restoredDialogOpen
+		? fixture.replace( '<dialog id="uccm-preferences"', '<dialog open id="uccm-preferences"' )
+		: fixture;
 
 	await page.addInitScript( () => {
 		window.uccmConsentConfig = {
@@ -79,8 +101,23 @@ async function boot( page ) {
 			return;
 		}
 
+		if ( request.url().endsWith( '/assets/css/consent.css' ) ) {
+			await route.fulfill( { status: 200, contentType: 'text/css', body: consentCss } );
+			return;
+		}
+
+		if ( request.url().endsWith( '/assets/js/blocker.js' ) ) {
+			await route.fulfill( { status: 200, contentType: 'text/javascript', body: blockerScript } );
+			return;
+		}
+
+		if ( request.url().endsWith( '/assets/js/consent.js' ) ) {
+			await route.fulfill( { status: 200, contentType: 'text/javascript', body: consentScript } );
+			return;
+		}
+
 		if ( request.isNavigationRequest() && request.frame() === page.mainFrame() ) {
-			await route.fulfill( { status: 200, contentType: 'text/html', body: fixture } );
+			await route.fulfill( { status: 200, contentType: 'text/html', body: pageFixture } );
 			return;
 		}
 
@@ -88,9 +125,6 @@ async function boot( page ) {
 	} );
 
 	await page.goto( 'https://example.test/' );
-	await page.addStyleTag( { path: path.join( process.cwd(), 'assets/css/consent.css' ) } );
-	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/blocker.js' ) } );
-	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/consent.js' ) } );
 
 	return receipts;
 }
@@ -108,6 +142,20 @@ async function expectBannerWithinViewport( page ) {
 	expect( bannerBox.y + bannerBox.height ).toBeLessThanOrEqual( viewport.height + 1 );
 	await expect( page.locator( '#uccm-banner-title' ) ).toBeVisible();
 	await expect( banner.locator( '.uccm-copy' ) ).toBeVisible();
+}
+
+async function expectPreferencesClosedAcrossNavigations( page ) {
+	for ( let pageNumber = 1; pageNumber <= 5; pageNumber++ ) {
+		await page.getByRole( 'link', { name: `Page ${ pageNumber }`, exact: true } ).click();
+
+		const dialog = page.locator( '#uccm-preferences' );
+		await expect( page ).toHaveURL( `https://example.test/page-${ pageNumber }` );
+		await expect( page.locator( '#uccm-banner' ) ).toBeHidden();
+		await expect( page.getByRole( 'button', { name: 'Cookie settings' } ) ).toBeVisible();
+		await expect( dialog ).not.toHaveAttribute( 'open', '' );
+		await expect( dialog ).not.toHaveAttribute( 'data-uccm-explicit-open', 'true' );
+		await expect( dialog ).toBeHidden();
+	}
 }
 
 test( 'first visit remains blocked until an equally prominent decision is made', async ( { page } ) => {
@@ -160,6 +208,70 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 		marketing: true,
 	} );
 	await expect.poll( () => page.evaluate( () => window.analyticsExecutions || 0 ) ).toBe( 1 );
+} );
+
+test( 'accepted consent keeps preferences closed across full page navigations', async ( { page } ) => {
+	await boot( page );
+	await page.getByRole( 'button', { name: 'Accept all' } ).click();
+
+	await expectPreferencesClosedAcrossNavigations( page );
+} );
+
+test( 'rejected consent keeps preferences closed across full page navigations', async ( { page } ) => {
+	await boot( page );
+	await page.getByRole( 'button', { name: 'Reject non-essential' } ).click();
+
+	await expectPreferencesClosedAcrossNavigations( page );
+} );
+
+test( 'saved granular consent keeps preferences closed across full page navigations', async ( { page } ) => {
+	await boot( page );
+	await page.getByRole( 'button', { name: 'Manage preferences' } ).click();
+	await page.locator( 'input[name="functional"]' ).check();
+	await page.getByRole( 'button', { name: 'Save choices' } ).click();
+
+	await expectPreferencesClosedAcrossNavigations( page );
+} );
+
+test( 'withdrawn optional consent keeps preferences closed across full page navigations', async ( { page } ) => {
+	await boot( page );
+	await page.getByRole( 'button', { name: 'Accept all' } ).click();
+	await page.getByRole( 'button', { name: 'Cookie settings' } ).click();
+	await page.getByRole( 'button', { name: 'Withdraw optional consent' } ).click();
+
+	await expectPreferencesClosedAcrossNavigations( page );
+} );
+
+test( 'restored or cached open state is closed before it can block the page', async ( { page } ) => {
+	await boot( page, { restoredDialogOpen: true } );
+
+	const dialog = page.locator( '#uccm-preferences' );
+	await expect( dialog ).not.toHaveAttribute( 'open', '' );
+	await expect( dialog ).not.toHaveAttribute( 'data-uccm-explicit-open', 'true' );
+	await expect( dialog ).toBeHidden();
+	await expect( page.locator( '#uccm-banner' ) ).toBeVisible();
+} );
+
+test( 'only a trusted visitor action can open preferences', async ( { page } ) => {
+	await boot( page );
+	await page.getByRole( 'button', { name: 'Accept all' } ).click();
+
+	const dialog = page.locator( '#uccm-preferences' );
+	await page.evaluate( () => {
+		document.querySelector( '.uccm-settings' ).click();
+	} );
+	await expect( dialog ).not.toHaveAttribute( 'open', '' );
+
+	await page.evaluate( () => {
+		document.querySelector( '#uccm-preferences' ).showModal();
+	} );
+	await expect( dialog ).not.toHaveAttribute( 'open', '' );
+	await expect( dialog ).toBeHidden();
+
+	await page.getByRole( 'button', { name: 'Cookie settings' } ).click();
+	await expect( dialog ).toHaveAttribute( 'open', '' );
+	await expect( dialog ).toHaveAttribute( 'data-uccm-explicit-open', 'true' );
+	await expect( dialog ).toBeVisible();
 } );
 
 test( 'mobile portrait keeps compact actions and the complete banner within the viewport', async ( { page } ) => {

@@ -150,16 +150,32 @@
 			} );
 		}
 
-		function openPreferences() {
+		function openPreferences( event ) {
+			if ( ! event || ! event.isTrusted || ! event.currentTarget || ! root.contains( event.currentTarget ) ) {
+				return;
+			}
+
 			updatePreferenceControls( readCookie() );
-			dialog.showModal();
+			dialog.dataset.uccmExplicitOpen = 'true';
+
+			try {
+				dialog.showModal();
+			} catch {
+				delete dialog.dataset.uccmExplicitOpen;
+				return;
+			}
+
 			dialog.querySelector( '#uccm-preferences-title' ).focus();
 		}
 
 		function closePreferences() {
+			delete dialog.dataset.uccmExplicitOpen;
+
 			if ( dialog.open ) {
 				dialog.close();
 			}
+
+			dialog.removeAttribute( 'open' );
 		}
 
 		function selectedChoices() {
@@ -172,6 +188,22 @@
 
 			return choices;
 		}
+
+		closePreferences();
+
+		const dialogGuard = new MutationObserver( () => {
+			if ( dialog.open && 'true' !== dialog.dataset.uccmExplicitOpen ) {
+				closePreferences();
+			}
+		} );
+		dialogGuard.observe( dialog, { attributes: true, attributeFilter: [ 'open' ] } );
+
+		window.addEventListener( 'pagehide', closePreferences );
+		window.addEventListener( 'pageshow', ( event ) => {
+			if ( event.persisted ) {
+				closePreferences();
+			}
+		} );
 
 		root.querySelectorAll( '[data-uccm-action="manage"]' ).forEach( ( button ) => {
 			button.addEventListener( 'click', openPreferences );
