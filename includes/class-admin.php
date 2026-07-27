@@ -32,6 +32,7 @@ final class Admin {
 		add_action( 'admin_post_uccm_run_scan', array( self::class, 'run_scan' ) );
 		add_action( 'admin_post_uccm_cancel_scan', array( self::class, 'cancel_scan' ) );
 		add_action( 'admin_post_uccm_resume_scan', array( self::class, 'resume_scan' ) );
+		add_action( 'wp_ajax_uccm_process_scan_batch', array( self::class, 'process_scan_batch' ) );
 		add_action( 'wp_ajax_uccm_browser_scan_observations', array( self::class, 'browser_scan_observations' ) );
 		add_action( 'wp_ajax_nopriv_uccm_post_password_bootstrap', array( self::class, 'post_password_bootstrap' ) );
 		add_action( 'admin_post_uccm_review_scan_finding', array( self::class, 'review_scan_finding' ) );
@@ -490,6 +491,37 @@ final class Admin {
 		self::redirect( 'uccm-scans', 'scan-resumed' );
 	}
 
+	/**
+	 * Process one bounded scan batch from the authenticated scans screen.
+	 *
+	 * This is an independent recovery path when a host cannot start WP-Cron's
+	 * loopback request. The persisted batch lock keeps browser and cron workers
+	 * from processing the same run concurrently.
+	 */
+	public static function process_scan_batch(): void {
+		self::require_capability( 'run_uccm_scans' );
+		check_ajax_referer( 'uccm_scan_progress', 'nonce' );
+		$run_id = isset( $_POST['scan_id'] ) ? max( 0, (int) $_POST['scan_id'] ) : 0;
+		$result = Scanner::process_batch( $run_id, null, false );
+
+		if ( is_wp_error( $result ) && 'uccm_scan_batch_busy' !== $result->get_error_code() ) {
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) ? (int) ( $data['status'] ?? 400 ) : 400;
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), $status );
+		}
+
+		$progress = Scanner::progress( $run_id );
+
+		if ( is_wp_error( $progress ) ) {
+			$data   = $progress->get_error_data();
+			$status = is_array( $data ) ? (int) ( $data['status'] ?? 400 ) : 400;
+			wp_send_json_error( array( 'message' => $progress->get_error_message() ), $status );
+		}
+
+		$progress['busy'] = is_wp_error( $result );
+		wp_send_json_success( $progress );
+	}
+
 
 	/**
 	 * Establish WordPress's native post-password cookie inside an isolated browser frame.
@@ -815,6 +847,33 @@ final class Admin {
 		$rejected_url = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
 		$findings     = Scan_Findings::records( $scan_id, 100 );
 		$runner_run   = null;
+		$active_runs  = array();
+
+		if ( is_array( $runs ) ) {
+			foreach ( $runs as $candidate_run ) {
+				if ( in_array( (string) ( $candidate_run['status'] ?? '' ), array( 'queued', 'running' ), true ) ) {
+					$active_runs[] = max( 0, (int) ( $candidate_run['id'] ?? 0 ) );
+				}
+			}
+			$active_runs = array_values( array_filter( array_unique( $active_runs ) ) );
+		}
+
+		if ( array() !== $active_runs ) {
+			wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array(), UCCM_VERSION, true );
+			wp_localize_script(
+				'uccm-scan-progress',
+				'UCCMScanProgress',
+				array(
+					'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'uccm_scan_progress' ),
+					'runIds'   => $active_runs,
+					'messages' => array(
+						'working' => __( 'The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress.', 'uk-cookie-consent-manager' ),
+						'failed'  => __( 'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.', 'uk-cookie-consent-manager' ),
+					),
+				)
+			);
+		}
 
 		if ( is_array( $runs ) && 0 < $scan_id ) {
 			foreach ( $runs as $candidate_run ) {
@@ -859,7 +918,7 @@ final class Admin {
 		if ( 'saved' === $notice ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'Scan settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		} elseif ( 'scan-started' === $notice ) {
-			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan has started in the background. You can leave this page while it checks your public pages.', 'uk-cookie-consent-manager' ) . '</p></div>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan has started. This page will keep it moving if your site scheduler is delayed. You can leave and return without losing saved progress.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		} elseif ( 'scan-cancelled' === $notice ) {
 			echo '<div class="notice notice-success inline"><p>' . esc_html__( 'The scan was cancelled and its evidence was retained.', 'uk-cookie-consent-manager' ) . '</p></div>';
 		} elseif ( 'scan-resumed' === $notice ) {
@@ -906,11 +965,12 @@ final class Admin {
 		self::form_close();
 
 		self::form_open( 'uccm_run_scan', 'uccm_run_scan' );
-		echo '<p>' . esc_html__( 'The scan continues in the background, so you can leave this page. It checks public pages first; after that, you may run the optional browser check.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'The scan checks public pages first. Keeping this page open helps it continue if your site scheduler is delayed, but you can leave and return without losing saved progress. When it finishes, you may run the optional browser check.', 'uk-cookie-consent-manager' ) . '</p>';
 		submit_button( __( 'Run scan now', 'uk-cookie-consent-manager' ), 'primary' );
 		self::form_close();
 
 		echo '<h2>' . esc_html__( 'Recent scan runs', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p id="uccm-scan-progress-status" aria-live="polite"></p>';
 
 		if ( is_wp_error( $runs ) ) {
 			echo '<div class="notice notice-error inline"><p>' . esc_html( $runs->get_error_message() ) . '</p></div>';

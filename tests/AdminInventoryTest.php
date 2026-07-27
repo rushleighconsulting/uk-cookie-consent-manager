@@ -26,6 +26,7 @@ final class AdminInventoryTest extends TestCase {
 		$GLOBALS['uccm_test_admin_menus']      = array();
 		$GLOBALS['uccm_test_admin_submenus']   = array();
 		$GLOBALS['uccm_test_enqueued_scripts'] = array();
+		$GLOBALS['uccm_test_localized']        = array();
 	}
 
 	public function test_nine_capability_separated_admin_screens_are_registered(): void {
@@ -150,6 +151,31 @@ final class AdminInventoryTest extends TestCase {
 		self::assertSame( 1024, $settings['scan_page_limit'] );
 		self::assertSame( 1, $settings['scan_batch_size'] );
 		self::assertSame( array( '/private/*', '*/checkout/' ), $settings['scan_excluded_paths'] );
+	}
+
+	public function test_active_scan_enqueues_authenticated_browser_recovery_worker(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$GLOBALS['uccm_test_db_rows']                        = array(
+			array(
+				'id'            => 42,
+				'status'        => 'queued',
+				'methods'       => '[]',
+				'coverage'      => '{"visited_count":0,"remaining_count":1}',
+				'pages_visited' => '[]',
+				'summary'       => '{"findings":0,"warnings":[]}',
+				'error_code'    => '',
+				'started_at'    => '2026-07-27 06:12:17',
+				'completed_at'  => null,
+			),
+		);
+
+		ob_start();
+		Admin::render_scans();
+		$markup = (string) ob_get_clean();
+
+		self::assertArrayHasKey( 'uccm-scan-progress', $GLOBALS['uccm_test_enqueued_scripts'] );
+		self::assertSame( array( 42 ), $GLOBALS['uccm_test_localized']['UCCMScanProgress']['runIds'] );
+		self::assertStringContainsString( 'id="uccm-scan-progress-status" aria-live="polite"', $markup );
 	}
 
 	public function test_inventory_rejects_invalid_category_and_storage_type(): void {

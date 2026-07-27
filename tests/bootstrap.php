@@ -31,6 +31,7 @@ $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
 $GLOBALS['uccm_test_spawn_cron_calls'] = array();
+$GLOBALS['uccm_test_spawn_cron_result'] = true;
 $GLOBALS['uccm_test_wp_update_plugins_calls'] = 0;
 $GLOBALS['uccm_test_transients']       = array();
 $GLOBALS['uccm_test_site_transients']  = array();
@@ -397,7 +398,7 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $argument
 
 function spawn_cron( int $gmt_time = 0 ): bool {
 	$GLOBALS['uccm_test_spawn_cron_calls'][] = $gmt_time;
-	return true;
+	return true === $GLOBALS['uccm_test_spawn_cron_result'];
 }
 
 function get_transient( string $name ): mixed {

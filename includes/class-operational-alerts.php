@@ -288,6 +288,10 @@ final class Operational_Alerts {
 			return __( 'A background cookie scan has stopped progressing.', 'uk-cookie-consent-manager' );
 		}
 
+		if ( 'uccm_scan_dispatch_deferred' === $code ) {
+			return __( 'WordPress could not start a cookie scan in the background. Keep the Scans page open to continue it, or review the site scheduler.', 'uk-cookie-consent-manager' );
+		}
+
 		if ( 'uccm_update_rollback_failed' === $code ) {
 			return __( 'A plugin update failed and WordPress could not restore the previous UCCM version.', 'uk-cookie-consent-manager' );
 		}
