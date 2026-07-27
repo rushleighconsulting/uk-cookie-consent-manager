@@ -25,9 +25,11 @@ the versioned plugin ZIP produced by the Release workflow.
 
 ## Configure before production use
 
-- **Banner:** review visitor-facing wording and the consent-policy version.
-  Increment the policy version whenever a material policy change requires a new
-  decision.
+- **Banner:** review visitor-facing wording, the consent-policy version and the
+  supported appearance options. Use the preview before saving. UCCM rejects
+  colour combinations below its required contrast thresholds, keeps Accept and
+  Reject equally prominent, and can restore the appearance defaults. Increment
+  the policy version whenever a material policy change requires a new decision.
 - **View Categories:** review the fixed Necessary, Functional, Analytics and
   Marketing definitions. Necessary is always enabled; optional categories default
   to denied.
@@ -49,6 +51,41 @@ the versioned plugin ZIP produced by the Release workflow.
   run an immediate authenticated check, and review temporary-backup, disk-space
   and loopback readiness. Resolve any recovery warning before relying on
   unattended updates.
+
+## Banner appearance and accessibility
+
+The Banner screen supports background, heading, supporting-text, button and
+button-text colours; a system or site-theme font; a bounded corner radius; top
+or bottom banner placement; and left or right Cookie settings icon placement.
+It intentionally does not provide an unrestricted custom-CSS field. These
+controls cannot change the wording, order, target size or relative prominence
+of the Accept and Reject choices.
+
+UCCM aims to support WCAG 2.2 AA operation through semantic HTML, labelled
+regions and dialogs, keyboard operation, a high-contrast two-colour focus
+indicator, 44-pixel minimum targets, responsive reflow, forced-colour support
+and reduced-motion handling. This support is not an independent accessibility
+audit, legal certification or guarantee that the surrounding WordPress theme
+and site content are accessible. Test the complete site after changing its
+theme or the banner appearance. Record manual VoiceOver and NVDA results,
+including operating-system and browser versions, before treating a release as
+fully accessibility-assured.
+
+Theme developers may integrate with the stable properties below on
+`#uccm-consent-root`. Administrator settings are applied directly to that
+element, so an intentional theme override should use an equally deliberate
+selector and `!important`; the same contrast requirements remain the site
+operator's responsibility:
+
+| Property | Purpose |
+| --- | --- |
+| `--uccm-surface` | Banner, dialog and settings-icon background |
+| `--uccm-ink` | Headings and principal text |
+| `--uccm-muted` | Supporting text |
+| `--uccm-accent` | Buttons, settings icon and checkbox accent |
+| `--uccm-button-text` | Text on filled buttons |
+| `--uccm-radius` | Banner, dialog and control corner radius |
+| `--uccm-font-family` | Consent-interface font family |
 
 ## WordPress Multisite
 

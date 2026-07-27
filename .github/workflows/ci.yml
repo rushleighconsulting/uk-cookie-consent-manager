@@ -46,11 +46,13 @@ jobs:
         run: |
           node --check assets/js/consent.js
           node --check assets/js/blocker.js
+          node --check assets/js/admin-banner.js
           node --check assets/js/admin-privacy.js
           node --check assets/js/scan-progress.js
           node --check assets/js/scan-runner.js
           node --check playwright.config.js
           node --check tests/browser/admin-privacy.spec.js
+          node --check tests/browser/admin-banner.spec.js
           node --check tests/browser/consent.spec.js
           node --check tests/browser/scan-progress.spec.js
           node --check tests/browser/scan-runner.spec.js

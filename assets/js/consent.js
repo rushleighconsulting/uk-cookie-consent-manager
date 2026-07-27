@@ -15,6 +15,8 @@
 		const dialog = root.querySelector( '#uccm-preferences' );
 		const settingsButton = root.querySelector( '.uccm-settings' );
 		const status = root.querySelector( '[data-uccm-status]' );
+		let dialogInvoker = null;
+		let suppressFocusReturn = false;
 
 		if ( ! banner || ! dialog || ! settingsButton || ! status ) {
 			return;
@@ -156,6 +158,7 @@
 			}
 
 			updatePreferenceControls( readCookie() );
+			dialogInvoker = event.currentTarget;
 			dialog.dataset.uccmExplicitOpen = 'true';
 
 			try {
@@ -168,14 +171,17 @@
 			dialog.querySelector( '#uccm-preferences-title' ).focus();
 		}
 
-		function closePreferences() {
+		function closePreferences( restoreFocus = true ) {
+			suppressFocusReturn = ! restoreFocus;
 			delete dialog.dataset.uccmExplicitOpen;
 
 			if ( dialog.open ) {
 				dialog.close();
+				return;
 			}
 
 			dialog.removeAttribute( 'open' );
+			suppressFocusReturn = false;
 		}
 
 		function selectedChoices() {
@@ -189,19 +195,60 @@
 			return choices;
 		}
 
-		closePreferences();
+		closePreferences( false );
+
+		dialog.addEventListener( 'close', () => {
+			delete dialog.dataset.uccmExplicitOpen;
+			dialog.removeAttribute( 'open' );
+
+			if ( ! suppressFocusReturn ) {
+				const target = dialogInvoker && ! dialogInvoker.hidden ? dialogInvoker : settingsButton;
+
+				if ( target && ! target.hidden && 'function' === typeof target.focus ) {
+					target.focus();
+				}
+			}
+
+			suppressFocusReturn = false;
+			dialogInvoker = null;
+		} );
+		dialog.addEventListener( 'keydown', ( event ) => {
+			if ( 'Tab' !== event.key || ! dialog.open ) {
+				return;
+			}
+
+			const controls = Array.from(
+				dialog.querySelectorAll( 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])' )
+			).filter( ( control ) => ! control.hidden );
+
+			if ( 0 === controls.length ) {
+				event.preventDefault();
+				return;
+			}
+
+			const first = controls[0];
+			const last = controls[ controls.length - 1 ];
+
+			if ( event.shiftKey && ( document.activeElement === first || ! dialog.contains( document.activeElement ) ) ) {
+				event.preventDefault();
+				last.focus();
+			} else if ( ! event.shiftKey && document.activeElement === last ) {
+				event.preventDefault();
+				first.focus();
+			}
+		} );
 
 		const dialogGuard = new MutationObserver( () => {
 			if ( dialog.open && 'true' !== dialog.dataset.uccmExplicitOpen ) {
-				closePreferences();
+				closePreferences( false );
 			}
 		} );
 		dialogGuard.observe( dialog, { attributes: true, attributeFilter: [ 'open' ] } );
 
-		window.addEventListener( 'pagehide', closePreferences );
+		window.addEventListener( 'pagehide', () => closePreferences( false ) );
 		window.addEventListener( 'pageshow', ( event ) => {
 			if ( event.persisted ) {
-				closePreferences();
+				closePreferences( false );
 			}
 		} );
 
@@ -235,6 +282,11 @@
 
 		const initialDecision = readCookie();
 		applyDecision( initialDecision );
+
+		if ( ! initialDecision && config.messages.available ) {
+			status.textContent = config.messages.available;
+		}
+
 		window.dispatchEvent( new CustomEvent( 'uccm:consent-ready', {
 			detail: initialDecision || { categories: emptyChoices() },
 		} ) );

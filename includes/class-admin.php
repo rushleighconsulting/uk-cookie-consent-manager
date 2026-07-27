@@ -134,10 +134,28 @@ final class Admin {
 		$inherit   = self::submitted_inheritance();
 
 		if ( 'banner' === $section ) {
+			$style_input = array_intersect_key(
+				$submitted,
+				array_fill_keys( array_keys( Settings::banner_style_defaults() ), true )
+			);
+
+			if ( ! empty( $_POST['reset_banner_style'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified above.
+				$style_input = Settings::banner_style_defaults();
+			}
+
+			$validated_style = Settings::validate_banner_style( $style_input );
+
+			if ( is_wp_error( $validated_style ) ) {
+				wp_die( esc_html( $validated_style->get_error_message() ), '', array( 'response' => 400 ) );
+			}
+
 			Settings::update(
-				array(
-					'consent_lifetime_days'  => $submitted['consent_lifetime_days'] ?? 180,
-					'consent_policy_version' => $submitted['consent_policy_version'] ?? Consent_State::POLICY_VERSION,
+				array_merge(
+					$validated_style,
+					array(
+						'consent_lifetime_days'  => $submitted['consent_lifetime_days'] ?? 180,
+						'consent_policy_version' => $submitted['consent_policy_version'] ?? Consent_State::POLICY_VERSION,
+					)
 				),
 				$inherit
 			);
@@ -697,16 +715,98 @@ final class Admin {
 	public static function render_banner(): void {
 		self::require_capability( 'manage_uccm_settings' );
 		$settings = Settings::current();
+
+		wp_enqueue_style(
+			'uccm-admin-banner',
+			plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/css/admin-banner.css',
+			array(),
+			UCCM_VERSION
+		);
+		wp_enqueue_script(
+			'uccm-admin-banner',
+			plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/admin-banner.js',
+			array(),
+			UCCM_VERSION,
+			true
+		);
 		self::open_page( __( 'Banner', 'uk-cookie-consent-manager' ) );
 		self::saved_notice();
+		echo '<p>' . esc_html__( 'Choose from the supported appearance options. UCCM keeps the main Accept and Reject choices equally prominent and checks colour contrast before saving.', 'uk-cookie-consent-manager' ) . '</p>';
 		self::form_open( 'uccm_save_settings', 'uccm_save_banner' );
 		echo '<input type="hidden" name="section" value="banner">';
 		self::number_field( 'consent_lifetime_days', __( 'Consent lifetime (days)', 'uk-cookie-consent-manager' ), (int) $settings['consent_lifetime_days'], 1, 730, Settings::is_network_locked( 'consent_lifetime_days' ) );
 		self::network_setting_control( 'consent_lifetime_days' );
 		self::text_field( 'consent_policy_version', __( 'Consent policy version', 'uk-cookie-consent-manager' ), (string) $settings['consent_policy_version'] );
+		echo '<h2>' . esc_html__( 'Appearance', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<div class="uccm-banner-editor" data-uccm-banner-editor>';
+		echo '<div class="uccm-banner-editor__controls">';
+		self::colour_field( 'banner_surface_color', __( 'Banner background', 'uk-cookie-consent-manager' ), (string) $settings['banner_surface_color'] );
+		self::colour_field( 'banner_text_color', __( 'Heading text', 'uk-cookie-consent-manager' ), (string) $settings['banner_text_color'] );
+		self::colour_field( 'banner_muted_color', __( 'Supporting text', 'uk-cookie-consent-manager' ), (string) $settings['banner_muted_color'] );
+		self::colour_field( 'banner_button_color', __( 'Button background', 'uk-cookie-consent-manager' ), (string) $settings['banner_button_color'] );
+		self::colour_field( 'banner_button_text_color', __( 'Button text', 'uk-cookie-consent-manager' ), (string) $settings['banner_button_text_color'] );
+		self::select_field(
+			'banner_font',
+			__( 'Font', 'uk-cookie-consent-manager' ),
+			array(
+				'system' => __( 'UCCM system font', 'uk-cookie-consent-manager' ),
+				'theme'  => __( 'Use the site theme font', 'uk-cookie-consent-manager' ),
+			),
+			(string) $settings['banner_font']
+		);
+		self::number_field( 'banner_corner_radius', __( 'Corner radius (pixels)', 'uk-cookie-consent-manager' ), (int) $settings['banner_corner_radius'], 0, 24 );
+		self::select_field(
+			'banner_position',
+			__( 'Banner position', 'uk-cookie-consent-manager' ),
+			array(
+				'bottom' => __( 'Bottom', 'uk-cookie-consent-manager' ),
+				'top'    => __( 'Top', 'uk-cookie-consent-manager' ),
+			),
+			(string) $settings['banner_position']
+		);
+		self::select_field(
+			'icon_position',
+			__( 'Cookie settings icon position', 'uk-cookie-consent-manager' ),
+			array(
+				'right' => __( 'Bottom right', 'uk-cookie-consent-manager' ),
+				'left'  => __( 'Bottom left', 'uk-cookie-consent-manager' ),
+			),
+			(string) $settings['icon_position']
+		);
+		echo '</div>';
+		self::render_banner_preview( $settings );
+		echo '</div>';
+		echo '<p class="description">' . esc_html__( 'The preview demonstrates colour, font, corners and position. Your site layout may provide different surrounding content.', 'uk-cookie-consent-manager' ) . '</p>';
 		submit_button( __( 'Save banner settings', 'uk-cookie-consent-manager' ) );
+		echo '<p><button type="submit" class="button button-secondary" name="reset_banner_style" value="1" formnovalidate>' . esc_html__( 'Reset appearance to defaults', 'uk-cookie-consent-manager' ) . '</button></p>';
 		self::form_close();
 		self::close_page();
+	}
+
+	/**
+	 * Render the constrained banner appearance preview.
+	 *
+	 * @param array<string, mixed> $settings Current settings.
+	 */
+	private static function render_banner_preview( array $settings ): void {
+		$style = sprintf(
+			'--uccm-preview-surface:%1$s;--uccm-preview-ink:%2$s;--uccm-preview-muted:%3$s;--uccm-preview-accent:%4$s;--uccm-preview-button-text:%5$s;--uccm-preview-radius:%6$dpx',
+			(string) $settings['banner_surface_color'],
+			(string) $settings['banner_text_color'],
+			(string) $settings['banner_muted_color'],
+			(string) $settings['banner_button_color'],
+			(string) $settings['banner_button_text_color'],
+			(int) $settings['banner_corner_radius']
+		);
+
+		echo '<section class="uccm-banner-preview" data-uccm-banner-preview data-font="' . esc_attr( (string) $settings['banner_font'] ) . '" data-position="' . esc_attr( (string) $settings['banner_position'] ) . '" data-icon-position="' . esc_attr( (string) $settings['icon_position'] ) . '" style="' . esc_attr( $style ) . '" aria-label="' . esc_attr( __( 'Banner preview', 'uk-cookie-consent-manager' ) ) . '">';
+		echo '<div class="uccm-banner-preview__page"><span></span><span></span><span></span></div>';
+		echo '<div class="uccm-banner-preview__banner">';
+		echo '<div><strong>' . esc_html__( 'Your cookie choices', 'uk-cookie-consent-manager' ) . '</strong><p>' . esc_html__( 'We use one necessary cookie to remember your choice. Optional cookies need your permission.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		echo '<div class="uccm-banner-preview__actions"><span>' . esc_html__( 'Accept all', 'uk-cookie-consent-manager' ) . '</span><span>' . esc_html__( 'Reject non-essential', 'uk-cookie-consent-manager' ) . '</span><span>' . esc_html__( 'Manage preferences', 'uk-cookie-consent-manager' ) . '</span></div>';
+		echo '</div>';
+		echo '<span class="uccm-banner-preview__icon" aria-hidden="true">◔</span>';
+		echo '</section>';
 	}
 
 	/**
@@ -1609,6 +1709,35 @@ final class Admin {
 	 */
 	private static function text_field( string $name, string $label, string $value ): void {
 		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input class="regular-text" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( $value ) . '"></label></p>';
+	}
+
+	/**
+	 * Render a six-digit colour field.
+	 *
+	 * @param string $name  Field name.
+	 * @param string $label Visible label.
+	 * @param string $value Current value.
+	 */
+	private static function colour_field( string $name, string $label, string $value ): void {
+		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input type="color" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( $value ) . '" data-uccm-style-field="' . esc_attr( $name ) . '"> <code>' . esc_html( $value ) . '</code></label></p>';
+	}
+
+	/**
+	 * Render an allowlisted select field.
+	 *
+	 * @param string               $name    Field name.
+	 * @param string               $label   Visible label.
+	 * @param array<string,string> $choices Value and label pairs.
+	 * @param string               $current Current value.
+	 */
+	private static function select_field( string $name, string $label, array $choices, string $current ): void {
+		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><select name="uccm[' . esc_attr( $name ) . ']" data-uccm-style-field="' . esc_attr( $name ) . '">';
+
+		foreach ( $choices as $value => $choice_label ) {
+			echo '<option value="' . esc_attr( $value ) . '" ' . selected( $current, $value, false ) . '>' . esc_html( $choice_label ) . '</option>';
+		}
+
+		echo '</select></label></p>';
 	}
 
 	/**

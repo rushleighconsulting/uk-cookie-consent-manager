@@ -1,11 +1,14 @@
-:root {
+.uccm-consent {
 	--uccm-ink: #172033;
 	--uccm-surface: #ffffff;
 	--uccm-muted: #536079;
 	--uccm-border: #cbd2df;
 	--uccm-accent: #174ea6;
-	--uccm-accent-hover: #103b7d;
-	--uccm-focus: #ffbf47;
+	--uccm-button-text: #ffffff;
+	--uccm-radius: 12px;
+	--uccm-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--uccm-focus-inner: #ffffff;
+	--uccm-focus-outer: #111111;
 	--uccm-shadow: 0 16px 48px rgba(23, 32, 51, 0.2);
 }
 
@@ -34,9 +37,17 @@
 	color: var(--uccm-ink);
 	background: var(--uccm-surface);
 	border: 1px solid var(--uccm-border);
-	border-radius: 0.75rem;
+	border-radius: var(--uccm-radius);
 	box-shadow: var(--uccm-shadow);
-	font: 400 1rem/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-family: var(--uccm-font-family);
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5;
+}
+
+.uccm-consent[data-uccm-banner-position="top"] .uccm-banner {
+	top: 1rem;
+	bottom: auto;
 }
 
 .uccm-title {
@@ -68,36 +79,35 @@
 .uccm-icon-button {
 	min-height: 2.75rem;
 	padding: 0.65rem 1rem;
-	color: #ffffff;
+	color: var(--uccm-button-text);
 	background: var(--uccm-accent);
 	border: 2px solid var(--uccm-accent);
-	border-radius: 0.4rem;
-	font: 700 0.95rem/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	border-radius: min(var(--uccm-radius), 0.6rem);
+	font-family: var(--uccm-font-family);
+	font-size: 0.95rem;
+	font-weight: 700;
+	line-height: 1.2;
 	cursor: pointer;
 }
 
 .uccm-button:hover,
 .uccm-settings:hover,
 .uccm-icon-button:hover {
-	background: var(--uccm-accent-hover);
-	border-color: var(--uccm-accent-hover);
+	text-decoration: underline;
 }
 
 .uccm-button:focus-visible,
 .uccm-settings:focus-visible,
 .uccm-icon-button:focus-visible,
 .uccm-category input:focus-visible {
-	outline: 3px solid var(--uccm-focus);
+	outline: 3px solid var(--uccm-focus-inner);
 	outline-offset: 3px;
+	box-shadow: 0 0 0 6px var(--uccm-focus-outer);
 }
 
 .uccm-button--secondary {
-	color: var(--uccm-accent);
-	background: transparent;
-}
-
-.uccm-button--secondary:hover {
-	color: #ffffff;
+	color: var(--uccm-button-text);
+	background: var(--uccm-accent);
 }
 
 .uccm-settings {
@@ -118,9 +128,14 @@
 }
 
 .uccm-settings:hover {
-	color: var(--uccm-accent-hover);
-	background: #eef4ff;
-	border-color: var(--uccm-accent-hover);
+	color: var(--uccm-accent);
+	background: var(--uccm-surface);
+	border-color: var(--uccm-accent);
+}
+
+.uccm-consent[data-uccm-icon-position="left"] .uccm-settings {
+	right: auto;
+	left: 1rem;
 }
 
 .uccm-settings__icon {
@@ -141,11 +156,14 @@
 	width: max-content;
 	max-width: min(15rem, calc(100vw - 2rem));
 	padding: 0.4rem 0.6rem;
-	color: #ffffff;
+	color: var(--uccm-surface);
 	background: var(--uccm-ink);
 	border-radius: 0.3rem;
 	content: attr(data-uccm-label);
-	font: 600 0.8rem/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-family: var(--uccm-font-family);
+	font-size: 0.8rem;
+	font-weight: 600;
+	line-height: 1.25;
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(0.25rem);
@@ -156,6 +174,11 @@
 .uccm-settings:focus-visible::after {
 	opacity: 1;
 	transform: translateY(0);
+}
+
+.uccm-consent[data-uccm-icon-position="left"] .uccm-settings::after {
+	right: auto;
+	left: 0;
 }
 
 .uccm-banner:not([hidden]) ~ .uccm-settings {
@@ -170,9 +193,12 @@
 	color: var(--uccm-ink);
 	background: var(--uccm-surface);
 	border: 1px solid var(--uccm-border);
-	border-radius: 0.75rem;
+	border-radius: var(--uccm-radius);
 	box-shadow: var(--uccm-shadow);
-	font: 400 1rem/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-family: var(--uccm-font-family);
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5;
 }
 
 .uccm-dialog[open][data-uccm-explicit-open="true"] {
@@ -270,6 +296,11 @@
 		-webkit-overflow-scrolling: touch;
 	}
 
+	.uccm-consent[data-uccm-banner-position="top"] .uccm-banner {
+		top: max(0.5rem, env(safe-area-inset-top, 0px));
+		bottom: auto;
+	}
+
 	.uccm-actions,
 	.uccm-actions--primary {
 		flex-direction: column;
@@ -288,6 +319,41 @@
 
 	.uccm-dialog__inner {
 		padding: 1rem;
+	}
+}
+
+@media (forced-colors: active) {
+	.uccm-banner,
+	.uccm-dialog,
+	.uccm-category {
+		color: CanvasText;
+		background: Canvas;
+		border-color: CanvasText;
+		box-shadow: none;
+		forced-color-adjust: auto;
+	}
+
+	.uccm-title,
+	.uccm-copy,
+	.uccm-category span span {
+		color: CanvasText;
+	}
+
+	.uccm-button,
+	.uccm-settings,
+	.uccm-icon-button {
+		color: ButtonText;
+		background: ButtonFace;
+		border-color: ButtonText;
+		forced-color-adjust: auto;
+	}
+
+	.uccm-button:focus-visible,
+	.uccm-settings:focus-visible,
+	.uccm-icon-button:focus-visible,
+	.uccm-category input:focus-visible {
+		outline: 3px solid Highlight;
+		box-shadow: none;
 	}
 }
 

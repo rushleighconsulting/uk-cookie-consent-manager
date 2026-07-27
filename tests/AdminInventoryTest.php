@@ -25,6 +25,7 @@ final class AdminInventoryTest extends TestCase {
 		$GLOBALS['uccm_test_db_var']           = 0;
 		$GLOBALS['uccm_test_admin_menus']      = array();
 		$GLOBALS['uccm_test_admin_submenus']   = array();
+		$GLOBALS['uccm_test_enqueued_styles']  = array();
 		$GLOBALS['uccm_test_enqueued_scripts'] = array();
 		$GLOBALS['uccm_test_localized']        = array();
 	}
@@ -78,6 +79,59 @@ final class AdminInventoryTest extends TestCase {
 		self::assertTrue( $settings['store_full_ip'] );
 		self::assertTrue( $settings['trust_proxy_headers'] );
 		self::assertSame( array( '192.0.2.10', '2001:db8::1' ), $settings['trusted_proxy_ips'] );
+	}
+
+	public function test_banner_colours_must_meet_text_and_control_contrast_thresholds(): void {
+		$valid = Settings::validate_banner_style(
+			array(
+				'banner_surface_color'     => '#fffef8',
+				'banner_text_color'        => '#1f2937',
+				'banner_muted_color'       => '#4b5563',
+				'banner_button_color'      => '#6b214f',
+				'banner_button_text_color' => '#ffffff',
+				'banner_font'              => 'theme',
+				'banner_corner_radius'     => 24,
+				'banner_position'          => 'top',
+				'icon_position'            => 'left',
+			),
+			array()
+		);
+
+		self::assertIsArray( $valid );
+		self::assertSame( 'theme', $valid['banner_font'] );
+		self::assertSame( 'top', $valid['banner_position'] );
+		self::assertSame( 'left', $valid['icon_position'] );
+
+		$invalid = Settings::validate_banner_style(
+			array(
+				'banner_surface_color' => '#ffffff',
+				'banner_text_color'    => '#dddddd',
+			),
+			array()
+		);
+
+		self::assertInstanceOf( WP_Error::class, $invalid );
+		self::assertSame( 'uccm_inaccessible_banner_colours', $invalid->get_error_code() );
+		self::assertStringContainsString( '4.5:1', $invalid->get_error_message() );
+	}
+
+	public function test_banner_screen_renders_supported_controls_preview_and_reset(): void {
+		$GLOBALS['uccm_test_capabilities']['manage_uccm_settings'] = true;
+
+		ob_start();
+		Admin::render_banner();
+		$markup = (string) ob_get_clean();
+
+		self::assertArrayHasKey( 'uccm-admin-banner', $GLOBALS['uccm_test_enqueued_styles'] );
+		self::assertArrayHasKey( 'uccm-admin-banner', $GLOBALS['uccm_test_enqueued_scripts'] );
+		self::assertStringContainsString( 'data-uccm-banner-editor', $markup );
+		self::assertStringContainsString( 'data-uccm-banner-preview', $markup );
+		self::assertStringContainsString( 'name="uccm[banner_surface_color]"', $markup );
+		self::assertStringContainsString( 'name="uccm[banner_font]"', $markup );
+		self::assertStringContainsString( 'name="uccm[banner_position]"', $markup );
+		self::assertStringContainsString( 'name="uccm[icon_position]"', $markup );
+		self::assertStringContainsString( 'name="reset_banner_style"', $markup );
+		self::assertStringContainsString( 'keeps the main Accept and Reject choices equally prominent', $markup );
 	}
 
 	public function test_proxy_allowlist_is_preserved_and_ignored_when_header_trust_is_disabled(): void {
