@@ -850,7 +850,13 @@ final class Admin {
 			self::language_text_input( $prefix, 'wording_version', __( 'Wording version', 'uk-cookie-consent-manager' ), (string) ( $content['wording_version'] ?? '1' ), false );
 			echo '<p><label><strong>' . esc_html__( 'Reading direction', 'uk-cookie-consent-manager' ) . '</strong><br><select name="' . esc_attr( $prefix . '[direction]' ) . '">';
 
-			foreach ( array( 'auto' => __( 'Automatic', 'uk-cookie-consent-manager' ), 'ltr' => __( 'Left to right', 'uk-cookie-consent-manager' ), 'rtl' => __( 'Right to left', 'uk-cookie-consent-manager' ) ) as $value => $label ) {
+			foreach (
+				array(
+					'auto' => __( 'Automatic', 'uk-cookie-consent-manager' ),
+					'ltr'  => __( 'Left to right', 'uk-cookie-consent-manager' ),
+					'rtl'  => __( 'Right to left', 'uk-cookie-consent-manager' ),
+				) as $value => $label
+			) {
 				echo '<option value="' . esc_attr( $value ) . '" ' . selected( (string) ( $content['direction'] ?? 'auto' ), $value, false ) . '>' . esc_html( $label ) . '</option>';
 			}
 
@@ -893,6 +899,12 @@ final class Admin {
 
 	/**
 	 * Render one plain-text language-content field.
+	 *
+	 * @param string $prefix    Nested form-field prefix.
+	 * @param string $field     Content field name.
+	 * @param string $label     Visible administrator label.
+	 * @param string $value     Current field value.
+	 * @param bool   $multiline Whether to render a textarea.
 	 */
 	private static function language_text_input( string $prefix, string $field, string $label, string $value, bool $multiline ): void {
 		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br>';

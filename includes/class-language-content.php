@@ -35,6 +35,8 @@ final class Language_Content {
 
 	/**
 	 * Normalise a WordPress locale or HTML language tag.
+	 *
+	 * @param string $locale Locale or language tag.
 	 */
 	public static function normalise_locale( string $locale ): string {
 		$locale = str_replace( '-', '_', trim( $locale ) );
@@ -98,6 +100,7 @@ final class Language_Content {
 	/**
 	 * Return the complete default public wording.
 	 *
+	 * @param int $lifetime_days Configured consent lifetime.
 	 * @return array<string, mixed>
 	 */
 	public static function defaults( int $lifetime_days ): array {
@@ -112,7 +115,7 @@ final class Language_Content {
 			),
 			$lifetime_days
 		);
-		$cookie     = sprintf(
+		$cookie = sprintf(
 			/* translators: %d: configured consent lifetime. */
 			_n(
 				'We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
@@ -183,7 +186,7 @@ final class Language_Content {
 			$content['categories'] = array();
 
 			foreach ( array( 'necessary', 'functional', 'analytics', 'marketing' ) as $category ) {
-				$submitted_category               = is_array( $candidate['categories'][ $category ] ?? null ) ? $candidate['categories'][ $category ] : array();
+				$submitted_category                 = is_array( $candidate['categories'][ $category ] ?? null ) ? $candidate['categories'][ $category ] : array();
 				$content['categories'][ $category ] = array(
 					'label'       => sanitize_text_field( (string) ( $submitted_category['label'] ?? '' ) ),
 					'description' => sanitize_textarea_field( (string) ( $submitted_category['description'] ?? '' ) ),
@@ -221,6 +224,7 @@ final class Language_Content {
 	/**
 	 * Resolve content and fallback evidence for one locale.
 	 *
+	 * @param string|null $requested_locale Optional requested locale.
 	 * @return array{locale: string, requestedLocale: string, fallback: bool, direction: string, content: array<string, mixed>}
 	 */
 	public static function resolve( ?string $requested_locale = null ): array {
@@ -284,6 +288,7 @@ final class Language_Content {
 	 *
 	 * @param array<string, mixed> $base     Default content.
 	 * @param array<string, mixed> $authored Authored content.
+	 * @param int                  $lifetime Configured consent lifetime.
 	 * @return array<string, mixed>
 	 */
 	private static function merge_content( array $base, array $authored, int $lifetime ): array {
@@ -327,7 +332,7 @@ final class Language_Content {
 		$language = strtolower( (string) strtok( $requested, '_' ) );
 
 		foreach ( $available as $locale ) {
-			if ( $language === strtolower( (string) strtok( $locale, '_' ) ) ) {
+			if ( strtolower( (string) strtok( $locale, '_' ) ) === $language ) {
 				return $locale;
 			}
 		}
@@ -337,6 +342,8 @@ final class Language_Content {
 
 	/**
 	 * Identify common right-to-left language codes without a dependency.
+	 *
+	 * @param string $locale Resolved locale.
 	 */
 	private static function is_rtl_locale( string $locale ): bool {
 		$language = strtolower( (string) strtok( $locale, '_' ) );
