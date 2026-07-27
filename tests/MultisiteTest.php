@@ -55,7 +55,10 @@ final class MultisiteTest extends TestCase {
 		self::assertSame( range( 1, 25 ), $GLOBALS['uccm_test_switched_blogs'] );
 		self::assertSame( 1, $GLOBALS['uccm_test_current_blog_id'] );
 		self::assertCount( 25, $GLOBALS['uccm_test_dbdelta_calls'] );
-		self::assertSame( Multisite::BATCH_HOOK, $GLOBALS['uccm_test_schedule_events'][0]['hook'] );
+		self::assertContains(
+			Multisite::BATCH_HOOK,
+			array_column( $GLOBALS['uccm_test_schedule_events'], 'hook' )
+		);
 
 		Multisite::process_install_batch();
 

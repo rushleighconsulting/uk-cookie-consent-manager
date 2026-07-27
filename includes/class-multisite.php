@@ -57,7 +57,7 @@ final class Multisite {
 			return;
 		}
 
-		add_action( 'wp_initialize_site', array( Activator::class, 'initialize_site' ), 100 );
+		add_action( 'wp_initialize_site', array( self::class, 'initialize_site' ), 100 );
 		add_action( self::BATCH_HOOK, array( self::class, 'process_install_batch' ) );
 		add_action( 'network_admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_post_uccm_save_network_settings', array( self::class, 'save_settings' ) );
@@ -107,8 +107,9 @@ final class Multisite {
 				self::with_site( $site_id, array( Activator::class, 'clear_scheduled_work' ) );
 			}
 
-			$offset += count( $site_ids );
-		} while ( self::BATCH_SIZE === count( $site_ids ) );
+			$site_count = count( $site_ids );
+			$offset    += $site_count;
+		} while ( self::BATCH_SIZE === $site_count );
 
 		delete_site_option( self::STATE_OPTION );
 	}
@@ -141,10 +142,11 @@ final class Multisite {
 				);
 			}
 
-			$state['offset']     += count( $site_ids );
-			$state['processed']  += count( $site_ids );
-			$state['updated_at']  = current_time( 'mysql', true );
-			$state['status']      = self::BATCH_SIZE === count( $site_ids ) ? 'running' : 'completed';
+			$site_count          = count( $site_ids );
+			$state['offset']    += $site_count;
+			$state['processed'] += $site_count;
+			$state['updated_at'] = current_time( 'mysql', true );
+			$state['status']     = self::BATCH_SIZE === $site_count ? 'running' : 'completed';
 
 			update_site_option( self::STATE_OPTION, $state );
 

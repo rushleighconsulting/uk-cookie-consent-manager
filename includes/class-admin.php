@@ -1409,8 +1409,8 @@ final class Admin {
 	 * @return string[]
 	 */
 	private static function submitted_inheritance(): array {
-		$submitted = isset( $_POST['uccm_inherit'] ) && is_array( $_POST['uccm_inherit'] ) ? wp_unslash( $_POST['uccm_inherit'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Each caller verifies its form nonce before use.
-		$submitted = array_map( 'sanitize_key', array_map( 'strval', array_filter( $submitted, 'is_scalar' ) ) );
+		$submitted = isset( $_POST['uccm_inherit'] ) && is_array( $_POST['uccm_inherit'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['uccm_inherit'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Each caller verifies its form nonce before use.
+		$submitted = array_map( 'strval', array_filter( $submitted, 'is_scalar' ) );
 
 		return array_values( array_intersect( $submitted, Multisite::manageable_settings() ) );
 	}

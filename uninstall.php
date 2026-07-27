@@ -76,8 +76,9 @@ if ( is_multisite() ) {
 				}
 			}
 
-			$uccm_offset += count( $uccm_site_ids );
-		} while ( UCCM\Multisite::BATCH_SIZE === count( $uccm_site_ids ) );
+			$uccm_site_count = count( $uccm_site_ids );
+			$uccm_offset    += $uccm_site_count;
+		} while ( UCCM\Multisite::BATCH_SIZE === $uccm_site_count );
 
 		delete_site_option( UCCM\Multisite::SETTINGS_OPTION );
 		delete_site_option( UCCM\Multisite::STATE_OPTION );
