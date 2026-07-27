@@ -92,7 +92,7 @@ async function boot( page, options = {} ) {
 			wording_version: 'english-1',
 			direction: 'ltr',
 			banner_title: 'Your cookie choices',
-			banner_copy: 'We use one necessary cookie to remember your choice for 180 days.',
+			banner_copy: 'We use one necessary cookie to remember your choice for 180 days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
 			accept_all: 'Accept all',
 			reject_optional: 'Reject non-essential',
 			manage_preferences: 'Manage preferences',
