@@ -2,14 +2,49 @@
 
 ## Reporting a vulnerability
 
-Please do not disclose suspected vulnerabilities in a public issue.
+Do not disclose a suspected vulnerability in a public GitHub issue, WordPress.org
+support topic, ordinary support request, chat room or social-media post.
 
-Use GitHub's private vulnerability reporting for this repository when available,
-or contact the repository owner through an agreed private channel. Include the
-affected version, reproduction steps, impact, and any suggested mitigation.
+Use GitHub Private Vulnerability Reporting as the primary confidential route:
 
-Do not include real visitor consent records, IP addresses, credentials, tokens,
-database exports, or other personal data in a report.
+https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/advisories/new
+
+If GitHub private reporting is unavailable, email
+security@rushleighconsulting.co.uk. The mailbox is monitored by Jeremy Sedgley
+and Matthew Worley. Do not send vulnerability evidence to any other Rushleigh
+Consulting address unless a security maintainer explicitly agrees a secure
+alternative with you.
+
+Include the affected UCCM and WordPress versions, a concise impact description,
+and the minimum reproduction steps needed to assess the problem. Before sending
+logs or files, remove real consent records, cookie values, complete IP addresses,
+credentials, access tokens, authentication cookies, database exports and
+unrelated personal data.
+
+We aim to acknowledge a report within two working days. Acknowledgement does not
+confirm severity or eligibility for a CVE. Reporter communication, remediation,
+release and public disclosure are separate approval stages.
+
+## Coordinated disclosure
+
+The security maintainers will restrict the report and evidence to the security
+response group, assess severity and affected versions, and agree communication
+and disclosure timing with the reporter where practicable. Confidential fixes
+must be developed outside public issues and pull requests. A GitHub security
+advisory and CVE may be used when appropriate.
+
+If a vulnerability is mentioned publicly, do not request further evidence in
+public. Direct the reporter to the private form and preserve only the public URL
+needed for the response record.
+
+Evidence is retained only while assessment, remediation, release and agreed
+disclosure require it. The security maintainers must securely delete unnecessary
+copies and record the deletion without copying the evidence into ordinary Jira,
+support queues, GitHub Actions logs or general notifications.
+
+If both GitHub private reporting and the security mailbox are unavailable, use a
+known Rushleigh Consulting contact only to request an alternative private
+channel. Do not include vulnerability details in that initial contact.
 
 ## Supported versions
 
@@ -21,7 +56,6 @@ here when Release 1 is published.
 The project applies least privilege, explicit consent, data minimisation, bounded
 retention, authenticated update metadata, package integrity checking, input
 validation, output escaping, prepared queries, and privacy-safe logging.
-
 
 ## Data-flow and boundary controls
 
