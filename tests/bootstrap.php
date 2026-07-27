@@ -707,6 +707,11 @@ function __( string $text, string $domain = 'default' ): string {
 	return $text;
 }
 
+function _n( string $single, string $plural, int $number, string $domain = 'default' ): string {
+	unset( $domain );
+	return 1 === $number ? $single : $plural;
+}
+
 function esc_html__( string $text, string $domain = 'default' ): string {
 	return esc_html( __( $text, $domain ) );
 }
