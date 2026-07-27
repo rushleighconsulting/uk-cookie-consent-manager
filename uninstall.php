@@ -64,8 +64,6 @@ if ( is_multisite() ) {
 					'order'   => 'ASC',
 				)
 			);
-			$uccm_site_ids = is_array( $uccm_site_ids ) ? $uccm_site_ids : array();
-
 			foreach ( $uccm_site_ids as $uccm_site_id ) {
 				switch_to_blog( (int) $uccm_site_id );
 

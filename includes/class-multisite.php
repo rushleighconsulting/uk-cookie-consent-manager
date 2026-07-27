@@ -322,8 +322,7 @@ final class Multisite {
 		$configuration = self::configuration();
 		$state         = self::install_state();
 		$status        = Secure_Updater::status();
-		$site_count    = get_sites( array( 'count' => true ) );
-		$site_count    = is_numeric( $site_count ) ? (int) $site_count : 0;
+		$site_count    = (int) get_sites( array( 'count' => true ) );
 		$defaults      = Settings::defaults();
 		$values        = array_merge( $defaults, $configuration['defaults'] );
 		$labels        = self::setting_labels();
@@ -437,7 +436,7 @@ final class Multisite {
 			)
 		);
 
-		return array_map( 'intval', is_array( $site_ids ) ? $site_ids : array() );
+		return array_map( 'intval', $site_ids );
 	}
 
 	/**
