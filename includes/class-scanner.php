@@ -1110,7 +1110,7 @@ final class Scanner {
 		}
 
 		if ( $dispatch ) {
-			$is_cron_request = defined( 'DOING_CRON' ) && DOING_CRON;
+			$is_cron_request = wp_doing_cron();
 
 			if ( ! function_exists( 'spawn_cron' ) || ( ! $is_cron_request && ! spawn_cron( time() ) ) ) {
 				Operational_Alerts::report( 'uccm_scan_dispatch_deferred', 'scanner', $run_id );

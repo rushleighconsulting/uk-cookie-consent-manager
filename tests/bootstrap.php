@@ -378,6 +378,10 @@ function wp_next_scheduled( string $hook, array $arguments = array() ): int|fals
 	return $GLOBALS['uccm_test_scheduled_hooks'][ $key ] ?? false;
 }
 
+function wp_doing_cron(): bool {
+	return false;
+}
+
 function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
 	$GLOBALS['uccm_test_scheduled_hooks'][ $hook ] = $timestamp;
 	$GLOBALS['uccm_test_schedule_events'][]        = compact( 'timestamp', 'recurrence', 'hook' );
@@ -668,6 +672,10 @@ function wp_localize_script( string $handle, string $object_name, array $data ):
 	unset( $handle );
 	$GLOBALS['uccm_test_localized'][ $object_name ] = $data;
 	return true;
+}
+
+function wp_create_nonce( string|int $action = -1 ): string {
+	return 'nonce-' . (string) $action;
 }
 
 function esc_attr( string $text ): string {
