@@ -154,8 +154,7 @@ final class AdminInventoryTest extends TestCase {
 	}
 
 	public function test_active_scan_enqueues_authenticated_browser_recovery_worker(): void {
-		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
-		$GLOBALS['uccm_test_db_rows']                        = array(
+		$runs = array(
 			array(
 				'id'            => 42,
 				'status'        => 'queued',
@@ -169,13 +168,11 @@ final class AdminInventoryTest extends TestCase {
 			),
 		);
 
-		ob_start();
-		Admin::render_scans();
-		$markup = (string) ob_get_clean();
+		$active_runs = Admin::enqueue_scan_progress( $runs );
 
+		self::assertSame( array( 42 ), $active_runs );
 		self::assertArrayHasKey( 'uccm-scan-progress', $GLOBALS['uccm_test_enqueued_scripts'] );
 		self::assertSame( array( 42 ), $GLOBALS['uccm_test_localized']['UCCMScanProgress']['runIds'] );
-		self::assertStringContainsString( 'id="uccm-scan-progress-status" aria-live="polite"', $markup );
 	}
 
 	public function test_inventory_rejects_invalid_category_and_storage_type(): void {

@@ -522,6 +522,44 @@ final class Admin {
 		wp_send_json_success( $progress );
 	}
 
+	/**
+	 * Enqueue the authenticated recovery worker for active scan runs.
+	 *
+	 * @param array<int, array<string, mixed>> $runs Recent scan records.
+	 * @return int[] Active run identifiers.
+	 */
+	public static function enqueue_scan_progress( array $runs ): array {
+		$active_runs = array();
+
+		foreach ( $runs as $candidate_run ) {
+			if ( in_array( (string) ( $candidate_run['status'] ?? '' ), array( 'queued', 'running' ), true ) ) {
+				$active_runs[] = max( 0, (int) ( $candidate_run['id'] ?? 0 ) );
+			}
+		}
+		$active_runs = array_values( array_filter( array_unique( $active_runs ) ) );
+
+		if ( array() === $active_runs ) {
+			return array();
+		}
+
+		wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array(), UCCM_VERSION, true );
+		wp_localize_script(
+			'uccm-scan-progress',
+			'UCCMScanProgress',
+			array(
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'uccm_scan_progress' ),
+				'runIds'   => $active_runs,
+				'messages' => array(
+					'working' => __( 'The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress.', 'uk-cookie-consent-manager' ),
+					'failed'  => __( 'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.', 'uk-cookie-consent-manager' ),
+				),
+			)
+		);
+
+		return $active_runs;
+	}
+
 
 	/**
 	 * Establish WordPress's native post-password cookie inside an isolated browser frame.
@@ -847,32 +885,9 @@ final class Admin {
 		$rejected_url = substr( sanitize_text_field( self::request_value( $_GET, 'uccm_rejected_url' ) ), 0, 200 );
 		$findings     = Scan_Findings::records( $scan_id, 100 );
 		$runner_run   = null;
-		$active_runs  = array();
 
 		if ( is_array( $runs ) ) {
-			foreach ( $runs as $candidate_run ) {
-				if ( in_array( (string) ( $candidate_run['status'] ?? '' ), array( 'queued', 'running' ), true ) ) {
-					$active_runs[] = max( 0, (int) ( $candidate_run['id'] ?? 0 ) );
-				}
-			}
-			$active_runs = array_values( array_filter( array_unique( $active_runs ) ) );
-		}
-
-		if ( array() !== $active_runs ) {
-			wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array(), UCCM_VERSION, true );
-			wp_localize_script(
-				'uccm-scan-progress',
-				'UCCMScanProgress',
-				array(
-					'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'uccm_scan_progress' ),
-					'runIds'   => $active_runs,
-					'messages' => array(
-						'working' => __( 'The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress.', 'uk-cookie-consent-manager' ),
-						'failed'  => __( 'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.', 'uk-cookie-consent-manager' ),
-					),
-				)
-			);
+			self::enqueue_scan_progress( $runs );
 		}
 
 		if ( is_array( $runs ) && 0 < $scan_id ) {
