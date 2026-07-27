@@ -258,7 +258,11 @@ final class Settings {
 			}
 		}
 
-		/** @var array<string, string|int> $style */
+		/**
+		 * Validated constrained style values.
+		 *
+		 * @var array<string, string|int> $style
+		 */
 		return $style;
 	}
 
@@ -283,6 +287,9 @@ final class Settings {
 
 	/**
 	 * Calculate the WCAG contrast ratio between two six-digit colours.
+	 *
+	 * @param string $first  First six-digit hexadecimal colour.
+	 * @param string $second Second six-digit hexadecimal colour.
 	 */
 	private static function contrast_ratio( string $first, string $second ): float {
 		$values = array();

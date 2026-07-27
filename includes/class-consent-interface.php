@@ -62,7 +62,7 @@ final class Consent_Interface {
 		$font_family   = 'theme' === (string) $settings['banner_font']
 			? 'inherit'
 			: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-		$style          = sprintf(
+		$style         = sprintf(
 			'--uccm-surface:%1$s;--uccm-ink:%2$s;--uccm-muted:%3$s;--uccm-accent:%4$s;--uccm-button-text:%5$s;--uccm-radius:%6$dpx;--uccm-font-family:%7$s',
 			(string) $settings['banner_surface_color'],
 			(string) $settings['banner_text_color'],

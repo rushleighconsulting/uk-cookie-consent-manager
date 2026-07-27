@@ -734,6 +734,16 @@ function checked( mixed $checked, mixed $current = true, bool $display = true ):
 	return $result;
 }
 
+function selected( mixed $selected, mixed $current = true, bool $display = true ): string {
+	$result = $selected == $current ? 'selected="selected"' : ''; // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual -- Mirrors WordPress selected().
+
+	if ( $display ) {
+		echo $result;
+	}
+
+	return $result;
+}
+
 function wp_nonce_field( string $action = '-1', string $name = '_wpnonce', bool $referer = true, bool $display = true ): string {
 	unset( $referer );
 	$field = '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $action ) . '">';
