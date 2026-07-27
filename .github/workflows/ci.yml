@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -10,6 +11,42 @@ permissions:
   contents: read
 
 jobs:
+  translations:
+    name: Translation template and JavaScript i18n
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP and WP-CLI
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+          tools: wp-cli
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate translation template for inspection
+        if: always()
+        run: bash scripts/generate-pot.sh "${RUNNER_TEMP}/uk-cookie-consent-manager.pot"
+
+      - name: Upload generated translation template
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uccm-generated-pot
+          path: ${{ runner.temp }}/uk-cookie-consent-manager.pot
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Verify committed translations
+        run: bash scripts/check-translations.sh
+
   source-quality:
     name: Source quality (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
@@ -118,6 +155,7 @@ jobs:
     name: Package checks
     runs-on: ubuntu-latest
     needs:
+      - translations
       - source-quality
       - unit-integration
       - browser-consent

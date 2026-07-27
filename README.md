@@ -271,6 +271,10 @@ database-aware rollback procedures are maintained in the
 
 ## Development
 
+Translation maintenance and locale-testing instructions are in
+[`docs/TRANSLATION.md`](docs/TRANSLATION.md). The committed POT template is
+generated deterministically and checked in CI.
+
 Install the development tools:
 
 ```sh

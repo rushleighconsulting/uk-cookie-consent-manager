@@ -18,11 +18,7 @@ test( 'authenticated scans screen completes queued work without refreshes or vis
 		window.UCCMScanProgress = {
 			ajaxUrl: 'https://example.test/wp-admin/admin-ajax.php',
 			nonce: 'progress-nonce',
-			runIds: [ 42 ],
-			messages: {
-				working: 'Working in the background.',
-				failed: 'Saved progress is safe.'
-			}
+			runIds: [ 42 ]
 		};
 	} );
 
@@ -73,14 +69,24 @@ test( 'authenticated scans screen completes queued work without refreshes or vis
 
 test( 'worker stops and shows a recoverable message when the request fails', async ( { page } ) => {
 	await page.addInitScript( () => {
+		window.wp = {
+			i18n: {
+				__( text, domain ) {
+					if (
+						'uk-cookie-consent-manager' === domain &&
+						'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.' === text
+					) {
+						return 'Saved progress is safe.';
+					}
+
+					return text;
+				}
+			}
+		};
 		window.UCCMScanProgress = {
 			ajaxUrl: 'https://example.test/wp-admin/admin-ajax.php',
 			nonce: 'progress-nonce',
-			runIds: [ 42 ],
-			messages: {
-				working: 'Working in the background.',
-				failed: 'Saved progress is safe.'
-			}
+			runIds: [ 42 ]
 		};
 	} );
 
