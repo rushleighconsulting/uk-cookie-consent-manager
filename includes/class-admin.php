@@ -130,13 +130,15 @@ final class Admin {
 		$section = self::request_value( $_POST, 'section' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified immediately below.
 		check_admin_referer( 'uccm_save_' . $section );
 		$submitted = isset( $_POST['uccm'] ) && is_array( $_POST['uccm'] ) ? wp_unslash( $_POST['uccm'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Field-level validation follows.
+		$inherit   = self::submitted_inheritance();
 
 		if ( 'banner' === $section ) {
 			Settings::update(
 				array(
 					'consent_lifetime_days'  => $submitted['consent_lifetime_days'] ?? 180,
 					'consent_policy_version' => $submitted['consent_policy_version'] ?? Consent_State::POLICY_VERSION,
-				)
+				),
+				$inherit
 			);
 		} elseif ( 'privacy' === $section ) {
 			$privacy_settings = array(
@@ -149,16 +151,19 @@ final class Admin {
 				$privacy_settings['trusted_proxy_ips'] = $submitted['trusted_proxy_ips'];
 			}
 
-			Settings::update( $privacy_settings );
+			Settings::update( $privacy_settings, $inherit );
 		} elseif ( 'advanced' === $section ) {
 			Settings::update(
 				array(
 					'error_email_enabled'             => $submitted['error_email_enabled'] ?? false,
 					'error_email_suppression_minutes' => $submitted['error_email_suppression_minutes'] ?? Settings::DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES,
-				)
+				),
+				$inherit
 			);
 
-			update_option( 'uccm_delete_data_on_uninstall', ! empty( $submitted['delete_data_on_uninstall'] ), false );
+			if ( ! Multisite::is_network_active() ) {
+				update_option( 'uccm_delete_data_on_uninstall', ! empty( $submitted['delete_data_on_uninstall'] ), false );
+			}
 		} else {
 			wp_die( esc_html__( 'The settings section is invalid.', 'uk-cookie-consent-manager' ), '', array( 'response' => 400 ) );
 		}
@@ -429,7 +434,8 @@ final class Admin {
 				'scan_page_limit'                => $submitted['scan_page_limit'] ?? Scanner::MAX_TARGETS,
 				'scan_batch_size'                => $submitted['scan_batch_size'] ?? Scanner::DEFAULT_BATCH_SIZE,
 				'scan_protected_content_enabled' => $submitted['scan_protected_content_enabled'] ?? false,
-			)
+			),
+			self::submitted_inheritance()
 		);
 
 		self::redirect( 'uccm-scans', 'saved' );
@@ -625,7 +631,8 @@ final class Admin {
 		self::saved_notice();
 		self::form_open( 'uccm_save_settings', 'uccm_save_banner' );
 		echo '<input type="hidden" name="section" value="banner">';
-		self::number_field( 'consent_lifetime_days', __( 'Consent lifetime (days)', 'uk-cookie-consent-manager' ), (int) $settings['consent_lifetime_days'], 1, 730 );
+		self::number_field( 'consent_lifetime_days', __( 'Consent lifetime (days)', 'uk-cookie-consent-manager' ), (int) $settings['consent_lifetime_days'], 1, 730, Settings::is_network_locked( 'consent_lifetime_days' ) );
+		self::network_setting_control( 'consent_lifetime_days' );
 		self::text_field( 'consent_policy_version', __( 'Consent policy version', 'uk-cookie-consent-manager' ), (string) $settings['consent_policy_version'] );
 		submit_button( __( 'Save banner settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
@@ -883,8 +890,10 @@ final class Admin {
 		$textarea_attributes = 'scan-url-error' === $notice ? ' aria-invalid="true" aria-describedby="uccm-scan-url-error"' : '';
 		echo '<textarea id="uccm-scan-urls" class="large-text code" rows="7" name="uccm[scan_urls]"' . $textarea_attributes . '>' . esc_textarea( $urls ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attribute fragment is a fixed allowlisted string.
 		echo '<h3>' . esc_html__( 'Scan limits', 'uk-cookie-consent-manager' ) . '</h3>';
-		self::number_field( 'scan_page_limit', __( 'Maximum pages per scan', 'uk-cookie-consent-manager' ), $page_limit, 1, Scanner::MAX_TARGETS );
-		self::number_field( 'scan_batch_size', __( 'Pages checked at a time', 'uk-cookie-consent-manager' ), $batch_size, 1, 25 );
+		self::number_field( 'scan_page_limit', __( 'Maximum pages per scan', 'uk-cookie-consent-manager' ), $page_limit, 1, Scanner::MAX_TARGETS, Settings::is_network_locked( 'scan_page_limit' ) );
+		self::network_setting_control( 'scan_page_limit' );
+		self::number_field( 'scan_batch_size', __( 'Pages checked at a time', 'uk-cookie-consent-manager' ), $batch_size, 1, 25, Settings::is_network_locked( 'scan_batch_size' ) );
+		self::network_setting_control( 'scan_batch_size' );
 		echo '<p><label for="uccm-scan-excluded-paths"><strong>' . esc_html__( 'Excluded path patterns', 'uk-cookie-consent-manager' ) . '</strong></label><br>';
 		echo '<textarea id="uccm-scan-excluded-paths" class="large-text code" rows="5" name="uccm[scan_excluded_paths]">' . esc_textarea( $excluded_paths ) . '</textarea><br>';
 		echo '<span class="description">' . esc_html__( 'One path pattern per line. Use * as a wildcard. WordPress administration, login, REST and feed paths are always excluded.', 'uk-cookie-consent-manager' ) . '</span></p>';
@@ -1091,7 +1100,8 @@ final class Admin {
 		self::saved_notice();
 		self::form_open( 'uccm_save_settings', 'uccm_save_privacy' );
 		echo '<input type="hidden" name="section" value="privacy">';
-		self::number_field( 'retention_days', __( 'Consent retention (days)', 'uk-cookie-consent-manager' ), (int) $settings['retention_days'], 1, 3650 );
+		self::number_field( 'retention_days', __( 'Consent retention (days)', 'uk-cookie-consent-manager' ), (int) $settings['retention_days'], 1, 3650, Settings::is_network_locked( 'retention_days' ) );
+		self::network_setting_control( 'retention_days' );
 		self::checkbox_field( 'store_full_ip', __( 'Store encrypted complete IP addresses', 'uk-cookie-consent-manager' ), ! empty( $settings['store_full_ip'] ), __( 'This increases privacy risk and is not required for normal consent evidence.', 'uk-cookie-consent-manager' ) );
 		echo '<p><label><input id="uccm-trust-proxy-headers" data-uccm-trust-proxy-headers type="checkbox" name="uccm[trust_proxy_headers]" value="1" aria-controls="uccm-trusted-proxies-settings" aria-expanded="' . esc_attr( $trust_proxy_headers ? 'true' : 'false' ) . '" ' . checked( $trust_proxy_headers, true, false ) . '> <strong>' . esc_html__( 'Trust forwarded IP headers', 'uk-cookie-consent-manager' ) . '</strong></label><br><span class="description">' . esc_html__( 'Enable only when every trusted reverse proxy is listed below.', 'uk-cookie-consent-manager' ) . '</span></p>';
 		$proxies = is_array( $settings['trusted_proxy_ips'] ) ? implode( "\n", $settings['trusted_proxy_ips'] ) : '';
@@ -1177,10 +1187,22 @@ final class Admin {
 		self::form_open( 'uccm_save_settings', 'uccm_save_advanced' );
 		echo '<input type="hidden" name="section" value="advanced">';
 		echo '<hr><h2>' . esc_html__( 'Operational error notifications', 'uk-cookie-consent-manager' ) . '</h2>';
-		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials.', 'uk-cookie-consent-manager' ) );
-		echo '<p><label for="uccm-error-email-suppression"><strong>' . esc_html__( 'Repeat email suppression (minutes)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-error-email-suppression" class="small-text" type="number" min="1" max="' . esc_attr( (string) Settings::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES ) . '" step="1" name="uccm[error_email_suppression_minutes]" value="' . esc_attr( (string) $settings['error_email_suppression_minutes'] ) . '"><br><small>' . esc_html__( 'Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours).', 'uk-cookie-consent-manager' ) . '</small></p>';
+		self::checkbox_field( 'error_email_enabled', __( 'Email operational error notifications to the site administrator', 'uk-cookie-consent-manager' ), ! empty( $settings['error_email_enabled'] ), __( 'Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials.', 'uk-cookie-consent-manager' ), Settings::is_network_locked( 'error_email_enabled' ) );
+		self::network_setting_control( 'error_email_enabled' );
+		$email_suppression_locked = Settings::is_network_locked( 'error_email_suppression_minutes' );
+		echo '<p><label for="uccm-error-email-suppression"><strong>' . esc_html__( 'Repeat email suppression (minutes)', 'uk-cookie-consent-manager' ) . '</strong></label><br><input id="uccm-error-email-suppression" class="small-text" type="number" min="1" max="' . esc_attr( (string) Settings::MAX_ERROR_EMAIL_SUPPRESSION_MINUTES ) . '" step="1" name="uccm[error_email_suppression_minutes]" value="' . esc_attr( (string) $settings['error_email_suppression_minutes'] ) . '"' . ( $email_suppression_locked ? ' disabled aria-disabled="true"' : '' ) . '><br><small>' . esc_html__( 'Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours).', 'uk-cookie-consent-manager' ) . '</small></p>';
+		self::network_setting_control( 'error_email_suppression_minutes' );
 		echo '<hr>';
-		self::checkbox_field( 'delete_data_on_uninstall', __( 'Delete all UCCM data when the plugin is uninstalled', 'uk-cookie-consent-manager' ), true === get_option( 'uccm_delete_data_on_uninstall', false ), __( 'Leave disabled to retain settings and evidence by default.', 'uk-cookie-consent-manager' ) );
+		$network_active = Multisite::is_network_active();
+		self::checkbox_field(
+			'delete_data_on_uninstall',
+			__( 'Delete all UCCM data when the plugin is uninstalled', 'uk-cookie-consent-manager' ),
+			! $network_active && true === get_option( 'uccm_delete_data_on_uninstall', false ),
+			$network_active
+				? __( 'Network-wide deletion can be approved only by a Network Administrator from Network Admin.', 'uk-cookie-consent-manager' )
+				: __( 'Leave disabled to retain settings and evidence by default.', 'uk-cookie-consent-manager' ),
+			$network_active
+		);
 		submit_button( __( 'Save advanced settings', 'uk-cookie-consent-manager' ) );
 		self::form_close();
 		self::close_page();
@@ -1382,6 +1404,18 @@ final class Admin {
 	}
 
 	/**
+	 * Return allowlisted network settings selected for inheritance.
+	 *
+	 * @return string[]
+	 */
+	private static function submitted_inheritance(): array {
+		$submitted = isset( $_POST['uccm_inherit'] ) && is_array( $_POST['uccm_inherit'] ) ? wp_unslash( $_POST['uccm_inherit'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Each caller verifies its form nonce before use.
+		$submitted = array_map( 'sanitize_key', array_map( 'strval', array_filter( $submitted, 'is_scalar' ) ) );
+
+		return array_values( array_intersect( $submitted, Multisite::manageable_settings() ) );
+	}
+
+	/**
 	 * Enforce a dedicated capability before rendering or mutating.
 	 *
 	 * @param string $capability Required capability.
@@ -1460,16 +1494,35 @@ final class Admin {
 	}
 
 	/**
+	 * Render network inheritance or lock information for one site setting.
+	 *
+	 * @param string $name Setting name.
+	 */
+	private static function network_setting_control( string $name ): void {
+		if ( ! Multisite::is_network_active() || ! in_array( $name, Multisite::manageable_settings(), true ) ) {
+			return;
+		}
+
+		if ( Settings::is_network_locked( $name ) ) {
+			echo '<p class="description">' . esc_html__( 'This value is locked by the Network Administrator.', 'uk-cookie-consent-manager' ) . '</p>';
+			return;
+		}
+
+		echo '<p class="description"><label><input type="checkbox" name="uccm_inherit[]" value="' . esc_attr( $name ) . '" ' . checked( Settings::is_network_inherited( $name ), true, false ) . '> ' . esc_html__( 'Use the network default for this site', 'uk-cookie-consent-manager' ) . '</label></p>';
+	}
+
+	/**
 	 * Render a number field.
 	 *
 	 * @param string $name  Field name.
 	 * @param string $label Visible label.
 	 * @param int    $value Current value.
 	 * @param int    $min   Minimum value.
-	 * @param int    $max   Maximum value.
+	 * @param int    $max      Maximum value.
+	 * @param bool   $disabled Whether the network has locked the value.
 	 */
-	private static function number_field( string $name, string $label, int $value, int $min, int $max ): void {
-		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input type="number" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( (string) $value ) . '" min="' . esc_attr( (string) $min ) . '" max="' . esc_attr( (string) $max ) . '"></label></p>';
+	private static function number_field( string $name, string $label, int $value, int $min, int $max, bool $disabled = false ): void {
+		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br><input type="number" name="uccm[' . esc_attr( $name ) . ']" value="' . esc_attr( (string) $value ) . '" min="' . esc_attr( (string) $min ) . '" max="' . esc_attr( (string) $max ) . '"' . ( $disabled ? ' disabled aria-disabled="true"' : '' ) . '></label></p>';
 	}
 
 	/**
@@ -1490,9 +1543,10 @@ final class Admin {
 	 * @param string $label       Visible label.
 	 * @param bool   $checked     Whether the checkbox is selected.
 	 * @param string $description Explanatory text.
+	 * @param bool   $disabled    Whether the network has locked the value.
 	 */
-	private static function checkbox_field( string $name, string $label, bool $checked, string $description ): void {
-		echo '<p><label><input type="checkbox" name="uccm[' . esc_attr( $name ) . ']" value="1" ' . checked( $checked, true, false ) . '> <strong>' . esc_html( $label ) . '</strong></label><br><span class="description">' . esc_html( $description ) . '</span></p>';
+	private static function checkbox_field( string $name, string $label, bool $checked, string $description, bool $disabled = false ): void {
+		echo '<p><label><input type="checkbox" name="uccm[' . esc_attr( $name ) . ']" value="1" ' . checked( $checked, true, false ) . ( $disabled ? ' disabled aria-disabled="true"' : '' ) . '> <strong>' . esc_html( $label ) . '</strong></label><br><span class="description">' . esc_html( $description ) . '</span></p>';
 	}
 
 	/**

@@ -23,6 +23,8 @@ final class FoundationTest extends TestCase {
 		$GLOBALS['uccm_test_cleared_hooks'] = array();
 		$GLOBALS['uccm_test_role']          = new UCCM_Test_Role();
 		$GLOBALS['uccm_test_scheduled_hooks'] = array();
+		$GLOBALS['uccm_test_is_multisite']    = false;
+		$GLOBALS['uccm_test_site_options']    = array();
 	}
 
 	public function test_release_version_metadata_agrees(): void {

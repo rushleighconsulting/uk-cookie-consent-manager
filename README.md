@@ -26,8 +26,29 @@ UCCM-2 establishes:
 - Dedicated settings, inventory, scanning and consent-record capabilities.
 - Privacy-preserving defaults: full IP storage is disabled and consent-record
   retention defaults to 365 days.
-- Multisite activation, deactivation and new-site initialization.
+- Resumable Multisite network activation and upgrades, new-site initialization,
+  per-site data isolation, Network Administrator diagnostics and controlled
+  operational defaults.
 - Retain-by-default uninstall behaviour with explicit full cleanup.
+
+### WordPress Multisite
+
+UCCM supports individual-site activation and Network Activation. Each site owns
+its own prefixed tables, settings, capabilities, schedules, inventories, scans,
+findings and consent evidence. Network installation and version upgrades run in
+resumable batches of at most 25 sites and initialize sites created after Network
+Activation.
+
+Network Administrators receive **Cookie Consent → Cookie Consent Network** in
+Network Admin. The screen reports rollout progress and shared update status and
+allows a deliberately limited set of operational defaults. Precedence is:
+plugin default, enabled network default, explicit site override, then an
+explicit network lock. Consent policy versions, scan URLs, post passwords,
+complete-IP collection and proxy trust are always site-specific.
+
+Network-wide data deletion is disabled by default and requires the separate
+Network Administrator setting. A single site's uninstall preference can never
+authorize deletion across the network.
 
 UCCM-3 adds:
 

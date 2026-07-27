@@ -65,8 +65,7 @@ final class Consent_State {
 	 * @return array<string, mixed>
 	 */
 	public static function configuration(): array {
-		$settings = get_option( 'uccm_settings', array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Settings::current();
 
 		$lifetime_days = isset( $settings['consent_lifetime_days'] )
 			? (int) $settings['consent_lifetime_days']

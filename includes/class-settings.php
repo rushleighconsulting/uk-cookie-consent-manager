@@ -20,6 +20,11 @@ final class Settings {
 	public const OPTION_NAME = 'uccm_settings';
 
 	/**
+	 * Per-site option listing settings which override a network default.
+	 */
+	public const OVERRIDES_OPTION = 'uccm_network_overrides';
+
+	/**
 	 * Default repeat-email suppression period in minutes.
 	 */
 	public const DEFAULT_ERROR_EMAIL_SUPPRESSION_MINUTES = 360;
@@ -53,6 +58,25 @@ final class Settings {
 	}
 
 	/**
+	 * Return settings stored for a newly installed site.
+	 *
+	 * Network-managed sites omit inheritable operational settings so that the
+	 * network default can take effect without replacing site-specific choices.
+	 *
+	 * @param bool $network_managed Whether the site belongs to a network activation.
+	 * @return array<string, mixed>
+	 */
+	public static function installation_defaults( bool $network_managed ): array {
+		$defaults = self::defaults();
+
+		if ( ! $network_managed ) {
+			return $defaults;
+		}
+
+		return array_diff_key( $defaults, array_fill_keys( Multisite::manageable_settings(), true ) );
+	}
+
+	/**
 	 * Return current settings merged over safe defaults.
 	 *
 	 * @return array<string, mixed>
@@ -60,7 +84,27 @@ final class Settings {
 	public static function current(): array {
 		$stored = get_option( self::OPTION_NAME, array() );
 		$stored = is_array( $stored ) ? $stored : array();
-		return array_merge( self::defaults(), $stored );
+
+		if ( ! Multisite::is_network_active() ) {
+			return array_merge( self::defaults(), $stored );
+		}
+
+		$configuration = Multisite::configuration();
+		$manageable    = Multisite::manageable_settings();
+		$overrides     = self::site_overrides( $stored );
+		$effective     = array_merge( self::defaults(), $configuration['defaults'] );
+
+		foreach ( $stored as $name => $value ) {
+			if ( ! in_array( $name, $manageable, true ) || in_array( $name, $overrides, true ) ) {
+				$effective[ $name ] = $value;
+			}
+		}
+
+		foreach ( $configuration['locked'] as $name ) {
+			$effective[ $name ] = $configuration['defaults'][ $name ];
+		}
+
+		return $effective;
 	}
 
 	/**
@@ -122,13 +166,89 @@ final class Settings {
 	/**
 	 * Persist a validated partial settings update.
 	 *
-	 * @param array<string, mixed> $input Untrusted partial settings.
+	 * @param array<string, mixed> $input   Untrusted partial settings.
+	 * @param string[]             $inherit Network-manageable settings to inherit.
 	 * @return array<string, mixed>
 	 */
-	public static function update( array $input ): array {
-		$settings = self::sanitize( $input );
-		update_option( self::OPTION_NAME, $settings, false );
-		return $settings;
+	public static function update( array $input, array $inherit = array() ): array {
+		if ( ! Multisite::is_network_active() ) {
+			$settings = self::sanitize( $input );
+			update_option( self::OPTION_NAME, $settings, false );
+			return $settings;
+		}
+
+		$stored        = get_option( self::OPTION_NAME, array() );
+		$stored        = is_array( $stored ) ? $stored : array();
+		$configuration = Multisite::configuration();
+		$manageable    = Multisite::manageable_settings();
+		$overrides     = self::site_overrides( $stored );
+		$inherit       = array_values( array_intersect( array_map( 'strval', array_filter( $inherit, 'is_scalar' ) ), $manageable ) );
+
+		foreach ( $configuration['locked'] as $locked ) {
+			unset( $input[ $locked ] );
+		}
+
+		$sanitized = self::sanitize( $input, self::current() );
+
+		foreach ( $inherit as $name ) {
+			unset( $stored[ $name ] );
+			$overrides = array_values( array_diff( $overrides, array( $name ) ) );
+		}
+
+		foreach ( array_keys( $input ) as $name ) {
+			if ( ! array_key_exists( $name, $sanitized ) || in_array( $name, $inherit, true ) ) {
+				continue;
+			}
+
+			$stored[ $name ] = $sanitized[ $name ];
+
+			if ( in_array( $name, $manageable, true ) && ! in_array( $name, $overrides, true ) ) {
+				$overrides[] = $name;
+			}
+		}
+
+		update_option( self::OPTION_NAME, $stored, false );
+		update_option( self::OVERRIDES_OPTION, array_values( array_intersect( $overrides, $manageable ) ), false );
+
+		return self::current();
+	}
+
+	/**
+	 * Return per-site overrides, preserving legacy site values on first upgrade.
+	 *
+	 * @param array<string, mixed>|null $stored_settings Optional raw site settings.
+	 * @return string[]
+	 */
+	public static function site_overrides( ?array $stored_settings = null ): array {
+		$stored_settings = null === $stored_settings ? get_option( self::OPTION_NAME, array() ) : $stored_settings;
+		$stored_settings = is_array( $stored_settings ) ? $stored_settings : array();
+		$stored          = get_option( self::OVERRIDES_OPTION, null );
+
+		if ( ! is_array( $stored ) ) {
+			return array_values( array_intersect( array_keys( $stored_settings ), Multisite::manageable_settings() ) );
+		}
+
+		return array_values( array_intersect( array_map( 'strval', array_filter( $stored, 'is_scalar' ) ), Multisite::manageable_settings() ) );
+	}
+
+	/**
+	 * Return whether a network administrator has locked one setting.
+	 *
+	 * @param string $name Setting name.
+	 */
+	public static function is_network_locked( string $name ): bool {
+		return Multisite::is_network_active() && in_array( $name, Multisite::configuration()['locked'], true );
+	}
+
+	/**
+	 * Return whether a site inherits a network-manageable setting.
+	 *
+	 * @param string $name Setting name.
+	 */
+	public static function is_network_inherited( string $name ): bool {
+		return Multisite::is_network_active()
+			&& in_array( $name, Multisite::manageable_settings(), true )
+			&& ! in_array( $name, self::site_overrides(), true );
 	}
 
 	/**

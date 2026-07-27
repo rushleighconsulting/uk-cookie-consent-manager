@@ -51,13 +51,10 @@ final class Plugin {
 		Consent_Interface::register();
 		Secure_Updater::register();
 		Privacy::register();
+		Multisite::register();
 
 		if ( is_admin() ) {
 			Admin::register();
-		}
-
-		if ( is_multisite() ) {
-			add_action( 'wp_initialize_site', array( Activator::class, 'initialize_site' ), 100 );
 		}
 
 		/**

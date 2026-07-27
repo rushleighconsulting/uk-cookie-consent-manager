@@ -18,7 +18,9 @@ staging acceptance. It is not approved for production use.
 Release 1 provides an accessible consent banner, granular preferences, prior
 blocking for configured non-essential technologies, cookie inventory and
 scanning, privacy-preserving consent records, WordPress privacy-tool integration
-and signed updates through WordPress's normal plugin-update interface.
+and signed updates through WordPress's normal plugin-update interface. Multisite
+supports Network Activation, per-site data isolation, resumable network
+installation and controlled operational defaults.
 
 This plugin supports a site's compliance work. It does not provide legal advice
 or guarantee compliance.
