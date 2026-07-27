@@ -43,6 +43,15 @@ final class Settings {
 		return array(
 			'consent_lifetime_days'           => 180,
 			'consent_policy_version'          => Consent_State::POLICY_VERSION,
+			'banner_surface_color'            => '#ffffff',
+			'banner_text_color'               => '#172033',
+			'banner_muted_color'              => '#536079',
+			'banner_button_color'             => '#174ea6',
+			'banner_button_text_color'        => '#ffffff',
+			'banner_font'                     => 'system',
+			'banner_corner_radius'            => 12,
+			'banner_position'                 => 'bottom',
+			'icon_position'                   => 'right',
 			'retention_days'                  => 365,
 			'store_full_ip'                   => false,
 			'trust_proxy_headers'             => false,
@@ -126,6 +135,16 @@ final class Settings {
 			$settings['consent_policy_version'] = '' === $version ? Consent_State::POLICY_VERSION : substr( $version, 0, 40 );
 		}
 
+		$style_input = array_intersect_key( $input, array_fill_keys( self::banner_style_keys(), true ) );
+
+		if ( array() !== $style_input ) {
+			$validated_style = self::validate_banner_style( $style_input, $settings );
+
+			if ( ! is_wp_error( $validated_style ) ) {
+				$settings = array_merge( $settings, $validated_style );
+			}
+		}
+
 		if ( array_key_exists( 'retention_days', $input ) ) {
 			$settings['retention_days'] = max( 1, min( 3650, (int) $input['retention_days'] ) );
 		}
@@ -161,6 +180,136 @@ final class Settings {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * Return the constrained banner-style defaults.
+	 *
+	 * @return array<string, string|int>
+	 */
+	public static function banner_style_defaults(): array {
+		return array_intersect_key( self::defaults(), array_fill_keys( self::banner_style_keys(), true ) );
+	}
+
+	/**
+	 * Validate a partial banner-style update and its resulting colour contrast.
+	 *
+	 * @param array<string, mixed>      $input   Untrusted style values.
+	 * @param array<string, mixed>|null $current Existing effective settings.
+	 * @return array<string, string|int>|\WP_Error
+	 */
+	public static function validate_banner_style( array $input, ?array $current = null ): array|\WP_Error {
+		$base   = null === $current ? self::current() : array_merge( self::defaults(), $current );
+		$style  = array_intersect_key( $base, array_fill_keys( self::banner_style_keys(), true ) );
+		$colors = array(
+			'banner_surface_color',
+			'banner_text_color',
+			'banner_muted_color',
+			'banner_button_color',
+			'banner_button_text_color',
+		);
+
+		foreach ( $colors as $name ) {
+			if ( ! array_key_exists( $name, $input ) ) {
+				continue;
+			}
+
+			$value = strtolower( trim( (string) $input[ $name ] ) );
+
+			if ( 1 !== preg_match( '/^#[0-9a-f]{6}$/', $value ) ) {
+				return new \WP_Error(
+					'uccm_invalid_banner_colour',
+					__( 'Choose colours in the six-digit format shown, for example #174ea6.', 'uk-cookie-consent-manager' )
+				);
+			}
+
+			$style[ $name ] = $value;
+		}
+
+		if ( array_key_exists( 'banner_font', $input ) ) {
+			$font                 = sanitize_key( (string) $input['banner_font'] );
+			$style['banner_font'] = in_array( $font, array( 'system', 'theme' ), true ) ? $font : 'system';
+		}
+
+		if ( array_key_exists( 'banner_corner_radius', $input ) ) {
+			$style['banner_corner_radius'] = max( 0, min( 24, (int) $input['banner_corner_radius'] ) );
+		}
+
+		if ( array_key_exists( 'banner_position', $input ) ) {
+			$position                 = sanitize_key( (string) $input['banner_position'] );
+			$style['banner_position'] = in_array( $position, array( 'top', 'bottom' ), true ) ? $position : 'bottom';
+		}
+
+		if ( array_key_exists( 'icon_position', $input ) ) {
+			$position               = sanitize_key( (string) $input['icon_position'] );
+			$style['icon_position'] = in_array( $position, array( 'left', 'right' ), true ) ? $position : 'right';
+		}
+
+		$checks = array(
+			array( 'banner_text_color', 'banner_surface_color', 4.5, __( 'Banner text must have at least 4.5:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
+			array( 'banner_muted_color', 'banner_surface_color', 4.5, __( 'Banner supporting text must have at least 4.5:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
+			array( 'banner_button_text_color', 'banner_button_color', 4.5, __( 'Button text must have at least 4.5:1 contrast against the button colour.', 'uk-cookie-consent-manager' ) ),
+			array( 'banner_button_color', 'banner_surface_color', 3.0, __( 'Buttons must have at least 3:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
+		);
+
+		foreach ( $checks as $check ) {
+			if ( self::contrast_ratio( (string) $style[ $check[0] ], (string) $style[ $check[1] ] ) < (float) $check[2] ) {
+				return new \WP_Error( 'uccm_inaccessible_banner_colours', (string) $check[3] );
+			}
+		}
+
+		/**
+		 * Validated constrained style values.
+		 *
+		 * @var array<string, string|int> $style
+		 */
+		return $style;
+	}
+
+	/**
+	 * Return the names of supported banner-style settings.
+	 *
+	 * @return string[]
+	 */
+	private static function banner_style_keys(): array {
+		return array(
+			'banner_surface_color',
+			'banner_text_color',
+			'banner_muted_color',
+			'banner_button_color',
+			'banner_button_text_color',
+			'banner_font',
+			'banner_corner_radius',
+			'banner_position',
+			'icon_position',
+		);
+	}
+
+	/**
+	 * Calculate the WCAG contrast ratio between two six-digit colours.
+	 *
+	 * @param string $first  First six-digit hexadecimal colour.
+	 * @param string $second Second six-digit hexadecimal colour.
+	 */
+	private static function contrast_ratio( string $first, string $second ): float {
+		$values = array();
+
+		foreach ( array( $first, $second ) as $colour ) {
+			$channels = array(
+				hexdec( substr( $colour, 1, 2 ) ) / 255,
+				hexdec( substr( $colour, 3, 2 ) ) / 255,
+				hexdec( substr( $colour, 5, 2 ) ) / 255,
+			);
+			$channels = array_map(
+				static fn ( float $channel ): float => $channel <= 0.04045
+					? $channel / 12.92
+					: ( ( $channel + 0.055 ) / 1.055 ) ** 2.4,
+				$channels
+			);
+			$values[] = ( 0.2126 * $channels[0] ) + ( 0.7152 * $channels[1] ) + ( 0.0722 * $channels[2] );
+		}
+
+		return ( max( $values ) + 0.05 ) / ( min( $values ) + 0.05 );
 	}
 
 	/**

@@ -16,11 +16,11 @@ const fixture = `
 	<link rel="stylesheet" href="/assets/css/consent.css">
 </head>
 <body>
-<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
-	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
+<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown" data-uccm-banner-position="bottom" data-uccm-icon-position="right">
+	<section id="uccm-banner" class="uccm-banner" role="region" aria-live="polite" aria-atomic="true" aria-labelledby="uccm-banner-title" aria-describedby="uccm-banner-copy" hidden>
 		<div class="uccm-banner__content">
 			<h2 id="uccm-banner-title" class="uccm-title">Your cookie choices</h2>
-			<p class="uccm-copy">We use one necessary cookie to remember your choice for 180 days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.</p>
+			<p id="uccm-banner-copy" class="uccm-copy">We use one necessary cookie to remember your choice for 180 days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.</p>
 		</div>
 		<div class="uccm-actions uccm-actions--primary">
 			<button type="button" class="uccm-button" data-uccm-action="accept-all">Accept all</button>
@@ -34,14 +34,14 @@ const fixture = `
 			<path d="M8.5 8.5h.01M16 15.5h.01M10.5 16.5h.01"></path>
 		</svg>
 	</button>
-	<dialog id="uccm-preferences" class="uccm-dialog" aria-labelledby="uccm-preferences-title">
+	<dialog id="uccm-preferences" class="uccm-dialog" aria-modal="true" aria-labelledby="uccm-preferences-title" aria-describedby="uccm-preferences-intro uccm-preferences-cookie">
 		<div class="uccm-dialog__inner">
 			<div class="uccm-dialog__header">
 				<h2 id="uccm-preferences-title" tabindex="-1">Cookie preferences</h2>
 				<button type="button" data-uccm-action="close" aria-label="Close cookie preferences">Close</button>
 			</div>
-			<p>Choose which optional cookie categories this website may use. Necessary cookies are always active.</p>
-			<p>We set one necessary cookie. This cookie remembers your cookie choices for 180 days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.</p>
+			<p id="uccm-preferences-intro">Choose which optional cookie categories this website may use. Necessary cookies are always active.</p>
+			<p id="uccm-preferences-cookie">We set one necessary cookie. This cookie remembers your cookie choices for 180 days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.</p>
 			<label>Necessary <input type="checkbox" name="necessary" checked disabled aria-disabled="true"></label>
 			<label>Functional <input type="checkbox" name="functional"></label>
 			<label>Analytics <input type="checkbox" name="analytics"></label>
@@ -84,6 +84,7 @@ async function boot( page, options = {} ) {
 			pluginVersion: '0.1.0',
 			receiptEndpoint: 'https://example.test/wp-json/uccm/v1/consents',
 			messages: {
+				available: 'Cookie choices are available.',
 				saved: 'Your cookie choices have been saved.',
 				withdrawn: 'Optional cookie consent has been withdrawn.',
 			},
@@ -382,4 +383,104 @@ test( 'keyboard preferences support granular consent and withdrawal', async ( { 
 	expect( receipts[1].categories.functional ).toBe( false );
 	await expect( page.locator( '[data-uccm-rule="functional-frame"]' ) ).not.toHaveAttribute( 'src' );
 	await expect( page.locator( '[data-uccm-status]' ) ).toHaveText( 'Optional cookie consent has been withdrawn.' );
+} );
+
+test( 'dialog traps keyboard focus, closes with Escape and returns focus to its invoker', async ( { page } ) => {
+	await boot( page );
+	const manage = page.getByRole( 'button', { name: 'Manage preferences' } );
+
+	await manage.focus();
+	await manage.click();
+	await expect( page.locator( '#uccm-preferences-title' ) ).toBeFocused();
+
+	for ( let index = 0; index < 10; index++ ) {
+		await page.keyboard.press( 'Tab' );
+		const focusInsideDialog = await page.evaluate( () => (
+			document.querySelector( '#uccm-preferences' ).contains( document.activeElement )
+		) );
+		expect( focusInsideDialog ).toBe( true );
+	}
+
+	await page.keyboard.press( 'Escape' );
+	await expect( page.locator( '#uccm-preferences' ) ).toBeHidden();
+	await expect( manage ).toBeFocused();
+} );
+
+test( 'default and representative custom themes retain WCAG-focused contrast and equal choices', async ( { page } ) => {
+	await boot( page );
+
+	const results = await page.evaluate( () => {
+		function luminance( colour ) {
+			const channels = colour.match( /\d+(?:\.\d+)?/g ).slice( 0, 3 ).map( ( value ) => Number( value ) / 255 );
+			const linear = channels.map( ( value ) => value <= 0.04045 ? value / 12.92 : ( ( value + 0.055 ) / 1.055 ) ** 2.4 );
+			return ( 0.2126 * linear[0] ) + ( 0.7152 * linear[1] ) + ( 0.0722 * linear[2] );
+		}
+
+		function contrast( first, second ) {
+			const values = [ luminance( first ), luminance( second ) ];
+			return ( Math.max( ...values ) + 0.05 ) / ( Math.min( ...values ) + 0.05 );
+		}
+
+		function inspect() {
+			const banner = getComputedStyle( document.querySelector( '#uccm-banner' ) );
+			const title = getComputedStyle( document.querySelector( '#uccm-banner-title' ) );
+			const copy = getComputedStyle( document.querySelector( '#uccm-banner-copy' ) );
+			const buttons = Array.from( document.querySelectorAll( '.uccm-actions--primary .uccm-button' ) );
+			const buttonStyles = buttons.map( ( button ) => getComputedStyle( button ) );
+
+			return {
+				title: contrast( title.color, banner.backgroundColor ),
+				copy: contrast( copy.color, banner.backgroundColor ),
+				buttonText: contrast( buttonStyles[0].color, buttonStyles[0].backgroundColor ),
+				buttonBoundary: contrast( buttonStyles[0].backgroundColor, banner.backgroundColor ),
+				buttonBackgrounds: new Set( buttonStyles.map( ( style ) => style.backgroundColor ) ).size,
+				buttonTextColours: new Set( buttonStyles.map( ( style ) => style.color ) ).size,
+			};
+		}
+
+		const defaultTheme = inspect();
+		const root = document.querySelector( '#uccm-consent-root' );
+		root.style.setProperty( '--uccm-surface', '#fffef8' );
+		root.style.setProperty( '--uccm-ink', '#1f2937' );
+		root.style.setProperty( '--uccm-muted', '#4b5563' );
+		root.style.setProperty( '--uccm-accent', '#6b214f' );
+		root.style.setProperty( '--uccm-button-text', '#ffffff' );
+
+		return { defaultTheme, customTheme: inspect() };
+	} );
+
+	for ( const theme of [ results.defaultTheme, results.customTheme ] ) {
+		expect( theme.title ).toBeGreaterThanOrEqual( 4.5 );
+		expect( theme.copy ).toBeGreaterThanOrEqual( 4.5 );
+		expect( theme.buttonText ).toBeGreaterThanOrEqual( 4.5 );
+		expect( theme.buttonBoundary ).toBeGreaterThanOrEqual( 3 );
+		expect( theme.buttonBackgrounds ).toBe( 1 );
+		expect( theme.buttonTextColours ).toBe( 1 );
+	}
+} );
+
+test( 'top placement, left icon, reduced motion and forced colours remain available', async ( { page, browserName } ) => {
+	await page.emulateMedia( {
+		reducedMotion: 'reduce',
+		forcedColors: 'chromium' === browserName ? 'active' : 'none',
+	} );
+	await boot( page );
+
+	await page.locator( '#uccm-consent-root' ).evaluate( ( root ) => {
+		root.dataset.uccmBannerPosition = 'top';
+		root.dataset.uccmIconPosition = 'left';
+	} );
+
+	const bannerBox = await page.locator( '#uccm-banner' ).boundingBox();
+	expect( bannerBox ).not.toBeNull();
+	expect( bannerBox.y ).toBeLessThan( 40 );
+	expect( await page.evaluate( () => matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) ).toBe( true );
+	if ( 'chromium' === browserName ) {
+		expect( await page.evaluate( () => matchMedia( '(forced-colors: active)' ).matches ) ).toBe( true );
+	}
+
+	await page.getByRole( 'button', { name: 'Reject non-essential' } ).click();
+	const iconBox = await page.getByRole( 'button', { name: 'Cookie settings' } ).boundingBox();
+	expect( iconBox ).not.toBeNull();
+	expect( iconBox.x ).toBeLessThan( 40 );
 } );

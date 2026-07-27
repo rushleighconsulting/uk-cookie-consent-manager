@@ -57,7 +57,21 @@ final class Consent_Interface {
 		}
 
 		$configuration = Consent_State::configuration();
+		$settings      = Settings::current();
 		$lifetime_days = (int) ( $configuration['lifetimeDays'] ?? 180 );
+		$font_family   = 'theme' === (string) $settings['banner_font']
+			? 'inherit'
+			: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+		$style         = sprintf(
+			'--uccm-surface:%1$s;--uccm-ink:%2$s;--uccm-muted:%3$s;--uccm-accent:%4$s;--uccm-button-text:%5$s;--uccm-radius:%6$dpx;--uccm-font-family:%7$s',
+			(string) $settings['banner_surface_color'],
+			(string) $settings['banner_text_color'],
+			(string) $settings['banner_muted_color'],
+			(string) $settings['banner_button_color'],
+			(string) $settings['banner_button_text_color'],
+			(int) $settings['banner_corner_radius'],
+			$font_family
+		);
 		$banner_copy   = sprintf(
 			/* translators: %d: configured consent lifetime. */
 			_n(
@@ -79,11 +93,11 @@ final class Consent_Interface {
 			$lifetime_days
 		);
 		?>
-		<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown">
-			<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
+		<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown" data-uccm-banner-position="<?php echo esc_attr( (string) $settings['banner_position'] ); ?>" data-uccm-icon-position="<?php echo esc_attr( (string) $settings['icon_position'] ); ?>" style="<?php echo esc_attr( $style ); ?>">
+			<section id="uccm-banner" class="uccm-banner" role="region" aria-live="polite" aria-atomic="true" aria-labelledby="uccm-banner-title" aria-describedby="uccm-banner-copy" hidden>
 				<div class="uccm-banner__content">
 					<h2 id="uccm-banner-title" class="uccm-title"><?php esc_html_e( 'Your cookie choices', 'uk-cookie-consent-manager' ); ?></h2>
-					<p class="uccm-copy"><?php echo esc_html( $banner_copy ); ?></p>
+					<p id="uccm-banner-copy" class="uccm-copy"><?php echo esc_html( $banner_copy ); ?></p>
 				</div>
 				<div class="uccm-actions uccm-actions--primary">
 					<button type="button" class="uccm-button" data-uccm-action="accept-all"><?php esc_html_e( 'Accept all', 'uk-cookie-consent-manager' ); ?></button>
@@ -99,14 +113,14 @@ final class Consent_Interface {
 				</svg>
 			</button>
 
-			<dialog id="uccm-preferences" class="uccm-dialog" aria-labelledby="uccm-preferences-title">
+			<dialog id="uccm-preferences" class="uccm-dialog" aria-modal="true" aria-labelledby="uccm-preferences-title" aria-describedby="uccm-preferences-intro uccm-preferences-cookie">
 				<div class="uccm-dialog__inner">
 					<div class="uccm-dialog__header">
 						<h2 id="uccm-preferences-title" class="uccm-title" tabindex="-1"><?php esc_html_e( 'Cookie preferences', 'uk-cookie-consent-manager' ); ?></h2>
 						<button type="button" class="uccm-icon-button" data-uccm-action="close" aria-label="<?php esc_attr_e( 'Close cookie preferences', 'uk-cookie-consent-manager' ); ?>">&times;</button>
 					</div>
-					<p class="uccm-copy"><?php esc_html_e( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ); ?></p>
-					<p class="uccm-copy"><?php echo esc_html( $cookie_copy ); ?></p>
+					<p id="uccm-preferences-intro" class="uccm-copy"><?php esc_html_e( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ); ?></p>
+					<p id="uccm-preferences-cookie" class="uccm-copy"><?php echo esc_html( $cookie_copy ); ?></p>
 
 					<div class="uccm-categories">
 						<label class="uccm-category">

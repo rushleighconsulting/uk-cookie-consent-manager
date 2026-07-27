@@ -75,6 +75,11 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'class="uccm-settings__icon"', $markup );
 		self::assertStringContainsString( 'aria-hidden="true"', $markup );
 		self::assertStringContainsString( '<dialog id="uccm-preferences"', $markup );
+		self::assertStringContainsString( 'role="region"', $markup );
+		self::assertStringContainsString( 'aria-live="polite"', $markup );
+		self::assertStringContainsString( 'aria-describedby="uccm-banner-copy"', $markup );
+		self::assertStringContainsString( 'aria-modal="true"', $markup );
+		self::assertStringContainsString( 'aria-describedby="uccm-preferences-intro uccm-preferences-cookie"', $markup );
 		self::assertStringContainsString( 'name="necessary" checked disabled', $markup );
 		self::assertStringContainsString( 'name="functional"', $markup );
 		self::assertStringContainsString( 'name="analytics"', $markup );
@@ -86,6 +91,33 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'You may reject any other cookies.', $markup );
 		self::assertSame( 2, substr_count( $markup, '180 days' ) );
 		self::assertStringNotContainsString( 'uccm_consent', $markup );
+		self::assertStringContainsString( '--uccm-focus', file_get_contents( dirname( __DIR__ ) . '/assets/css/consent.css' ) );
+	}
+
+	public function test_markup_applies_validated_custom_appearance_without_changing_actions(): void {
+		$GLOBALS['uccm_test_options']['uccm_settings'] = array(
+			'banner_surface_color'     => '#fffef8',
+			'banner_text_color'        => '#1f2937',
+			'banner_muted_color'       => '#4b5563',
+			'banner_button_color'      => '#6b214f',
+			'banner_button_text_color' => '#ffffff',
+			'banner_font'              => 'theme',
+			'banner_corner_radius'     => 20,
+			'banner_position'          => 'top',
+			'icon_position'            => 'left',
+		);
+
+		ob_start();
+		Consent_Interface::render();
+		$markup = (string) ob_get_clean();
+
+		self::assertStringContainsString( 'data-uccm-banner-position="top"', $markup );
+		self::assertStringContainsString( 'data-uccm-icon-position="left"', $markup );
+		self::assertStringContainsString( '--uccm-surface:#fffef8', $markup );
+		self::assertStringContainsString( '--uccm-radius:20px', $markup );
+		self::assertStringContainsString( '--uccm-font-family:inherit', $markup );
+		self::assertSame( 1, substr_count( $markup, 'data-uccm-action="accept-all"' ) );
+		self::assertSame( 1, substr_count( $markup, 'data-uccm-action="reject-optional"' ) );
 	}
 
 	public function test_markup_uses_the_configured_lifetime_in_both_messages(): void {

@@ -90,6 +90,7 @@ final class Consent_State {
 			'receiptEndpoint' => rest_url( 'uccm/v1/consents' ),
 			'categories'      => self::categories(),
 			'messages'        => array(
+				'available' => __( 'Cookie choices are available.', 'uk-cookie-consent-manager' ),
 				'saved'     => __( 'Your cookie choices have been saved.', 'uk-cookie-consent-manager' ),
 				'withdrawn' => __( 'Optional cookie consent has been withdrawn.', 'uk-cookie-consent-manager' ),
 			),
