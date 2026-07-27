@@ -50,6 +50,44 @@ the versioned plugin ZIP produced by the Release workflow.
   and loopback readiness. Resolve any recovery warning before relying on
   unattended updates.
 
+## WordPress Multisite
+
+UCCM may be activated on one site or Network Activated. Network Activation
+initializes existing sites in resumable groups of no more than 25. WP-Cron
+continues any remaining installation or upgrade batches; check **Network Admin
+→ Cookie Consent** until the batch reports `completed`. A site created later is
+initialized automatically.
+
+Every site keeps separate prefixed database tables, settings, roles, consent
+records, inventories, scans, findings and WP-Cron events. Scheduled retention
+and scanning run in the site context that owns the data. This remains true for
+subdirectory, subdomain and domain-mapped networks.
+
+Network Administrators can enable operational defaults for consent lifetime,
+retention, scan limits and error-email behaviour. Settings resolve in this
+order:
+
+1. UCCM's privacy-preserving plugin default.
+2. An enabled network default.
+3. An explicit site override.
+4. An explicit network lock.
+
+A Site Administrator can select **Use the network default for this site** for
+an unlocked setting. A locked value is visible but cannot be changed at site
+level. Network defaults never control the consent policy version, scan URLs,
+post-password access, complete-IP storage, forwarded-header trust or trusted
+proxy addresses; those legal and privacy-sensitive choices remain site-owned.
+
+Plugin files and updates are shared by the network. Test an update on a staging
+network, confirm the Network Admin batch completes, then smoke-test more than
+one representative site. Rollback restores shared plugin files, while each
+site's backward-compatible data remains in its own tables.
+
+Uninstall retains every site's data by default. Network-wide deletion requires
+the separate destructive option on **Network Admin → Cookie Consent**. A
+single-site uninstall preference never authorizes network-wide deletion. Take a
+verified database backup before enabling that option.
+
 ## Inventory and scanning
 
 Maintain the curated inventory in **Cookie Consent → Cookie Inventory**. A scan

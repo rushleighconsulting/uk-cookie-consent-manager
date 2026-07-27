@@ -21,17 +21,19 @@ final class Activator {
 	 */
 	public static function activate( bool $network_wide = false ): void {
 		if ( is_multisite() && $network_wide ) {
-			self::for_each_site( array( self::class, 'install_current_site' ) );
+			Multisite::activate_network();
 			return;
 		}
 
-		self::install_current_site();
+		self::install_current_site( false );
 	}
 
 	/**
 	 * Install the foundation for the current site.
+	 *
+	 * @param bool $network_managed Whether network inheritance should be initialized.
 	 */
-	public static function install_current_site(): void {
+	public static function install_current_site( bool $network_managed = false ): void {
 		Database::install();
 		Capabilities::grant();
 		Consent_Receipts::schedule_cleanup();
@@ -39,23 +41,19 @@ final class Activator {
 		add_filter( 'cron_schedules', array( Scanner::class, 'cron_schedules' ) );
 		Scanner::schedule();
 
-		add_option(
-			'uccm_settings',
-			array(
-				'consent_lifetime_days'  => 180,
-				'consent_policy_version' => Consent_State::POLICY_VERSION,
-				'retention_days'         => 365,
-				'store_full_ip'          => false,
-				'trust_proxy_headers'    => false,
-				'trusted_proxy_ips'      => array(),
-				'scan_urls'              => array(),
-				'scan_excluded_paths'    => Crawler::DEFAULT_EXCLUDED_PATHS,
-				'scan_page_limit'        => Scanner::MAX_TARGETS,
-				'scan_batch_size'        => Scanner::DEFAULT_BATCH_SIZE,
-			),
-			'',
-			false
-		);
+		$stored_settings = get_option( Settings::OPTION_NAME, null );
+
+		if ( ! is_array( $stored_settings ) ) {
+			add_option( Settings::OPTION_NAME, Settings::installation_defaults( $network_managed ), '', false );
+
+			if ( $network_managed ) {
+				add_option( Settings::OVERRIDES_OPTION, array(), '', false );
+			}
+		} elseif ( $network_managed && ! is_array( get_option( Settings::OVERRIDES_OPTION, null ) ) ) {
+			$existing_overrides = array_values( array_intersect( array_keys( $stored_settings ), Multisite::manageable_settings() ) );
+			add_option( Settings::OVERRIDES_OPTION, $existing_overrides, '', false );
+		}
+
 		add_option( 'uccm_delete_data_on_uninstall', false, '', false );
 		update_option( 'uccm_version', UCCM_VERSION, false );
 	}
@@ -67,7 +65,7 @@ final class Activator {
 	 */
 	public static function deactivate( bool $network_wide = false ): void {
 		if ( is_multisite() && $network_wide ) {
-			self::for_each_site( array( self::class, 'clear_scheduled_work' ) );
+			Multisite::deactivate_network();
 			return;
 		}
 
@@ -75,67 +73,11 @@ final class Activator {
 	}
 
 	/**
-	 * Install the foundation when a site is added to an active network.
-	 *
-	 * @param \WP_Site $site Newly initialized site.
-	 */
-	public static function initialize_site( \WP_Site $site ): void {
-		if ( ! self::is_network_active() ) {
-			return;
-		}
-
-		self::with_site( (int) $site->blog_id, array( self::class, 'install_current_site' ) );
-	}
-
-	/**
 	 * Clear the plugin's recurring events for the current site.
 	 */
-	private static function clear_scheduled_work(): void {
+	public static function clear_scheduled_work(): void {
 		wp_clear_scheduled_hook( 'uccm_monthly_scan' );
 		wp_clear_scheduled_hook( Scanner::BATCH_HOOK );
 		wp_clear_scheduled_hook( 'uccm_retention_cleanup' );
-	}
-
-	/**
-	 * Run an operation on every existing site.
-	 *
-	 * @param callable $operation Operation to run after switching site.
-	 */
-	private static function for_each_site( callable $operation ): void {
-		$site_ids = get_sites(
-			array(
-				'fields' => 'ids',
-				'number' => 0,
-			)
-		);
-
-		foreach ( $site_ids as $site_id ) {
-			self::with_site( (int) $site_id, $operation );
-		}
-	}
-
-	/**
-	 * Run an operation in a site context and always restore the original site.
-	 *
-	 * @param int      $site_id   Site ID.
-	 * @param callable $operation Operation to run.
-	 */
-	private static function with_site( int $site_id, callable $operation ): void {
-		switch_to_blog( $site_id );
-
-		try {
-			$operation();
-		} finally {
-			restore_current_blog();
-		}
-	}
-
-	/**
-	 * Determine whether this plugin is active for the network.
-	 */
-	private static function is_network_active(): bool {
-		$active_plugins = (array) get_site_option( 'active_sitewide_plugins', array() );
-
-		return isset( $active_plugins[ plugin_basename( UCCM_PLUGIN_FILE ) ] );
 	}
 }

@@ -285,8 +285,7 @@ final class Consent_Receipts {
 	public static function cleanup_expired(): int {
 		global $wpdb;
 
-		$settings       = get_option( 'uccm_settings', array() );
-		$settings       = is_array( $settings ) ? $settings : array();
+		$settings       = Settings::current();
 		$retention_days = isset( $settings['retention_days'] ) ? (int) $settings['retention_days'] : 365;
 		$retention_days = max( 1, min( 3650, $retention_days ) );
 		$cutoff         = gmdate( 'Y-m-d H:i:s', time() - ( $retention_days * DAY_IN_SECONDS ) );

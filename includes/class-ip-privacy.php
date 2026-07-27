@@ -195,8 +195,7 @@ final class IP_Privacy {
 	 * @return array<string, mixed>
 	 */
 	private static function settings(): array {
-		$settings = get_option( 'uccm_settings', array() );
-		return is_array( $settings ) ? $settings : array();
+		return Settings::current();
 	}
 
 	/**

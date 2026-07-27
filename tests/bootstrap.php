@@ -55,6 +55,13 @@ $GLOBALS['uccm_test_url_post_ids']       = array();
 $GLOBALS['uccm_test_get_posts_arguments'] = array();
 $GLOBALS['uccm_test_salt']                = 'test-site-secret';
 $GLOBALS['uccm_test_current_blog_id']     = 1;
+$GLOBALS['uccm_test_is_multisite']        = false;
+$GLOBALS['uccm_test_is_main_site']        = true;
+$GLOBALS['uccm_test_sites']               = array();
+$GLOBALS['uccm_test_site_options']        = array();
+$GLOBALS['uccm_test_site_options_by_blog'] = array();
+$GLOBALS['uccm_test_blog_stack']          = array();
+$GLOBALS['uccm_test_switched_blogs']      = array();
 
 /**
  * Minimal wpdb test double.
@@ -168,6 +175,14 @@ class WP_User {
 }
 
 /**
+ * Minimal WordPress site test double.
+ */
+class WP_Site {
+	public function __construct( public int $blog_id ) {
+	}
+}
+
+/**
  * Minimal administrator role test double.
  */
 class UCCM_Test_Role {
@@ -274,6 +289,15 @@ function admin_url( string $path = '' ): string {
 	return 'https://example.test/wp-admin/' . ltrim( $path, '/' );
 }
 
+function network_admin_url( string $path = '' ): string {
+	return 'https://example.test/wp-admin/network/' . ltrim( $path, '/' );
+}
+
+function current_time( string $type, bool $gmt = false ): string|int {
+	unset( $gmt );
+	return 'mysql' === $type ? '2026-07-27 10:00:00' : time();
+}
+
 function update_option( string $name, mixed $value, mixed $autoload = null ): bool {
 	unset( $autoload );
 	$GLOBALS['uccm_test_options'][ $name ] = $value;
@@ -296,6 +320,29 @@ function delete_option( string $name ): bool {
 	return true;
 }
 
+function get_site_option( string $name, mixed $default = false ): mixed {
+	return $GLOBALS['uccm_test_site_options'][ $name ] ?? $default;
+}
+
+function add_site_option( string $name, mixed $value ): bool {
+	if ( array_key_exists( $name, $GLOBALS['uccm_test_site_options'] ) ) {
+		return false;
+	}
+
+	$GLOBALS['uccm_test_site_options'][ $name ] = $value;
+	return true;
+}
+
+function update_site_option( string $name, mixed $value ): bool {
+	$GLOBALS['uccm_test_site_options'][ $name ] = $value;
+	return true;
+}
+
+function delete_site_option( string $name ): bool {
+	unset( $GLOBALS['uccm_test_site_options'][ $name ] );
+	return true;
+}
+
 function get_role( string $role ): ?UCCM_Test_Role {
 	return 'administrator' === $role ? $GLOBALS['uccm_test_role'] : null;
 }
@@ -313,7 +360,11 @@ function dbDelta( array|string $queries ): array { // phpcs:ignore WordPress.Nam
 }
 
 function is_multisite(): bool {
-	return false;
+	return true === $GLOBALS['uccm_test_is_multisite'];
+}
+
+function is_main_site(): bool {
+	return true === $GLOBALS['uccm_test_is_main_site'];
 }
 
 function wp_clear_scheduled_hook( string $hook ): int {
@@ -364,17 +415,42 @@ function delete_transient( string $name ): bool {
 	return true;
 }
 
-function get_sites( array $arguments = array() ): array {
-	unset( $arguments );
-	return array();
+function get_sites( array $arguments = array() ): array|int {
+	$sites = array_values( array_map( 'intval', $GLOBALS['uccm_test_sites'] ) );
+
+	if ( ! empty( $arguments['count'] ) ) {
+		return count( $sites );
+	}
+
+	$offset = max( 0, (int) ( $arguments['offset'] ?? 0 ) );
+	$number = isset( $arguments['number'] ) ? max( 0, (int) $arguments['number'] ) : 100;
+
+	return 0 === $number ? array_slice( $sites, $offset ) : array_slice( $sites, $offset, $number );
 }
 
 function switch_to_blog( int $site_id ): bool {
-	unset( $site_id );
+	$current = (int) $GLOBALS['uccm_test_current_blog_id'];
+	$GLOBALS['uccm_test_site_options_by_blog'][ $current ] = $GLOBALS['uccm_test_options'];
+	$GLOBALS['uccm_test_blog_stack'][]                     = $current;
+	$GLOBALS['uccm_test_switched_blogs'][]                 = $site_id;
+	$GLOBALS['uccm_test_current_blog_id']                  = $site_id;
+	$GLOBALS['uccm_test_options']                          = $GLOBALS['uccm_test_site_options_by_blog'][ $site_id ] ?? array();
+	$GLOBALS['wpdb']->prefix                               = 1 === $site_id ? 'wp_' : 'wp_' . $site_id . '_';
 	return true;
 }
 
 function restore_current_blog(): bool {
+	$current = (int) $GLOBALS['uccm_test_current_blog_id'];
+	$GLOBALS['uccm_test_site_options_by_blog'][ $current ] = $GLOBALS['uccm_test_options'];
+	$previous                                             = array_pop( $GLOBALS['uccm_test_blog_stack'] );
+
+	if ( null === $previous ) {
+		return false;
+	}
+
+	$GLOBALS['uccm_test_current_blog_id'] = (int) $previous;
+	$GLOBALS['uccm_test_options']         = $GLOBALS['uccm_test_site_options_by_blog'][ $previous ] ?? array();
+	$GLOBALS['wpdb']->prefix              = 1 === (int) $previous ? 'wp_' : 'wp_' . (int) $previous . '_';
 	return true;
 }
 
@@ -682,6 +758,7 @@ require_once dirname( __DIR__ ) . '/includes/class-database.php';
 require_once dirname( __DIR__ ) . '/includes/class-capabilities.php';
 require_once dirname( __DIR__ ) . '/includes/class-ip-privacy.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-receipts.php';
+require_once dirname( __DIR__ ) . '/includes/class-multisite.php';
 require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-crawler.php';
