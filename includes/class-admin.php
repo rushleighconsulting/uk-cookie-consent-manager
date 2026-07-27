@@ -566,9 +566,9 @@ final class Admin {
 			'uccm-scan-progress',
 			'UCCMScanProgress',
 			array(
-				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'uccm_scan_progress' ),
-				'runIds'   => $active_runs,
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'uccm_scan_progress' ),
+				'runIds'  => $active_runs,
 			)
 		);
 

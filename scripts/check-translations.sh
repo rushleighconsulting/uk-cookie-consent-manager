@@ -15,5 +15,4 @@ cmp --silent "${expected}" "${generated}" || {
 node scripts/check-js-i18n.js
 grep -Fq 'msgid "Your cookie choices"' "${expected}"
 grep -Fq 'msgid "Checking page %1$d of %2$d (%3$s)…"' "${expected}"
-grep -Fq 'Plural-Forms: nplurals=2; plural=(n != 1);' "${expected}"
-
+grep -Fq 'msgid_plural "%d reviewed items"' "${expected}"

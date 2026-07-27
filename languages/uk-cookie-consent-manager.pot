@@ -4,21 +4,1694 @@ msgid ""
 msgstr ""
 "Project-Id-Version: UK Cookie Consent Manager 0.1.0-rc.16\n"
 "Report-Msgid-Bugs-To: https://github.com/rushleighconsulting/uk-cookie-consent-manager/issues\n"
-"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: uk-cookie-consent-manager\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: includes/class-consent-interface.php
+#. Plugin Name of the plugin
+#: uk-cookie-consent-manager.php
+#: includes/class-admin.php:105
+#: includes/class-privacy.php:214
+msgid "UK Cookie Consent Manager"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: uk-cookie-consent-manager.php
+msgid "https://github.com/rushleighconsulting/uk-cookie-consent-manager"
+msgstr ""
+
+#. Description of the plugin
+#: uk-cookie-consent-manager.php
+msgid "Privacy-by-design cookie consent and management for UK WordPress sites."
+msgstr ""
+
+#. Author of the plugin
+#: uk-cookie-consent-manager.php
+msgid "Rushleigh Consulting"
+msgstr ""
+
+#: includes/class-admin.php:51
+msgid "Overview"
+msgstr ""
+
+#: includes/class-admin.php:56
+#: includes/class-admin.php:729
+msgid "Banner"
+msgstr ""
+
+#: includes/class-admin.php:61
+#: includes/class-admin.php:814
+msgid "View Categories"
+msgstr ""
+
+#: includes/class-admin.php:66
+#: includes/class-admin.php:855
+msgid "Script Blocking"
+msgstr ""
+
+#: includes/class-admin.php:71
+#: includes/class-admin.php:936
+msgid "Cookie Inventory"
+msgstr ""
+
+#: includes/class-admin.php:76
+#: includes/class-admin.php:1030
+msgid "Scans"
+msgstr ""
+
+#: includes/class-admin.php:81
+#: includes/class-admin.php:1239
+msgid "Consent Records"
+msgstr ""
+
+#: includes/class-admin.php:86
+#: includes/class-admin.php:1273
+msgid "Privacy"
+msgstr ""
+
+#: includes/class-admin.php:91
+#: includes/class-admin.php:1325
+msgid "Advanced"
+msgstr ""
+
+#: includes/class-admin.php:106
+#: includes/class-multisite.php:256
+msgid "Cookie Consent"
+msgstr ""
+
+#: includes/class-admin.php:187
+msgid "The settings section is invalid."
+msgstr ""
+
+#: includes/class-admin.php:248
+msgid "Advanced blocking rules must be a JSON object, such as {}."
+msgstr ""
+
+#: includes/class-admin.php:267
+msgid "A blocking rule has an invalid format."
+msgstr ""
+
+#: includes/class-admin.php:287
+#: includes/class-admin.php:340
+msgid "Rule ID is required."
+msgstr ""
+
+#: includes/class-admin.php:298
+msgid "Rule ID must contain letters, numbers, hyphens or underscores."
+msgstr ""
+
+#: includes/class-admin.php:307
+#: includes/class-admin.php:851
+#: assets/js/admin-blocking.js:104
+msgid "Each Rule ID must be unique."
+msgstr ""
+
+#: includes/class-admin.php:349
+msgid "Choose Script, Iframe, Embed or Pixel."
+msgstr ""
+
+#: includes/class-admin.php:358
+msgid "Choose Functional, Analytics or Marketing."
+msgstr ""
+
+#: includes/class-admin.php:368
+msgid "Enter a WordPress handle or an HTTPS source for this script."
+msgstr ""
+
+#: includes/class-admin.php:369
+msgid "Enter an HTTPS source for this resource."
+msgstr ""
+
+#: includes/class-admin.php:378
+msgid "Source must be a complete HTTPS URL."
+msgstr ""
+
+#. translators: 1: rule number, 2: validation message.
+#: includes/class-admin.php:403
+#, php-format
+msgid "Rule %1$d: %2$s"
+msgstr ""
+
+#: includes/class-admin.php:488
+msgid "The scan could not be cancelled."
+msgstr ""
+
+#: includes/class-admin.php:505
+#: includes/class-scanner.php:783
+msgid "The scan could not be resumed."
+msgstr ""
+
+#: includes/class-admin.php:621
+msgid "Protected page access prepared"
+msgstr ""
+
+#: includes/class-admin.php:703
+msgid "Cookie Consent Overview"
+msgstr ""
+
+#: includes/class-admin.php:704
+msgid "Set up your cookie banner, review what your site stores, and check visitors’ choices."
+msgstr ""
+
+#: includes/class-admin.php:705
+msgid "Scans continue in the background. Anything new is listed for you to review before it is added to your cookie list."
+msgstr ""
+
+#: includes/class-admin.php:731
+msgid "Choose from the supported appearance options. UCCM keeps the main Accept and Reject choices equally prominent and checks colour contrast before saving."
+msgstr ""
+
+#: includes/class-admin.php:734
+#: includes/class-multisite.php:474
+msgid "Consent lifetime (days)"
+msgstr ""
+
+#: includes/class-admin.php:736
+msgid "Consent policy version"
+msgstr ""
+
+#: includes/class-admin.php:737
+msgid "Appearance"
+msgstr ""
+
+#: includes/class-admin.php:740
+msgid "Banner background"
+msgstr ""
+
+#: includes/class-admin.php:741
+msgid "Heading text"
+msgstr ""
+
+#: includes/class-admin.php:742
+msgid "Supporting text"
+msgstr ""
+
+#: includes/class-admin.php:743
+msgid "Button background"
+msgstr ""
+
+#: includes/class-admin.php:744
+msgid "Button text"
+msgstr ""
+
+#: includes/class-admin.php:747
+msgid "Font"
+msgstr ""
+
+#: includes/class-admin.php:749
+msgid "UCCM system font"
+msgstr ""
+
+#: includes/class-admin.php:750
+msgid "Use the site theme font"
+msgstr ""
+
+#: includes/class-admin.php:754
+msgid "Corner radius (pixels)"
+msgstr ""
+
+#: includes/class-admin.php:757
+msgid "Banner position"
+msgstr ""
+
+#: includes/class-admin.php:759
+msgid "Bottom"
+msgstr ""
+
+#: includes/class-admin.php:760
+msgid "Top"
+msgstr ""
+
+#: includes/class-admin.php:766
+msgid "Cookie settings icon position"
+msgstr ""
+
+#: includes/class-admin.php:768
+msgid "Bottom right"
+msgstr ""
+
+#: includes/class-admin.php:769
+msgid "Bottom left"
+msgstr ""
+
+#: includes/class-admin.php:776
+msgid "The preview demonstrates colour, font, corners and position. Your site layout may provide different surrounding content."
+msgstr ""
+
+#: includes/class-admin.php:777
+msgid "Save banner settings"
+msgstr ""
+
+#: includes/class-admin.php:778
+msgid "Reset appearance to defaults"
+msgstr ""
+
+#: includes/class-admin.php:799
+msgid "Banner preview"
+msgstr ""
+
+#: includes/class-admin.php:802
+#: includes/class-consent-interface.php:99
 msgid "Your cookie choices"
 msgstr ""
 
-#: assets/js/scan-runner.js
+#: includes/class-admin.php:802
+msgid "We use one necessary cookie to remember your choice. Optional cookies need your permission."
+msgstr ""
+
+#: includes/class-admin.php:803
+#: includes/class-consent-interface.php:103
+#: assets/js/scan-runner.js:21
+msgid "Accept all"
+msgstr ""
+
+#: includes/class-admin.php:803
+#: includes/class-consent-interface.php:104
+#: assets/js/scan-runner.js:20
+msgid "Reject non-essential"
+msgstr ""
+
+#: includes/class-admin.php:803
+#: includes/class-consent-interface.php:105
+msgid "Manage preferences"
+msgstr ""
+
+#: includes/class-admin.php:815
+#: includes/class-admin.php:948
+msgid "Category"
+msgstr ""
+
+#: includes/class-admin.php:815
+#: includes/class-admin.php:948
+#: includes/class-admin.php:1511
+msgid "Purpose"
+msgstr ""
+
+#: includes/class-admin.php:815
+msgid "Required"
+msgstr ""
+
+#: includes/class-admin.php:818
+msgid "Yes"
+msgstr ""
+
+#: includes/class-admin.php:818
+msgid "No"
+msgstr ""
+
+#: includes/class-admin.php:847
+#: includes/class-admin.php:899
+#: assets/js/admin-blocking.js:35
+msgid "New rule"
+msgstr ""
+
+#: includes/class-admin.php:848
+msgid "Rule"
+msgstr ""
+
+#: includes/class-admin.php:849
+#: assets/js/admin-blocking.js:110
+msgid "Enter a WordPress handle or an HTTPS source."
+msgstr ""
+
+#: includes/class-admin.php:850
+#: assets/js/admin-blocking.js:115
+#: assets/js/admin-blocking.js:125
+msgid "Enter a complete HTTPS source."
+msgstr ""
+
+#: includes/class-admin.php:857
+msgid "Add only optional resources you recognise. UCCM blocks a configured resource until the visitor allows its category."
+msgstr ""
+
+#: includes/class-admin.php:858
+msgid "Incorrect rules can stop site features from working. Test each rule before using it on a live site."
+msgstr ""
+
+#: includes/class-admin.php:871
+msgid "No blocking rules have been added yet."
+msgstr ""
+
+#: includes/class-admin.php:872
+msgid "Add rule"
+msgstr ""
+
+#: includes/class-admin.php:873
+msgid "Advanced JSON view"
+msgstr ""
+
+#: includes/class-admin.php:874
+msgid "This read-only view shows the validated object that will be saved. Use the fields above to make changes."
+msgstr ""
+
+#: includes/class-admin.php:881
+msgid "Save blocking rules"
+msgstr ""
+
+#: includes/class-admin.php:905
+msgid "Rule ID"
+msgstr ""
+
+#: includes/class-admin.php:907
+msgid "A unique name using letters, numbers, hyphens or underscores; for example analytics-test."
+msgstr ""
+
+#: includes/class-admin.php:908
+msgid "Resource type"
+msgstr ""
+
+#: includes/class-admin.php:911
+msgid "Consent category"
+msgstr ""
+
+#: includes/class-admin.php:914
+msgid "WordPress script handle"
+msgstr ""
+
+#: includes/class-admin.php:916
+msgid "For scripts registered by WordPress. A script needs a handle, an HTTPS source, or both."
+msgstr ""
+
+#: includes/class-admin.php:917
+msgid "HTTPS source"
+msgstr ""
+
+#: includes/class-admin.php:919
+msgid "Required for iframes, embeds and pixels. Scripts may use this instead of a WordPress handle."
+msgstr ""
+
+#: includes/class-admin.php:920
+msgid "Title"
+msgstr ""
+
+#: includes/class-admin.php:922
+msgid "A recognisable administrator label, such as Analytics test script or Location map."
+msgstr ""
+
+#: includes/class-admin.php:923
+msgid "Remove rule"
+msgstr ""
+
+#. translators: %d: number of reviewed inventory items.
+#: includes/class-admin.php:947
+#, php-format
+msgid "%d reviewed item"
+msgid_plural "%d reviewed items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin.php:948
+msgid "Name"
+msgstr ""
+
+#: includes/class-admin.php:948
+msgid "Provider / domain"
+msgstr ""
+
+#: includes/class-admin.php:948
+msgid "Type"
+msgstr ""
+
+#: includes/class-admin.php:948
+#: includes/class-admin.php:1437
+#: includes/class-admin.php:1512
+msgid "Duration"
+msgstr ""
+
+#: includes/class-admin.php:948
+#: includes/class-admin.php:1190
+msgid "Review"
+msgstr ""
+
+#: includes/class-admin.php:951
+msgid "No inventory items match the current filters."
+msgstr ""
+
+#: includes/class-admin.php:1033
+msgid "Scan settings saved."
+msgstr ""
+
+#: includes/class-admin.php:1035
+msgid "The scan has started. This page will keep it moving if your site scheduler is delayed. You can leave and return without losing saved progress."
+msgstr ""
+
+#: includes/class-admin.php:1037
+msgid "The scan was cancelled and its evidence was retained."
+msgstr ""
+
+#: includes/class-admin.php:1039
+msgid "The scan has restarted from its last saved point."
+msgstr ""
+
+#: includes/class-admin.php:1041
+msgid "Your review decision was saved. The cookie inventory was not changed."
+msgstr ""
+
+#: includes/class-admin.php:1044
+msgid "A scan checks public pages that this site can reach. Pages shown only after sign-in, personal choices or location checks may behave differently."
+msgstr ""
+
+#: includes/class-admin.php:1045
+msgid "How it works:"
+msgstr ""
+
+#: includes/class-admin.php:1045
+msgid "The plugin checks public pages in the background first. When that finishes, you can run an optional browser check to look for cookies and other items loaded by those pages."
+msgstr ""
+
+#: includes/class-admin.php:1046
+msgid "Next monthly run:"
+msgstr ""
+
+#: includes/class-admin.php:1046
+msgid "Not scheduled"
+msgstr ""
+
+#: includes/class-admin.php:1049
+msgid "Starting pages"
+msgstr ""
+
+#: includes/class-admin.php:1050
+msgid "The homepage is always checked. You can add other public pages on this website, one address per line. The scan follows links from these starting pages, up to the saved limit."
+msgstr ""
+
+#: includes/class-admin.php:1054
+msgid "The scan URLs were not saved. Enter only same-origin public URLs without credentials or fragments."
+msgstr ""
+
+#. translators: %s: rejected scan URL.
+#: includes/class-admin.php:1057
+#, php-format
+msgid "The scan URL “%s” was not saved. Enter only same-origin public URLs without credentials or fragments."
+msgstr ""
+
+#: includes/class-admin.php:1065
+msgid "Scan limits"
+msgstr ""
+
+#: includes/class-admin.php:1066
+#: includes/class-multisite.php:476
+msgid "Maximum pages per scan"
+msgstr ""
+
+#: includes/class-admin.php:1068
+#: includes/class-multisite.php:477
+msgid "Pages checked at a time"
+msgstr ""
+
+#: includes/class-admin.php:1070
+msgid "Excluded path patterns"
+msgstr ""
+
+#: includes/class-admin.php:1072
+msgid "One path pattern per line. Use * as a wildcard. WordPress administration, login, REST and feed paths are always excluded."
+msgstr ""
+
+#: includes/class-admin.php:1073
+msgid "Password-protected pages"
+msgstr ""
+
+#: includes/class-admin.php:1074
+msgid "By default, WordPress post-password protected pages are not checked. You can opt in with one shared WordPress post password. This does not sign the scanner into WordPress or other services."
+msgstr ""
+
+#: includes/class-admin.php:1075
+msgid "Check pages unlocked by the stored WordPress post password"
+msgstr ""
+
+#: includes/class-admin.php:1075
+msgid "Only published pages and posts on this site that match the stored password become eligible."
+msgstr ""
+
+#: includes/class-admin.php:1076
+msgid "WordPress post password"
+msgstr ""
+
+#: includes/class-admin.php:1076
+msgid "Leave blank to keep the stored password"
+msgstr ""
+
+#: includes/class-admin.php:1076
+msgid "An encrypted post password is configured."
+msgstr ""
+
+#: includes/class-admin.php:1076
+msgid "No usable post password is configured."
+msgstr ""
+
+#: includes/class-admin.php:1077
+msgid "Remove the stored post password"
+msgstr ""
+
+#: includes/class-admin.php:1077
+msgid "The password is never displayed after saving. Removing it makes protected pages ineligible immediately."
+msgstr ""
+
+#: includes/class-admin.php:1078
+msgid "Save scan settings"
+msgstr ""
+
+#: includes/class-admin.php:1082
+msgid "The scan checks public pages first. Keeping this page open helps it continue if your site scheduler is delayed, but you can leave and return without losing saved progress. When it finishes, you may run the optional browser check."
+msgstr ""
+
+#: includes/class-admin.php:1083
+msgid "Run scan now"
+msgstr ""
+
+#: includes/class-admin.php:1086
+msgid "Recent scan runs"
+msgstr ""
+
+#: includes/class-admin.php:1092
+msgid "No scan runs have been recorded yet."
+msgstr ""
+
+#: includes/class-admin.php:1094
+msgid "Run"
+msgstr ""
+
+#: includes/class-admin.php:1094
+#: includes/class-admin.php:1190
+msgid "Status"
+msgstr ""
+
+#: includes/class-admin.php:1094
+msgid "Started (UTC)"
+msgstr ""
+
+#: includes/class-admin.php:1094
+msgid "Scan coverage"
+msgstr ""
+
+#: includes/class-admin.php:1094
+msgid "Browser check"
+msgstr ""
+
+#: includes/class-admin.php:1094
+#: includes/class-admin.php:1178
+msgid "Items to review"
+msgstr ""
+
+#: includes/class-admin.php:1094
+msgid "Problems"
+msgstr ""
+
+#: includes/class-admin.php:1094
+#: includes/class-admin.php:1247
+#: includes/class-privacy.php:112
+msgid "Action"
+msgstr ""
+
+#. translators: 1: eligible WordPress pages/posts, 2: other accepted links, 3: ignored links, 4: checked URLs, 5: remaining URLs.
+#: includes/class-admin.php:1123
+#, php-format
+msgid "%1$d pages/posts; %2$d other links; %3$d ignored; %4$d checked; %5$d remaining"
+msgstr ""
+
+#. translators: 1: checked URLs, 2: accepted URLs, 3: remaining URLs.
+#: includes/class-admin.php:1132
+#, php-format
+msgid "%1$d checked; %2$d accepted; %3$d remaining"
+msgstr ""
+
+#: includes/class-admin.php:1141
+msgid "Resume"
+msgstr ""
+
+#: includes/class-admin.php:1147
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-admin.php:1162
+msgid "Browser check for scan "
+msgstr ""
+
+#: includes/class-admin.php:1163
+msgid "This optional check visits eligible public pages as a temporary visitor, tries the main cookie choices, and lists cookie names, browser storage, scripts, embedded content and tracking images. It does not use your administrator sign-in or saved browser choices."
+msgstr ""
+
+#: includes/class-admin.php:1164
+msgid "Browser check status:"
+msgstr ""
+
+#: includes/class-admin.php:1169
+msgid "This browser cannot run the separate visitor check safely. Use a current Chrome, Edge or other Chromium browser."
+msgstr ""
+
+#: includes/class-admin.php:1171
+msgid "Browser check note:"
+msgstr ""
+
+#: includes/class-admin.php:1173
+msgid "Run browser check"
+msgstr ""
+
+#: includes/class-admin.php:1174
+#: assets/js/scan-runner.js:29
+msgid "For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet."
+msgstr ""
+
+#: includes/class-admin.php:1179
+msgid "The plugin never adds, changes or publishes cookie information automatically. Review each item before changing the cookie inventory."
+msgstr ""
+
+#: includes/class-admin.php:1182
+msgid "Show findings from all scans"
+msgstr ""
+
+#: includes/class-admin.php:1188
+msgid "No scan findings match this view."
+msgstr ""
+
+#: includes/class-admin.php:1190
+msgid "Finding"
+msgstr ""
+
+#: includes/class-admin.php:1190
+msgid "Observation"
+msgstr ""
+
+#: includes/class-admin.php:1190
+msgid "Material diff"
+msgstr ""
+
+#: includes/class-admin.php:1197
+msgid "scan"
+msgstr ""
+
+#: includes/class-admin.php:1206
+msgid "Mark reviewed"
+msgstr ""
+
+#: includes/class-admin.php:1207
+msgid "Ignore"
+msgstr ""
+
+#: includes/class-admin.php:1208
+msgid "Resolve"
+msgstr ""
+
+#: includes/class-admin.php:1242
+msgid "No consent records are available to display."
+msgstr ""
+
+#: includes/class-admin.php:1247
+msgid "Receipt"
+msgstr ""
+
+#: includes/class-admin.php:1247
+#: includes/class-privacy.php:108
+msgid "Time (UTC)"
+msgstr ""
+
+#: includes/class-admin.php:1247
+msgid "Policy"
+msgstr ""
+
+#: includes/class-admin.php:1247
+msgid "Masked IP"
+msgstr ""
+
+#: includes/class-admin.php:1277
+#: includes/class-multisite.php:475
+msgid "Consent retention (days)"
+msgstr ""
+
+#: includes/class-admin.php:1279
+msgid "Store encrypted complete IP addresses"
+msgstr ""
+
+#: includes/class-admin.php:1279
+msgid "This increases privacy risk and is not required for normal consent evidence."
+msgstr ""
+
+#: includes/class-admin.php:1280
+msgid "Trust forwarded IP headers"
+msgstr ""
+
+#: includes/class-admin.php:1280
+msgid "Enable only when every trusted reverse proxy is listed below."
+msgstr ""
+
+#: includes/class-admin.php:1283
+msgid "Trusted proxy IPs"
+msgstr ""
+
+#: includes/class-admin.php:1283
+msgid "Enter one proxy IP address per line. Only these proxies may supply a forwarded visitor address."
+msgstr ""
+
+#: includes/class-admin.php:1285
+msgid "Save privacy settings"
+msgstr ""
+
+#: includes/class-admin.php:1302
+msgid "Free disk space could not be measured."
+msgstr ""
+
+#. translators: %s: Human-readable free disk space.
+#: includes/class-admin.php:1306
+#, php-format
+msgid "%s of free disk space is available."
+msgstr ""
+
+#. translators: %s: Human-readable free disk space.
+#: includes/class-admin.php:1312
+#, php-format
+msgid "Only %s of free disk space is available; make more space before updating."
+msgstr ""
+
+#: includes/class-admin.php:1318
+msgid "The WordPress loopback check succeeded."
+msgstr ""
+
+#: includes/class-admin.php:1320
+msgid "The WordPress loopback check failed; fatal-error rollback may not work."
+msgstr ""
+
+#: includes/class-admin.php:1322
+msgid "Use “Check for updates now” to test the WordPress loopback connection."
+msgstr ""
+
+#: includes/class-admin.php:1328
+msgid "Updates"
+msgstr ""
+
+#: includes/class-admin.php:1331
+msgid "Installed version"
+msgstr ""
+
+#: includes/class-admin.php:1332
+#: includes/class-multisite.php:356
+msgid "Latest available version"
+msgstr ""
+
+#: includes/class-admin.php:1332
+#: includes/class-admin.php:1334
+#: includes/class-multisite.php:356
+msgid "Not checked yet"
+msgstr ""
+
+#: includes/class-admin.php:1333
+msgid "Update channel"
+msgstr ""
+
+#: includes/class-admin.php:1334
+msgid "Last successful check (UTC)"
+msgstr ""
+
+#: includes/class-admin.php:1335
+msgid "Last update outcome"
+msgstr ""
+
+#: includes/class-admin.php:1335
+msgid "No update recorded yet"
+msgstr ""
+
+#: includes/class-admin.php:1339
+msgid "Last update check problem:"
+msgstr ""
+
+#: includes/class-admin.php:1343
+msgid "A newer release is being introduced gradually. This site will continue using its current version until its rollout group is enabled."
+msgstr ""
+
+#: includes/class-admin.php:1347
+msgid "Manage automatic updates in WordPress"
+msgstr ""
+
+#: includes/class-admin.php:1349
+msgid "Check for updates now"
+msgstr ""
+
+#: includes/class-admin.php:1352
+msgid "A WordPress administrator with plugin-update permission controls automatic updates and immediate checks."
+msgstr ""
+
+#: includes/class-admin.php:1355
+msgid "Update recovery readiness"
+msgstr ""
+
+#: includes/class-admin.php:1356
+msgid "WordPress fatal-error rollback is available."
+msgstr ""
+
+#: includes/class-admin.php:1356
+msgid "This WordPress version does not provide the required plugin fatal-error rollback."
+msgstr ""
+
+#: includes/class-admin.php:1357
+msgid "The temporary backup location is writable."
+msgstr ""
+
+#: includes/class-admin.php:1357
+msgid "The temporary backup location is not writable."
+msgstr ""
+
+#: includes/class-admin.php:1363
+msgid "Operational error notifications"
+msgstr ""
+
+#: includes/class-admin.php:1364
+msgid "Email operational error notifications to the site administrator"
+msgstr ""
+
+#: includes/class-admin.php:1364
+msgid "Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials."
+msgstr ""
+
+#: includes/class-admin.php:1367
+#: includes/class-multisite.php:479
+msgid "Repeat email suppression (minutes)"
+msgstr ""
+
+#: includes/class-admin.php:1367
+msgid "Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours)."
+msgstr ""
+
+#: includes/class-admin.php:1373
+msgid "Delete all UCCM data when the plugin is uninstalled"
+msgstr ""
+
+#: includes/class-admin.php:1376
+msgid "Network-wide deletion can be approved only by a Network Administrator from Network Admin."
+msgstr ""
+
+#: includes/class-admin.php:1377
+msgid "Leave disabled to retain settings and evidence by default."
+msgstr ""
+
+#: includes/class-admin.php:1380
+msgid "Save advanced settings"
+msgstr ""
+
+#: includes/class-admin.php:1400
+msgid "Storage type:"
+msgstr ""
+
+#: includes/class-admin.php:1404
+msgid "Seen with:"
+msgstr ""
+
+#. translators: %d: number of affected pages.
+#: includes/class-admin.php:1411
+#, php-format
+msgid "%d affected page"
+msgid_plural "%d affected pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin.php:1422
+msgid "Show affected pages"
+msgstr ""
+
+#: includes/class-admin.php:1438
+#: includes/class-admin.php:1498
+msgid "Domain"
+msgstr ""
+
+#: includes/class-admin.php:1439
+msgid "Source URL"
+msgstr ""
+
+#: includes/class-admin.php:1440
+msgid "Category candidate"
+msgstr ""
+
+#: includes/class-admin.php:1448
+msgid "not recorded"
+msgstr ""
+
+#: includes/class-admin.php:1454
+msgid "New observation"
+msgstr ""
+
+#: includes/class-admin.php:1466
+msgid "Search inventory"
+msgstr ""
+
+#: includes/class-admin.php:1467
+msgid "All categories"
+msgstr ""
+
+#: includes/class-admin.php:1469
+msgid "All statuses"
+msgstr ""
+
+#: includes/class-admin.php:1472
+msgid "Filter"
+msgstr ""
+
+#: includes/class-admin.php:1486
+msgid "Export current filters as CSV"
+msgstr ""
+
+#: includes/class-admin.php:1493
+msgid "Add or update an inventory item"
+msgstr ""
+
+#: includes/class-admin.php:1495
+msgid "Existing database ID, or zero for a new item"
+msgstr ""
+
+#: includes/class-admin.php:1496
+msgid "Cookie or storage key"
+msgstr ""
+
+#: includes/class-admin.php:1497
+msgid "Provider"
+msgstr ""
+
+#: includes/class-admin.php:1514
+msgid "Save inventory item"
+msgstr ""
+
+#: includes/class-admin.php:1545
+msgid "Previous"
+msgstr ""
+
+#: includes/class-admin.php:1546
+msgid "Next"
+msgstr ""
+
+#: includes/class-admin.php:1550
+msgid "Inventory pages"
+msgstr ""
+
+#: includes/class-admin.php:1599
+msgid "You are not allowed to access this Cookie Consent screen."
+msgstr ""
+
+#: includes/class-admin.php:1664
+msgid "Settings saved."
+msgstr ""
+
+#: includes/class-admin.php:1666
+msgid "The update check finished. The latest result is shown below."
+msgstr ""
+
+#: includes/class-admin.php:1681
+msgid "This value is locked by the Network Administrator."
+msgstr ""
+
+#: includes/class-admin.php:1685
+msgid "Use the network default for this site"
+msgstr ""
+
+#. translators: %d: configured consent lifetime.
+#: includes/class-consent-interface.php:77
+#, php-format
+msgid "We use one necessary cookie to remember your choice for %d day. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo."
+msgid_plural "We use one necessary cookie to remember your choice for %d days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: configured consent lifetime.
+#: includes/class-consent-interface.php:87
+#, php-format
+msgid "We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies."
+msgid_plural "We set one necessary cookie. This cookie remembers your cookie choices for %d days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-consent-interface.php:109
+msgid "Cookie settings"
+msgstr ""
+
+#: includes/class-consent-interface.php:119
+msgid "Cookie preferences"
+msgstr ""
+
+#: includes/class-consent-interface.php:120
+msgid "Close cookie preferences"
+msgstr ""
+
+#: includes/class-consent-interface.php:122
+msgid "Choose which optional cookie categories this website may use. Necessary cookies are always active."
+msgstr ""
+
+#: includes/class-consent-interface.php:128
+#: includes/class-consent-state.php:40
+msgid "Necessary"
+msgstr ""
+
+#: includes/class-consent-interface.php:129
+#: includes/class-consent-state.php:41
+msgid "Required for the website to function and cannot be switched off."
+msgstr ""
+
+#: includes/class-consent-interface.php:135
+#: includes/class-consent-state.php:45
+msgid "Functional"
+msgstr ""
+
+#: includes/class-consent-interface.php:136
+#: includes/class-consent-state.php:46
+msgid "Remember choices and provide enhanced website features."
+msgstr ""
+
+#: includes/class-consent-interface.php:142
+#: includes/class-consent-state.php:50
+msgid "Analytics"
+msgstr ""
+
+#: includes/class-consent-interface.php:143
+#: includes/class-consent-state.php:51
+msgid "Help the site owner understand how the website is used."
+msgstr ""
+
+#: includes/class-consent-interface.php:149
+#: includes/class-consent-state.php:55
+msgid "Marketing"
+msgstr ""
+
+#: includes/class-consent-interface.php:150
+#: includes/class-consent-state.php:56
+msgid "Support advertising and measurement across websites."
+msgstr ""
+
+#: includes/class-consent-interface.php:157
+msgid "Save choices"
+msgstr ""
+
+#: includes/class-consent-interface.php:158
+msgid "Withdraw optional consent"
+msgstr ""
+
+#: includes/class-consent-receipts.php:103
+msgid "The consent receipt identifier is invalid."
+msgstr ""
+
+#: includes/class-consent-receipts.php:107
+msgid "The consent action is invalid."
+msgstr ""
+
+#: includes/class-consent-receipts.php:113
+msgid "The consent decision is incomplete."
+msgstr ""
+
+#: includes/class-consent-receipts.php:128
+msgid "The consent choices could not be encoded."
+msgstr ""
+
+#: includes/class-consent-receipts.php:157
+msgid "The consent receipt could not be stored."
+msgstr ""
+
+#: includes/class-consent-receipts.php:229
+msgid "You are not allowed to access consent records."
+msgstr ""
+
+#: includes/class-consent-receipts.php:257
+msgid "You are not allowed to reveal complete IP addresses."
+msgstr ""
+
+#: includes/class-consent-receipts.php:266
+msgid "No complete IP address is stored for this receipt."
+msgstr ""
+
+#: includes/class-consent-receipts.php:271
+msgid "The stored IP address could not be decrypted."
+msgstr ""
+
+#: includes/class-consent-receipts.php:325
+#: includes/class-consent-receipts.php:336
+msgid "Cross-origin consent submissions are not allowed."
+msgstr ""
+
+#: includes/class-consent-receipts.php:350
+msgid "Too many consent events were submitted. Please try again shortly."
+msgstr ""
+
+#: includes/class-consent-state.php:93
+msgid "Cookie choices are available."
+msgstr ""
+
+#: includes/class-consent-state.php:94
+msgid "Your cookie choices have been saved."
+msgstr ""
+
+#: includes/class-consent-state.php:95
+msgid "Optional cookie consent has been withdrawn."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:64
+msgid "A cookie or storage key name is required."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:68
+msgid "The party classification is invalid."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:72
+msgid "The storage type is invalid."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:76
+msgid "The consent category is invalid."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:80
+msgid "The review status is invalid."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:109
+msgid "You are not allowed to manage the cookie inventory."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:128
+msgid "The inventory item could not be updated."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:139
+msgid "The inventory item could not be created."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:156
+msgid "You are not allowed to view the cookie inventory."
+msgstr ""
+
+#: includes/class-cookie-inventory.php:197
+msgid "You are not allowed to export the cookie inventory."
+msgstr ""
+
+#: includes/class-crawler.php:122
+msgid "The discovered link is not crawlable."
+msgstr ""
+
+#: includes/class-crawler.php:128
+msgid "The crawl base URL is invalid."
+msgstr ""
+
+#: includes/class-crawler.php:139
+#: includes/class-crawler.php:170
+msgid "The discovered link is invalid."
+msgstr ""
+
+#: includes/class-multisite.php:255
+msgid "UK Cookie Consent Manager Network"
+msgstr ""
+
+#: includes/class-multisite.php:330
+msgid "Not started"
+msgstr ""
+
+#: includes/class-multisite.php:331
+msgid "Running"
+msgstr ""
+
+#: includes/class-multisite.php:332
+msgid "Completed"
+msgstr ""
+
+#: includes/class-multisite.php:337
+msgid "Cookie Consent Network"
+msgstr ""
+
+#: includes/class-multisite.php:338
+msgid "Manage shared operational defaults while each site keeps its own consent evidence, cookie inventory, scans, policy and privacy-sensitive settings."
+msgstr ""
+
+#: includes/class-multisite.php:341
+msgid "Network settings saved."
+msgstr ""
+
+#: includes/class-multisite.php:344
+msgid "Network status"
+msgstr ""
+
+#: includes/class-multisite.php:345
+msgid "Sites"
+msgstr ""
+
+#: includes/class-multisite.php:346
+msgid "Install or upgrade batch"
+msgstr ""
+
+#. translators: 1: Network batch status. 2: Number of processed sites.
+#: includes/class-multisite.php:349
+#, php-format
+msgid "%1$s — %2$d sites processed"
+msgstr ""
+
+#: includes/class-multisite.php:354
+msgid "Network schema version"
+msgstr ""
+
+#: includes/class-multisite.php:355
+msgid "Installed plugin version"
+msgstr ""
+
+#: includes/class-multisite.php:357
+msgid "Manage network plugins and updates"
+msgstr ""
+
+#: includes/class-multisite.php:359
+msgid "Network defaults"
+msgstr ""
+
+#: includes/class-multisite.php:360
+msgid "Enable a default to offer it to sites that inherit the setting. Lock only operational values that every site must use. Consent policy versions, scan URLs, passwords, complete-IP storage and trusted proxies always remain site-specific."
+msgstr ""
+
+#: includes/class-multisite.php:363
+msgid "Setting"
+msgstr ""
+
+#: includes/class-multisite.php:363
+msgid "Use network default"
+msgstr ""
+
+#: includes/class-multisite.php:363
+msgid "Value"
+msgstr ""
+
+#: includes/class-multisite.php:363
+msgid "Lock for sites"
+msgstr ""
+
+#: includes/class-multisite.php:375
+msgid "Delete UCCM data from every site when the plugin is uninstalled"
+msgstr ""
+
+#: includes/class-multisite.php:375
+msgid "Destructive and disabled by default. A single site’s uninstall setting can never enable network-wide deletion."
+msgstr ""
+
+#: includes/class-multisite.php:376
+msgid "Save network settings"
+msgstr ""
+
+#: includes/class-multisite.php:463
+msgid "You are not allowed to manage Cookie Consent network settings."
+msgstr ""
+
+#: includes/class-multisite.php:478
+msgid "Email operational errors"
+msgstr ""
+
+#: includes/class-multisite.php:491
+msgid "Enabled"
+msgstr ""
+
+#: includes/class-operational-alerts.php:220
+#: includes/class-operational-alerts.php:362
+msgid "UK Cookie Consent Manager needs attention"
+msgstr ""
+
+#: includes/class-operational-alerts.php:221
+msgid "Code:"
+msgstr ""
+
+#: includes/class-operational-alerts.php:221
+msgid "Last seen (UTC):"
+msgstr ""
+
+#: includes/class-operational-alerts.php:222
+msgid "Review and recover"
+msgstr ""
+
+#: includes/class-operational-alerts.php:225
+msgid "Dismiss this occurrence"
+msgstr ""
+
+#: includes/class-operational-alerts.php:288
+msgid "A background cookie scan has stopped progressing."
+msgstr ""
+
+#: includes/class-operational-alerts.php:292
+msgid "WordPress could not start a cookie scan in the background. Keep the Scans page open to continue it, or review the site scheduler."
+msgstr ""
+
+#: includes/class-operational-alerts.php:296
+msgid "A plugin update failed and WordPress could not restore the previous UCCM version."
+msgstr ""
+
+#: includes/class-operational-alerts.php:300
+msgid "WordPress restored the previous UCCM version after an update caused a fatal error."
+msgstr ""
+
+#: includes/class-operational-alerts.php:304
+msgid "An attempted UCCM update did not complete successfully."
+msgstr ""
+
+#: includes/class-operational-alerts.php:308
+msgid "UCCM could not verify or retrieve its update information."
+msgstr ""
+
+#: includes/class-operational-alerts.php:312
+msgid "The administrator browser check did not complete successfully."
+msgstr ""
+
+#: includes/class-operational-alerts.php:316
+msgid "A cookie scan could not complete successfully."
+msgstr ""
+
+#: includes/class-operational-alerts.php:319
+msgid "The plugin handled an operational problem."
+msgstr ""
+
+#: includes/class-operational-alerts.php:364
+msgid "Error code:"
+msgstr ""
+
+#: includes/class-operational-alerts.php:365
+msgid "Component:"
+msgstr ""
+
+#: includes/class-operational-alerts.php:366
+msgid "Time (UTC):"
+msgstr ""
+
+#: includes/class-operational-alerts.php:367
+msgid "Review:"
+msgstr ""
+
+#: includes/class-post-password-access.php:30
+msgid "The post password cannot be empty."
+msgstr ""
+
+#: includes/class-post-password-access.php:34
+msgid "OpenSSL is required to protect the post password."
+msgstr ""
+
+#: includes/class-post-password-access.php:42
+msgid "The post password could not be protected."
+msgstr ""
+
+#: includes/class-privacy.php:39
+#: includes/class-privacy.php:54
+msgid "UK Cookie Consent Manager receipts"
+msgstr ""
+
+#: includes/class-privacy.php:100
+msgid "Cookie consent receipts"
+msgstr ""
+
+#: includes/class-privacy.php:104
+msgid "Receipt ID"
+msgstr ""
+
+#: includes/class-privacy.php:116
+msgid "Category choices"
+msgstr ""
+
+#: includes/class-privacy.php:120
+msgid "Policy version"
+msgstr ""
+
+#: includes/class-privacy.php:124
+msgid "Plugin version"
+msgstr ""
+
+#: includes/class-privacy.php:128
+msgid "Site identifier"
+msgstr ""
+
+#: includes/class-privacy.php:132
+msgid "Masked IP address"
+msgstr ""
+
+#: includes/class-privacy.php:204
+msgid "Direct identifiers were removed. Non-attributable consent evidence remains until the configured retention period expires."
+msgstr ""
+
+#: includes/class-privacy.php:223
+msgid "This site uses UK Cookie Consent Manager to record cookie choices. Each decision may include a random receipt identifier, UTC time, selected categories, policy and plugin versions, a site identifier, an optional WordPress user ID, a masked IP address and a keyed non-reversible IP fingerprint. Complete IP storage is disabled by default; if enabled by the site operator it is encrypted at rest. Consent records remain on this WordPress site, are not sent to Rushleigh Consulting by default, and are retained for the period configured by the site operator (365 days by default). Logged-in users may request export or erasure through the WordPress privacy tools. Erasure removes account and IP identifiers while non-attributable consent evidence remains until retention cleanup."
+msgstr ""
+
+#: includes/class-resource-rules.php:213
+msgid "Optional embedded content"
+msgstr ""
+
+#: includes/class-scan-findings.php:185
+msgid "You are not allowed to view scan findings."
+msgstr ""
+
+#: includes/class-scan-findings.php:220
+msgid "You are not allowed to review scan findings."
+msgstr ""
+
+#: includes/class-scan-findings.php:226
+msgid "The scan finding review request is invalid."
+msgstr ""
+
+#: includes/class-scan-findings.php:241
+msgid "The scan finding could not be reviewed."
+msgstr ""
+
+#: includes/class-scan-findings.php:245
+msgid "The scan finding is no longer pending review."
+msgstr ""
+
+#. translators: %d: actionable finding count.
+#: includes/class-scan-findings.php:427
+#, php-format
+msgid "Cookie scan found %d item(s) requiring review"
+msgstr ""
+
+#. translators: 1: scan ID, 2: new count, 3: changed count, 4: administration URL.
+#: includes/class-scan-findings.php:432
+#, php-format
+msgid ""
+"Scan %1$d created %2$d new and %3$d changed finding(s).\n"
+"\n"
+"Review summary: %4$s"
+msgstr ""
+
+#: includes/class-scanner.php:88
+msgid "Every 30 days"
+msgstr ""
+
+#: includes/class-scanner.php:126
+msgid "The browser runner could not be authenticated."
+msgstr ""
+
+#: includes/class-scanner.php:133
+msgid "The browser runner request limit has been reached."
+msgstr ""
+
+#: includes/class-scanner.php:140
+msgid "Browser observations must be supplied as a list."
+msgstr ""
+
+#: includes/class-scanner.php:199
+msgid "A scan target is not a valid public URL."
+msgstr ""
+
+#: includes/class-scanner.php:219
+msgid "Scan targets must be same-origin public URLs without credentials or fragments."
+msgstr ""
+
+#: includes/class-scanner.php:223
+msgid "Private and reserved network targets are not allowed."
+msgstr ""
+
+#: includes/class-scanner.php:227
+msgid "The target failed WordPress safe-HTTP validation."
+msgstr ""
+
+#: includes/class-scanner.php:435
+#: includes/class-scanner.php:903
+msgid "You are not allowed to run cookie scans."
+msgstr ""
+
+#: includes/class-scanner.php:498
+#: includes/class-scanner.php:945
+msgid "The scan run could not be created."
+msgstr ""
+
+#: includes/class-scanner.php:560
+msgid "This scan batch is already running."
+msgstr ""
+
+#: includes/class-scanner.php:688
+msgid "The scan progress could not be saved and can be resumed after review."
+msgstr ""
+
+#: includes/class-scanner.php:701
+msgid "The scan batch failed and can be resumed after review."
+msgstr ""
+
+#: includes/class-scanner.php:717
+msgid "You are not allowed to cancel cookie scans."
+msgstr ""
+
+#: includes/class-scanner.php:727
+msgid "This scan is not cancellable."
+msgstr ""
+
+#: includes/class-scanner.php:758
+msgid "You are not allowed to resume cookie scans."
+msgstr ""
+
+#: includes/class-scanner.php:768
+msgid "This scan is not resumable."
+msgstr ""
+
+#: includes/class-scanner.php:803
+msgid "You are not allowed to add browser observations."
+msgstr ""
+
+#: includes/class-scanner.php:809
+msgid "The browser check status is invalid."
+msgstr ""
+
+#: includes/class-scanner.php:828
+msgid "The server crawl must complete before browser observations are added."
+msgstr ""
+
+#: includes/class-scanner.php:874
+msgid "The browser observations could not be saved."
+msgstr ""
+
+#: includes/class-scanner.php:907
+msgid "A cookie scan is already running."
+msgstr ""
+
+#: includes/class-scanner.php:1164
+msgid "The scan run was not found."
+msgstr ""
+
+#: includes/class-scanner.php:1261
+msgid "You are not allowed to view scan runs."
+msgstr ""
+
+#: includes/class-scanner.php:1362
+msgid "At least one valid public scan target is required."
+msgstr ""
+
+#: includes/class-secure-updater.php:149
+msgid "The latest authenticated release is not compatible with this WordPress or PHP version."
+msgstr ""
+
+#: includes/class-secure-updater.php:228
+msgid "The update package does not match authenticated release metadata."
+msgstr ""
+
+#: includes/class-secure-updater.php:234
+msgid "WordPress could not create a temporary update file."
+msgstr ""
+
+#: includes/class-secure-updater.php:249
+msgid "The update download failed authentication or checksum verification."
+msgstr ""
+
+#: includes/class-secure-updater.php:267
+msgid "The update manifest is incomplete."
+msgstr ""
+
+#: includes/class-secure-updater.php:285
+msgid "The update manifest has incomplete staged-rollout data."
+msgstr ""
+
+#: includes/class-secure-updater.php:302
+msgid "The update manifest contains invalid release data."
+msgstr ""
+
+#: includes/class-secure-updater.php:312
+msgid "The update manifest signature cannot be verified."
+msgstr ""
+
+#: includes/class-secure-updater.php:320
+msgid "The update manifest signature is invalid."
+msgstr ""
+
+#: includes/class-secure-updater.php:419
+msgid "UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically."
+msgstr ""
+
+#: includes/class-secure-updater.php:651
+msgid "The authenticated update information could not be retrieved."
+msgstr ""
+
+#: includes/class-secure-updater.php:655
+msgid "The update manifest is not valid JSON."
+msgstr ""
+
+#: includes/class-settings.php:222
+msgid "Choose colours in the six-digit format shown, for example #174ea6."
+msgstr ""
+
+#: includes/class-settings.php:249
+msgid "Banner text must have at least 4.5:1 contrast against the banner background."
+msgstr ""
+
+#: includes/class-settings.php:250
+msgid "Banner supporting text must have at least 4.5:1 contrast against the banner background."
+msgstr ""
+
+#: includes/class-settings.php:251
+msgid "Button text must have at least 4.5:1 contrast against the button colour."
+msgstr ""
+
+#: includes/class-settings.php:252
+msgid "Buttons must have at least 3:1 contrast against the banner background."
+msgstr ""
+
+#: assets/js/scan-progress.js:19
+msgid "The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress."
+msgstr ""
+
+#. translators: 1: number of pages checked, 2: number of pages remaining.
+#: assets/js/scan-progress.js:51
+#, js-format
+msgid "%1$d checked; %2$d remaining."
+msgstr ""
+
+#: assets/js/scan-progress.js:71
+msgid "The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume."
+msgstr ""
+
+#: assets/js/scan-runner.js:19
+msgid "Before a choice"
+msgstr ""
+
+#: assets/js/scan-runner.js:22
+msgid "Functional only"
+msgstr ""
+
+#: assets/js/scan-runner.js:23
+msgid "Analytics only"
+msgstr ""
+
+#: assets/js/scan-runner.js:24
+msgid "Marketing only"
+msgstr ""
+
+#: assets/js/scan-runner.js:296
+msgid "Cookie scan temporary visitor frame"
+msgstr ""
+
+#: assets/js/scan-runner.js:311
+msgid "Cookie scan preparation"
+msgstr ""
+
+#: assets/js/scan-runner.js:346
+msgid "The browser check could not be saved."
+msgstr ""
+
+#. translators: 1: current page number, 2: total pages, 3: consent scenario.
+#: assets/js/scan-runner.js:368
+#, js-format
 msgid "Checking page %1$d of %2$d (%3$s)…"
+msgstr ""
+
+#: assets/js/scan-runner.js:400
+msgid "Browser check saved. Reload this scan to review the results."
+msgstr ""
+
+#: assets/js/scan-runner.js:401
+msgid "Browser check saved, but some pages could not be checked. Reload this scan for details."
+msgstr ""
+
+#: assets/js/scan-runner.js:416
+msgid "The browser check could not be completed."
 msgstr ""

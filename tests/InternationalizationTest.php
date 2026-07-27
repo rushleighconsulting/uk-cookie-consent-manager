@@ -106,6 +106,6 @@ final class InternationalizationTest extends TestCase {
 		self::assertIsString( $pot );
 		self::assertStringContainsString( 'msgid "Your cookie choices"', $pot );
 		self::assertStringContainsString( 'msgid "Checking page %1$d of %2$d (%3$s)…"', $pot );
-		self::assertStringContainsString( 'Plural-Forms: nplurals=2; plural=(n != 1);', $pot );
+		self::assertStringContainsString( 'msgid_plural "%d reviewed items"', $pot );
 	}
 }
