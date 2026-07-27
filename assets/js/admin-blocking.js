@@ -3,6 +3,10 @@
 
 	var editor = document.querySelector( '[data-uccm-rule-editor]' );
 	var config = window.UCCMBlockingEditor || {};
+	var i18n = window.wp && window.wp.i18n ? window.wp.i18n : {};
+	var __ = i18n.__ || function ( text ) {
+		return text;
+	};
 
 	if ( ! editor ) {
 		return;
@@ -28,7 +32,7 @@
 		var title = field( rule, 'title' ).value.trim();
 		var id = field( rule, 'id' ).value.trim();
 		rule.querySelector( '[data-uccm-rule-legend]' ).textContent =
-			title || id || config.newRule || 'New rule';
+			title || id || config.newRule || __( 'New rule', 'uk-cookie-consent-manager' );
 	}
 
 	function updateResourceFields( rule ) {
@@ -97,18 +101,18 @@
 			sourceField.setCustomValidity( '' );
 
 			if ( id && ids[ id ] ) {
-				idField.setCustomValidity( config.duplicateId || 'Each Rule ID must be unique.' );
+				idField.setCustomValidity( config.duplicateId || __( 'Each Rule ID must be unique.', 'uk-cookie-consent-manager' ) );
 				valid = false;
 			}
 			ids[ id ] = true;
 
 			if ( 'script' === typeField.value && ! handleField.value.trim() && ! source ) {
-				handleField.setCustomValidity( config.handleOrSource || 'Enter a WordPress handle or an HTTPS source.' );
+				handleField.setCustomValidity( config.handleOrSource || __( 'Enter a WordPress handle or an HTTPS source.', 'uk-cookie-consent-manager' ) );
 				valid = false;
 			}
 
 			if ( 'script' !== typeField.value && ! source ) {
-				sourceField.setCustomValidity( config.httpsSource || 'Enter a complete HTTPS source.' );
+				sourceField.setCustomValidity( config.httpsSource || __( 'Enter a complete HTTPS source.', 'uk-cookie-consent-manager' ) );
 				valid = false;
 			}
 
@@ -118,7 +122,7 @@
 						throw new Error( 'insecure' );
 					}
 				} catch ( error ) {
-					sourceField.setCustomValidity( config.httpsSource || 'Enter a complete HTTPS source.' );
+					sourceField.setCustomValidity( config.httpsSource || __( 'Enter a complete HTTPS source.', 'uk-cookie-consent-manager' ) );
 					valid = false;
 				}
 			}

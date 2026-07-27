@@ -29,7 +29,7 @@ temporary="$(mktemp -d)"
 trap 'rm -rf "${temporary}"' EXIT
 
 mkdir -p "${temporary}/${slug}" "${output_directory}"
-git archive --format=tar HEAD assets includes uninstall.php | tar -xf - -C "${temporary}/${slug}"
+git archive --format=tar HEAD assets includes languages uninstall.php | tar -xf - -C "${temporary}/${slug}"
 git show "HEAD:wordpress-org/uk-cookie-consent-manager.php" > "${temporary}/${slug}/uk-cookie-consent-manager.php"
 git show "HEAD:wordpress-org/class-secure-updater.php" > "${temporary}/${slug}/includes/class-secure-updater.php"
 git show "HEAD:wordpress-org/readme.txt" > "${temporary}/${slug}/readme.txt"

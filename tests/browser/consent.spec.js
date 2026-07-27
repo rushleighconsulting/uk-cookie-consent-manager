@@ -71,9 +71,19 @@ const fixture = `
 
 async function boot( page, options = {} ) {
 	const receipts = [];
-	const pageFixture = options.restoredDialogOpen
+	let pageFixture = options.restoredDialogOpen
 		? fixture.replace( '<dialog id="uccm-preferences"', '<dialog open id="uccm-preferences"' )
 		: fixture;
+
+	if ( options.rtlTranslated ) {
+		pageFixture = pageFixture
+			.replace( '<html lang="en">', '<html lang="ar" dir="rtl">' )
+			.replace( 'Your cookie choices', 'خيارات ملفات تعريف الارتباط' )
+			.replace( 'Accept all', 'قبول الكل' )
+			.replace( 'Reject non-essential', 'رفض غير الضروري' )
+			.replace( 'Manage preferences', 'إدارة التفضيلات' )
+			.replaceAll( 'Cookie settings', 'إعدادات ملفات تعريف الارتباط' );
+	}
 
 	await page.addInitScript( () => {
 		window.uccmConsentConfig = {
@@ -309,6 +319,21 @@ test( 'mobile landscape remains compact and fully visible', async ( { page } ) =
 	) );
 
 	expect( actionHeights.every( ( height ) => height >= 44 && height <= 72 ) ).toBe( true );
+} );
+
+test( 'right-to-left translated banner remains coherent and inside the viewport', async ( { page } ) => {
+	await page.setViewportSize( { width: 390, height: 844 } );
+	await boot( page, { rtlTranslated: true } );
+	await expectBannerWithinViewport( page );
+
+	await expect( page.locator( 'html' ) ).toHaveAttribute( 'dir', 'rtl' );
+	await expect( page.getByRole( 'heading', { name: 'خيارات ملفات تعريف الارتباط' } ) ).toBeVisible();
+	await expect( page.getByRole( 'button', { name: 'قبول الكل' } ) ).toBeVisible();
+	await expect( page.getByRole( 'button', { name: 'رفض غير الضروري' } ) ).toBeVisible();
+	await expect( page.getByRole( 'button', { name: 'إدارة التفضيلات' } ) ).toBeVisible();
+
+	const direction = await page.locator( '#uccm-banner' ).evaluate( ( element ) => getComputedStyle( element ).direction );
+	expect( direction ).toBe( 'rtl' );
 } );
 
 test( 'constrained portrait view keeps enlarged content reachable by touch scrolling', async ( { page } ) => {

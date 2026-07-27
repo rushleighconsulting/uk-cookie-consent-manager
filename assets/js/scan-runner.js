@@ -2,21 +2,31 @@
 	'use strict';
 
 	var config = window.UCCMScanRunner || {};
+	var i18n = window.wp && window.wp.i18n ? window.wp.i18n : {};
+	var __ = i18n.__ || function ( text ) {
+		return text;
+	};
+	var sprintf = i18n.sprintf || function ( format ) {
+		var values = Array.prototype.slice.call( arguments, 1 );
+		return format.replace( /%(\d+)\$[ds]/g, function ( match, position ) {
+			return String( values[ Number( position ) - 1 ] ?? match );
+		} );
+	};
 	var button = document.getElementById( 'uccm-run-browser-observations' );
 	var status = document.getElementById( 'uccm-browser-observation-status' );
 	var optionalCategories = [ 'functional', 'analytics', 'marketing' ];
 	var scenarios = [
-		{ name: 'pre-consent', action: '', allowed: [] },
-		{ name: 'reject', action: 'reject', allowed: [] },
-		{ name: 'accept-all', action: 'grant', allowed: optionalCategories },
-		{ name: 'functional', action: 'grant', allowed: [ 'functional' ] },
-		{ name: 'analytics', action: 'grant', allowed: [ 'analytics' ] },
-		{ name: 'marketing', action: 'grant', allowed: [ 'marketing' ] }
+		{ name: 'pre-consent', label: __( 'Before a choice', 'uk-cookie-consent-manager' ), action: '', allowed: [] },
+		{ name: 'reject', label: __( 'Reject non-essential', 'uk-cookie-consent-manager' ), action: 'reject', allowed: [] },
+		{ name: 'accept-all', label: __( 'Accept all', 'uk-cookie-consent-manager' ), action: 'grant', allowed: optionalCategories },
+		{ name: 'functional', label: __( 'Functional only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'functional' ] },
+		{ name: 'analytics', label: __( 'Analytics only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'analytics' ] },
+		{ name: 'marketing', label: __( 'Marketing only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'marketing' ] }
 	];
 	var sourceLimit = 20;
 	var protectedLookup = {};
 	var isolatedContextAvailable = 'credentialless' in HTMLIFrameElement.prototype;
-	var browserRequirement = 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.';
+	var browserRequirement = __( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'uk-cookie-consent-manager' );
 
 	if ( ! button || ! status || ! Array.isArray( config.targets ) ) {
 		return;
@@ -283,7 +293,7 @@
 				form.submit();
 			}
 
-			frame.setAttribute( 'title', 'Cookie scan temporary visitor frame' );
+			frame.setAttribute( 'title', __( 'Cookie scan temporary visitor frame', 'uk-cookie-consent-manager' ) );
 			frame.credentialless = true;
 			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
 			timer = window.setTimeout( function () {
@@ -298,7 +308,15 @@
 
 				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
 				frame.addEventListener( 'load', submitProtectedBootstrap );
-				frame.srcdoc = '<!doctype html><title>Cookie scan preparation</title>';
+				frame.srcdoc = '<!doctype html><title>' + __( 'Cookie scan preparation', 'uk-cookie-consent-manager' ).replace( /[&<>"']/g, function ( character ) {
+					return {
+						'&': '&amp;',
+						'<': '&lt;',
+						'>': '&gt;',
+						'"': '&quot;',
+						"'": '&#039;'
+					}[ character ];
+				} ) + '</title>';
 				document.body.appendChild( frame );
 				return;
 			}
@@ -325,7 +343,7 @@
 		var result = await response.json();
 
 		if ( ! response.ok || ! result.success ) {
-			throw new Error( result.data && result.data.message ? result.data.message : 'The browser check could not be saved.' );
+			throw new Error( result.data && result.data.message ? result.data.message : __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
 		}
 	}
 
@@ -345,7 +363,13 @@
 
 			for ( var targetIndex = 0; targetIndex < targets.length; targetIndex += 1 ) {
 				for ( var scenarioIndex = 0; scenarioIndex < scenarios.length; scenarioIndex += 1 ) {
-					announce( 'Checking page ' + ( targetIndex + 1 ) + ' of ' + targets.length + ' (' + scenarios[ scenarioIndex ].name + ')…' );
+					announce( sprintf(
+						/* translators: 1: current page number, 2: total pages, 3: consent scenario. */
+						__( 'Checking page %1$d of %2$d (%3$s)…', 'uk-cookie-consent-manager' ),
+						targetIndex + 1,
+						targets.length,
+						scenarios[ scenarioIndex ].label
+					) );
 					try {
 						await inspectScenario( targets[ targetIndex ], scenarios[ scenarioIndex ], collected, !! protectedLookup[ targets[ targetIndex ] ] );
 						completedSteps += 1;
@@ -373,8 +397,8 @@
 			} );
 
 			announce( 'completed' === finalStatus
-				? 'Browser check saved. Reload this scan to review the results.'
-				: 'Browser check saved, but some pages could not be checked. Reload this scan for details.' );
+				? __( 'Browser check saved. Reload this scan to review the results.', 'uk-cookie-consent-manager' )
+				: __( 'Browser check saved, but some pages could not be checked. Reload this scan for details.', 'uk-cookie-consent-manager' ) );
 		} catch ( error ) {
 			try {
 				await submit( {
@@ -389,7 +413,7 @@
 			} catch ( submitError ) {
 				// Do not replace the original failure message.
 			}
-			announce( error instanceof Error ? error.message : 'The browser check could not be completed.' );
+			announce( error instanceof Error ? error.message : __( 'The browser check could not be completed.', 'uk-cookie-consent-manager' ) );
 		} finally {
 			button.disabled = false;
 		}
