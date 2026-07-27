@@ -312,3 +312,41 @@ jobs:
               throw new \RuntimeException( "Network-wide deletion was enabled by default." );
           }
           ' --path="${RUNNER_TEMP}/wordpress"
+
+  wordpress-org-package:
+    name: WordPress.org package and Plugin Check
+    runs-on: ubuntu-latest
+    needs:
+      - package-build
+
+    steps:
+      - name: Check out source with release history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build directory-safe package
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^ \* Version:[[:space:]]*//p' uk-cookie-consent-manager.php)"
+          bash scripts/build-wordpress-org-package.sh "${version}"
+          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run WordPress Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: dist/wordpress-org/uk-cookie-consent-manager
+
+      - name: Upload directory preparation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: uccm-wordpress-org-${{ steps.package.outputs.version }}
+          path: |
+            dist/wordpress-org/uk-cookie-consent-manager
+            dist/wordpress-org/SOURCE-MANIFEST.sha256
+            wordpress-org/assets
+          if-no-files-found: error
+          retention-days: 7

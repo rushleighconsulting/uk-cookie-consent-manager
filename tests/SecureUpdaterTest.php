@@ -77,6 +77,13 @@ final class SecureUpdaterTest extends TestCase {
 		self::assertArrayHasKey( 'automatic_updates_complete', $GLOBALS['uccm_test_actions'] );
 	}
 
+	public function test_github_distribution_reports_its_update_channel(): void {
+		$status = Secure_Updater::status();
+
+		self::assertSame( 'GitHub releases', $status['channel'] );
+		self::assertStringContainsString( 'GitHub repository', $status['channel_description'] );
+	}
+
 	public function test_first_plugins_screen_visit_primes_wordpress_update_metadata_once(): void {
 		$GLOBALS['uccm_test_capabilities']['update_plugins']       = true;
 		$GLOBALS['uccm_test_site_transients']['update_plugins']    = array( 'checked' => array() );

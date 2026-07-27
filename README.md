@@ -326,6 +326,21 @@ GitHub Actions secret containing a base64 Ed25519 seed (32 bytes) or secret key
 (64 bytes). The corresponding non-secret public key is embedded in the plugin.
 The private key must never be committed or placed in the plugin ZIP.
 
+## WordPress.org distribution
+
+The repository also contains a separately verified WordPress.org distribution
+path. It removes the external Update URI and signed GitHub updater from the
+directory package, so WordPress.org remains the only executable update service
+for directory-installed copies.
+
+The approval-gated workflow publishes only an immutable stable Git tag, copies
+the directory package and assets to the provisioned SVN repository, and then
+stops for WordPress.org Release Confirmation. Submission, SVN publication,
+release visibility and installed-site acceptance remain separate gates.
+
+See [WordPress.org Plugin Directory release](docs/WORDPRESS-ORG-RELEASE.md) for
+the distribution boundary, prerequisites, credentials and evidence procedure.
+
 
 ## WordPress privacy tools and security boundaries
 

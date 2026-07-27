@@ -1327,10 +1327,10 @@ final class Admin {
 		self::saved_notice();
 
 		echo '<h2>' . esc_html__( 'Updates', 'uk-cookie-consent-manager' ) . '</h2>';
-		echo '<p>' . esc_html__( 'UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html( (string) $status['channel_description'] ) . '</p>';
 		echo '<table class="widefat striped" style="max-width:900px"><tbody>';
 		echo '<tr><th scope="row">' . esc_html__( 'Installed version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) $status['installed_version'] ) . '</code></td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Latest authenticated version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Latest available version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Update channel', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( (string) $status['channel'] ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Last successful check (UTC)', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['last_successful_check_at'] ? (string) $status['last_successful_check_at'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Last update outcome', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['last_update_outcome'] ? (string) $status['last_update_outcome'] : __( 'No update recorded yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
