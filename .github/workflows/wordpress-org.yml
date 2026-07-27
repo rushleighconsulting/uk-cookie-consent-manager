@@ -1,0 +1,152 @@
+name: WordPress.org publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Immutable stable Git tag to publish, for example v1.0.0
+        required: true
+        type: string
+      release_confirmation:
+        description: Confirm that this exact tag has passed review and may be committed to WordPress.org SVN
+        required: true
+        default: NOT APPROVED
+        type: choice
+        options:
+          - NOT APPROVED
+          - APPROVED
+      support_and_security_routes:
+        description: Confirm UCCM-34 support intake and UCCM-35 private security reporting are operational
+        required: true
+        default: NOT VERIFIED
+        type: choice
+        options:
+          - NOT VERIFIED
+          - VERIFIED
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wordpress-org-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare exact tagged WordPress.org distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the approved tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Validate stable immutable tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${{ inputs.tag }}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test "$(git describe --tags --exact-match HEAD)" = "${{ inputs.tag }}"
+          version="${{ inputs.tag }}"
+          version="${version#v}"
+          test "$(sed -n 's/^ \* Version:[[:space:]]*//p' uk-cookie-consent-manager.php)" = "${version}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build directory-safe package from tagged files
+        run: bash scripts/build-wordpress-org-package.sh "${{ steps.version.outputs.version }}"
+
+      - name: Verify package and directory assets
+        run: bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+
+      - name: Run WordPress Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: dist/wordpress-org/uk-cookie-consent-manager
+
+      - name: Upload reviewed publication material
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordpress-org-${{ steps.version.outputs.version }}
+          path: |
+            dist/wordpress-org/uk-cookie-consent-manager
+            dist/wordpress-org/SOURCE-MANIFEST.sha256
+            wordpress-org/assets
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Commit approved tag to WordPress.org SVN
+    needs: prepare
+    if: inputs.release_confirmation == 'APPROVED' && inputs.support_and_security_routes == 'VERIFIED'
+    runs-on: ubuntu-latest
+    environment: wordpress-org-release
+
+    steps:
+      - name: Check out the approved tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Validate credentials and stable tag
+        id: version
+        env:
+          WORDPRESS_ORG_USERNAME: ${{ secrets.WORDPRESS_ORG_USERNAME }}
+          WORDPRESS_ORG_PASSWORD: ${{ secrets.WORDPRESS_ORG_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${WORDPRESS_ORG_USERNAME}"
+          test -n "${WORDPRESS_ORG_PASSWORD}"
+          [[ "${{ inputs.tag }}" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test "$(git describe --tags --exact-match HEAD)" = "${{ inputs.tag }}"
+          version="${{ inputs.tag }}"
+          version="${version#v}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Rebuild and verify exact tagged material
+        run: |
+          bash scripts/build-wordpress-org-package.sh "${{ steps.version.outputs.version }}"
+          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+
+      - name: Check out provisioned WordPress.org SVN repository
+        run: svn checkout --depth immediates https://plugins.svn.wordpress.org/uk-cookie-consent-manager "${RUNNER_TEMP}/wordpress-org-svn"
+
+      - name: Stage trunk, immutable tag and directory assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          svn update --set-depth infinity "${RUNNER_TEMP}/wordpress-org-svn/trunk"
+          svn update --set-depth infinity "${RUNNER_TEMP}/wordpress-org-svn/assets"
+          if svn info "https://plugins.svn.wordpress.org/uk-cookie-consent-manager/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "WordPress.org tag ${{ steps.version.outputs.version }} already exists; refusing to replace it." >&2
+            exit 1
+          fi
+          mkdir -p "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}"
+          rsync -a --delete dist/wordpress-org/uk-cookie-consent-manager/ "${RUNNER_TEMP}/wordpress-org-svn/trunk/"
+          rsync -a dist/wordpress-org/uk-cookie-consent-manager/ "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}/"
+          rsync -a --delete wordpress-org/assets/ "${RUNNER_TEMP}/wordpress-org-svn/assets/"
+          svn add --force "${RUNNER_TEMP}/wordpress-org-svn/trunk" "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}" "${RUNNER_TEMP}/wordpress-org-svn/assets"
+          svn status "${RUNNER_TEMP}/wordpress-org-svn" | awk '/^!/ { print substr($0, 9) }' | while IFS= read -r missing; do
+            svn rm "${missing}"
+          done
+          svn status "${RUNNER_TEMP}/wordpress-org-svn"
+
+      - name: Commit to WordPress.org SVN
+        env:
+          WORDPRESS_ORG_USERNAME: ${{ secrets.WORDPRESS_ORG_USERNAME }}
+          WORDPRESS_ORG_PASSWORD: ${{ secrets.WORDPRESS_ORG_PASSWORD }}
+        run: |
+          svn commit "${RUNNER_TEMP}/wordpress-org-svn" \
+            --message "Release ${{ steps.version.outputs.version }} from Git tag ${{ inputs.tag }} (${GITHUB_SHA})" \
+            --username "${WORDPRESS_ORG_USERNAME}" \
+            --password "${WORDPRESS_ORG_PASSWORD}" \
+            --non-interactive \
+            --no-auth-cache
+
+      - name: Record required WordPress.org release confirmation
+        run: |
+          echo "::notice::SVN publication completed. A WordPress.org committer must now approve the pending release in the WordPress.org Release Management dashboard."

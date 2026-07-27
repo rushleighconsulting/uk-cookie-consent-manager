@@ -12,3 +12,4 @@
 /package.json export-ignore
 /package-lock.json export-ignore
 /playwright.config.js export-ignore
+/wordpress-org export-ignore

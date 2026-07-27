@@ -353,7 +353,7 @@ final class Multisite {
 		) . '</td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Network schema version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) get_site_option( self::VERSION_OPTION, '' ) ) . '</code></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Installed plugin version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) $status['installed_version'] ) . '</code></td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Latest authenticated version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Latest available version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
 		echo '</tbody></table><p><a class="button" href="' . esc_url( network_admin_url( 'plugins.php' ) ) . '">' . esc_html__( 'Manage network plugins and updates', 'uk-cookie-consent-manager' ) . '</a></p>';
 
 		echo '<h2>' . esc_html__( 'Network defaults', 'uk-cookie-consent-manager' ) . '</h2>';

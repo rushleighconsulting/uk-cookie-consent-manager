@@ -416,6 +416,7 @@ final class Secure_Updater {
 		return array_merge(
 			array(
 				'channel'                  => 'GitHub releases',
+				'channel_description'      => __( 'UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically.', 'uk-cookie-consent-manager' ),
 				'installed_version'        => UCCM_VERSION,
 				'latest_version'           => '',
 				'last_checked_at'          => '',
