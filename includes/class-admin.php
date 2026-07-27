@@ -41,7 +41,7 @@ final class Admin {
 	}
 
 	/**
-	 * Return the nine-screen administration contract.
+	 * Return the ten-screen administration contract.
 	 *
 	 * @return array<string, array{title: string, capability: string, callback: callable}>
 	 */
@@ -91,6 +91,11 @@ final class Admin {
 				'title'      => __( 'Advanced', 'uk-cookie-consent-manager' ),
 				'capability' => 'manage_uccm_settings',
 				'callback'   => array( self::class, 'render_advanced' ),
+			),
+			'uccm-help'       => array(
+				'title'      => __( 'Help', 'uk-cookie-consent-manager' ),
+				'capability' => 'manage_uccm_settings',
+				'callback'   => array( self::class, 'render_help' ),
 			),
 		);
 	}
@@ -703,6 +708,24 @@ final class Admin {
 		self::open_page( __( 'Cookie Consent Overview', 'uk-cookie-consent-manager' ) );
 		echo '<p>' . esc_html__( 'Set up your cookie banner, review what your site stores, and check visitors’ choices.', 'uk-cookie-consent-manager' ) . '</p>';
 		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Scans continue in the background. Anything new is listed for you to review before it is added to your cookie list.', 'uk-cookie-consent-manager' ) . '</p></div>';
+		self::close_page();
+	}
+
+	/**
+	 * Render support and private security-reporting guidance.
+	 */
+	public static function render_help(): void {
+		self::require_capability( 'manage_uccm_settings' );
+		$security_url   = 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/advisories/new';
+		$security_email = 'security@rushleighconsulting.co.uk';
+
+		self::open_page( __( 'Help', 'uk-cookie-consent-manager' ) );
+		echo '<h2>' . esc_html__( 'Report a security vulnerability privately', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Do not post suspected vulnerabilities in a public support forum, ordinary bug report or social-media message.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p><a class="button button-primary" href="' . esc_url( $security_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open the private vulnerability form', 'uk-cookie-consent-manager' ) . '</a></p>';
+		echo '<p>' . esc_html__( 'If the private form is unavailable, email:', 'uk-cookie-consent-manager' ) . ' <a href="' . esc_attr( 'mailto:' . $security_email ) . '">' . esc_html( $security_email ) . '</a></p>';
+		echo '<p>' . esc_html__( 'Before sending evidence, remove consent records, cookie values, complete IP addresses, credentials, access tokens, database exports and unrelated personal data.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<p>' . esc_html__( 'Security reports are acknowledged separately from severity assessment, remediation, release and public disclosure.', 'uk-cookie-consent-manager' ) . '</p>';
 		self::close_page();
 	}
 

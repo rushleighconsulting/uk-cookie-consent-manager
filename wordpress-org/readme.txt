@@ -87,6 +87,19 @@ Follow the private reporting instructions in the Security section of the
 project repository:
 https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/policy
 
+== Security ==
+
+Report suspected vulnerabilities privately through GitHub Private Vulnerability
+Reporting:
+
+https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/advisories/new
+
+If that form is unavailable, email security@rushleighconsulting.co.uk. Do not
+post vulnerability details in a public support topic or ordinary bug report.
+Before sending evidence, remove consent records, cookie values, complete IP
+addresses, credentials, access tokens, database exports and unrelated personal
+data. See the repository SECURITY.md for the coordinated-disclosure process.
+
 == Changelog ==
 
 = 0.1.0-rc.16 =

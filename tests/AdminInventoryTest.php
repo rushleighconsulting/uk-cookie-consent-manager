@@ -30,18 +30,20 @@ final class AdminInventoryTest extends TestCase {
 		$GLOBALS['uccm_test_localized']        = array();
 	}
 
-	public function test_nine_capability_separated_admin_screens_are_registered(): void {
+	public function test_ten_capability_separated_admin_screens_are_registered(): void {
 		$screens = Admin::screens();
 
-		self::assertCount( 9, $screens );
+		self::assertCount( 10, $screens );
 		self::assertSame( 'manage_uccm_inventory', $screens['uccm-inventory']['capability'] );
 		self::assertSame( 'view_uccm_consents', $screens['uccm-consents']['capability'] );
 		self::assertSame( 'run_uccm_scans', $screens['uccm-scans']['capability'] );
 		self::assertSame( 'View Categories', $screens['uccm-categories']['title'] );
+		self::assertSame( 'Help', $screens['uccm-help']['title'] );
+		self::assertSame( 'manage_uccm_settings', $screens['uccm-help']['capability'] );
 
 		Admin::register_menu();
 		self::assertCount( 1, $GLOBALS['uccm_test_admin_menus'] );
-		self::assertCount( 9, $GLOBALS['uccm_test_admin_submenus'] );
+		self::assertCount( 10, $GLOBALS['uccm_test_admin_submenus'] );
 	}
 
 	public function test_overview_uses_plain_language_for_actions_and_scan_results(): void {
@@ -58,6 +60,20 @@ final class AdminInventoryTest extends TestCase {
 		self::assertStringNotContainsString( 'privacy-preserving evidence', $markup );
 		self::assertStringNotContainsString( 'resumable background batches', $markup );
 		self::assertStringNotContainsString( 'curated inventory', $markup );
+	}
+
+	public function test_help_screen_publishes_private_security_routes_and_data_warning(): void {
+		$GLOBALS['uccm_test_capabilities']['manage_uccm_settings'] = true;
+
+		ob_start();
+		Admin::render_help();
+		$markup = (string) ob_get_clean();
+
+		self::assertStringContainsString( 'Report a security vulnerability privately', $markup );
+		self::assertStringContainsString( 'security/advisories/new', $markup );
+		self::assertStringContainsString( 'security@rushleighconsulting.co.uk', $markup );
+		self::assertStringContainsString( 'Do not post suspected vulnerabilities in a public support forum', $markup );
+		self::assertStringContainsString( 'remove consent records, cookie values, complete IP addresses, credentials, access tokens, database exports', $markup );
 	}
 
 	public function test_settings_are_bounded_and_proxy_addresses_are_validated(): void {
