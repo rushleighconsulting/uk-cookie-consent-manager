@@ -613,6 +613,10 @@ function plugin_basename( string $file ): string {
 	return basename( dirname( $file ) ) . '/' . basename( $file );
 }
 
+function plugin_dir_path( string $file ): string {
+	return rtrim( dirname( $file ), '/\\' ) . '/';
+}
+
 function get_bloginfo( string $show = '' ): string {
 	return 'version' === $show ? '6.8' : '';
 }
