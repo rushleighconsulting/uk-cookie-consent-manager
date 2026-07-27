@@ -55,7 +55,7 @@ final class InternationalizationTest extends TestCase {
 		self::assertSame(
 			array(
 				'domain' => 'uk-cookie-consent-manager',
-				'path'   => UCCM_PLUGIN_DIR . 'languages',
+				'path'   => plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages',
 			),
 			$GLOBALS['uccm_test_script_translations']['uccm-scan-progress']
 		);

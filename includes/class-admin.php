@@ -561,7 +561,7 @@ final class Admin {
 		}
 
 		wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array( 'wp-i18n' ), UCCM_VERSION, true );
-		wp_set_script_translations( 'uccm-scan-progress', 'uk-cookie-consent-manager', UCCM_PLUGIN_DIR . 'languages' );
+		wp_set_script_translations( 'uccm-scan-progress', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 		wp_localize_script(
 			'uccm-scan-progress',
 			'UCCMScanProgress',
@@ -839,7 +839,7 @@ final class Admin {
 			UCCM_VERSION,
 			true
 		);
-		wp_set_script_translations( 'uccm-blocking-editor', 'uk-cookie-consent-manager', UCCM_PLUGIN_DIR . 'languages' );
+		wp_set_script_translations( 'uccm-blocking-editor', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 		wp_localize_script(
 			'uccm-blocking-editor',
 			'UCCMBlockingEditor',
@@ -1006,7 +1006,7 @@ final class Admin {
 			$consent_config    = Consent_State::configuration();
 
 			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array( 'wp-i18n' ), UCCM_VERSION, true );
-			wp_set_script_translations( 'uccm-scan-runner', 'uk-cookie-consent-manager', UCCM_PLUGIN_DIR . 'languages' );
+			wp_set_script_translations( 'uccm-scan-runner', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 			wp_localize_script(
 				'uccm-scan-runner',
 				'UCCMScanRunner',
