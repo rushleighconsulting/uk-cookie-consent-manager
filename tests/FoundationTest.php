@@ -56,6 +56,8 @@ final class FoundationTest extends TestCase {
 
 		self::assertCount( 4, $schema );
 		self::assertStringContainsString( 'CREATE TABLE wp_uccm_consents', $schema[0] );
+		self::assertStringContainsString( 'language varchar(20)', $schema[0] );
+		self::assertStringContainsString( 'wording_version varchar(40)', $schema[0] );
 		self::assertStringContainsString( 'CREATE TABLE wp_uccm_cookie_inventory', $schema[1] );
 		self::assertStringContainsString( 'CREATE TABLE wp_uccm_scan_runs', $schema[2] );
 		self::assertStringContainsString( 'CREATE TABLE wp_uccm_scan_findings', $schema[3] );

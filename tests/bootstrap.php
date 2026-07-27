@@ -66,6 +66,7 @@ $GLOBALS['uccm_test_site_options']        = array();
 $GLOBALS['uccm_test_site_options_by_blog'] = array();
 $GLOBALS['uccm_test_blog_stack']          = array();
 $GLOBALS['uccm_test_switched_blogs']      = array();
+$GLOBALS['uccm_test_polylang_locale']     = '';
 
 /**
  * Minimal wpdb test double.
@@ -496,6 +497,11 @@ function apply_filters( string $hook, mixed $value, mixed ...$arguments ): mixed
 	return $value;
 }
 
+function pll_current_language( string $field = 'slug' ): string {
+	unset( $field );
+	return (string) $GLOBALS['uccm_test_polylang_locale'];
+}
+
 /**
  * Fire and capture test actions.
  *
@@ -803,6 +809,7 @@ require_once dirname( __DIR__ ) . '/includes/class-activator.php';
 require_once dirname( __DIR__ ) . '/includes/class-consent-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-crawler.php';
 require_once dirname( __DIR__ ) . '/includes/class-settings.php';
+require_once dirname( __DIR__ ) . '/includes/class-language-content.php';
 require_once dirname( __DIR__ ) . '/includes/class-post-password-access.php';
 require_once dirname( __DIR__ ) . '/includes/class-operational-alerts.php';
 require_once dirname( __DIR__ ) . '/includes/class-resource-rules.php';

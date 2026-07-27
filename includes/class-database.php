@@ -17,7 +17,7 @@ final class Database {
 	/**
 	 * Current schema version.
 	 */
-	public const SCHEMA_VERSION = '1.0.0';
+	public const SCHEMA_VERSION = '1.1.0';
 
 	/**
 	 * Option containing the installed schema version.
@@ -96,6 +96,8 @@ final class Database {
 				action varchar(20) NOT NULL,
 				choices longtext NOT NULL,
 				policy_version varchar(40) NOT NULL,
+				language varchar(20) NOT NULL DEFAULT '',
+				wording_version varchar(40) NOT NULL DEFAULT '',
 				plugin_version varchar(40) NOT NULL,
 				site_identifier char(64) NOT NULL,
 				wp_user_id bigint(20) unsigned NULL,

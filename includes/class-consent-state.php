@@ -81,6 +81,8 @@ final class Consent_State {
 			$policy_version = self::POLICY_VERSION;
 		}
 
+		$language = Language_Content::resolve();
+
 		return array(
 			'cookieName'      => self::COOKIE_NAME,
 			'cookiePath'      => defined( 'COOKIEPATH' ) ? COOKIEPATH : '/',
@@ -89,6 +91,12 @@ final class Consent_State {
 			'lifetimeDays'    => $lifetime_days,
 			'receiptEndpoint' => rest_url( 'uccm/v1/consents' ),
 			'categories'      => self::categories(),
+			'locale'          => $language['locale'],
+			'requestedLocale' => $language['requestedLocale'],
+			'direction'       => $language['direction'],
+			'wordingVersion'  => (string) $language['content']['wording_version'],
+			'languageContent' => Language_Content::catalog(),
+			'defaultLocale'   => (string) ( $settings['default_content_locale'] ?? 'en_GB' ),
 			'messages'        => array(
 				'available' => __( 'Cookie choices are available.', 'uk-cookie-consent-manager' ),
 				'saved'     => __( 'Your cookie choices have been saved.', 'uk-cookie-consent-manager' ),

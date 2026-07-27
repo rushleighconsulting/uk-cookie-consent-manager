@@ -58,7 +58,9 @@ final class Consent_Interface {
 
 		$configuration = Consent_State::configuration();
 		$settings      = Settings::current();
-		$lifetime_days = (int) ( $configuration['lifetimeDays'] ?? 180 );
+		$language      = Language_Content::resolve();
+		$content       = $language['content'];
+		$categories    = $content['categories'];
 		$font_family   = 'theme' === (string) $settings['banner_font']
 			? 'inherit'
 			: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -72,41 +74,22 @@ final class Consent_Interface {
 			(int) $settings['banner_corner_radius'],
 			$font_family
 		);
-		$banner_copy   = sprintf(
-			/* translators: %d: configured consent lifetime. */
-			_n(
-				'We use one necessary cookie to remember your choice for %d day. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
-				'We use one necessary cookie to remember your choice for %d days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
-				$lifetime_days,
-				'uk-cookie-consent-manager'
-			),
-			$lifetime_days
-		);
-		$cookie_copy = sprintf(
-			/* translators: %d: configured consent lifetime. */
-			_n(
-				'We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
-				'We set one necessary cookie. This cookie remembers your cookie choices for %d days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
-				$lifetime_days,
-				'uk-cookie-consent-manager'
-			),
-			$lifetime_days
-		);
 		?>
-		<div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown" data-uccm-banner-position="<?php echo esc_attr( (string) $settings['banner_position'] ); ?>" data-uccm-icon-position="<?php echo esc_attr( (string) $settings['icon_position'] ); ?>" style="<?php echo esc_attr( $style ); ?>">
+		<div id="uccm-consent-root" class="uccm-consent" lang="<?php echo esc_attr( str_replace( '_', '-', (string) $language['locale'] ) ); ?>" dir="<?php echo esc_attr( (string) $language['direction'] ); ?>" data-uccm-locale="<?php echo esc_attr( (string) $language['locale'] ); ?>" data-uccm-wording-version="<?php echo esc_attr( (string) $content['wording_version'] ); ?>" data-uccm-state="unknown" data-uccm-banner-position="<?php echo esc_attr( (string) $settings['banner_position'] ); ?>" data-uccm-icon-position="<?php echo esc_attr( (string) $settings['icon_position'] ); ?>" style="<?php echo esc_attr( $style ); ?>">
 			<section id="uccm-banner" class="uccm-banner" role="region" aria-live="polite" aria-atomic="true" aria-labelledby="uccm-banner-title" aria-describedby="uccm-banner-copy" hidden>
 				<div class="uccm-banner__content">
-					<h2 id="uccm-banner-title" class="uccm-title"><?php esc_html_e( 'Your cookie choices', 'uk-cookie-consent-manager' ); ?></h2>
-					<p id="uccm-banner-copy" class="uccm-copy"><?php echo esc_html( $banner_copy ); ?></p>
+					<h2 id="uccm-banner-title" class="uccm-title"><?php echo esc_html( (string) $content['banner_title'] ); ?></h2>
+					<p id="uccm-banner-copy" class="uccm-copy"><?php echo esc_html( (string) $content['banner_copy'] ); ?></p>
+					<a class="uccm-policy-link" data-uccm-policy-link href="<?php echo esc_url( (string) $content['policy_url'] ); ?>"<?php echo '' === (string) $content['policy_url'] ? ' hidden' : ''; ?>><?php echo esc_html( (string) $content['policy_link_label'] ); ?></a>
 				</div>
 				<div class="uccm-actions uccm-actions--primary">
-					<button type="button" class="uccm-button" data-uccm-action="accept-all"><?php esc_html_e( 'Accept all', 'uk-cookie-consent-manager' ); ?></button>
-					<button type="button" class="uccm-button" data-uccm-action="reject-optional"><?php esc_html_e( 'Reject non-essential', 'uk-cookie-consent-manager' ); ?></button>
-					<button type="button" class="uccm-button" data-uccm-action="manage"><?php esc_html_e( 'Manage preferences', 'uk-cookie-consent-manager' ); ?></button>
+					<button type="button" class="uccm-button" data-uccm-action="accept-all"><?php echo esc_html( (string) $content['accept_all'] ); ?></button>
+					<button type="button" class="uccm-button" data-uccm-action="reject-optional"><?php echo esc_html( (string) $content['reject_optional'] ); ?></button>
+					<button type="button" class="uccm-button" data-uccm-action="manage"><?php echo esc_html( (string) $content['manage_preferences'] ); ?></button>
 				</div>
 			</section>
 
-			<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" aria-label="<?php esc_attr_e( 'Cookie settings', 'uk-cookie-consent-manager' ); ?>" data-uccm-label="<?php esc_attr_e( 'Cookie settings', 'uk-cookie-consent-manager' ); ?>" hidden>
+			<button type="button" class="uccm-settings" data-uccm-action="manage" aria-haspopup="dialog" aria-label="<?php echo esc_attr( (string) $content['settings_label'] ); ?>" data-uccm-label="<?php echo esc_attr( (string) $content['settings_label'] ); ?>" hidden>
 				<svg class="uccm-settings__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 					<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-3.87A4 4 0 0 1 12.13 3 4 4 0 0 1 12 2Z"></path>
 					<path d="M8.5 8.5h.01M16 15.5h.01M10.5 16.5h.01"></path>
@@ -116,46 +99,47 @@ final class Consent_Interface {
 			<dialog id="uccm-preferences" class="uccm-dialog" aria-modal="true" aria-labelledby="uccm-preferences-title" aria-describedby="uccm-preferences-intro uccm-preferences-cookie">
 				<div class="uccm-dialog__inner">
 					<div class="uccm-dialog__header">
-						<h2 id="uccm-preferences-title" class="uccm-title" tabindex="-1"><?php esc_html_e( 'Cookie preferences', 'uk-cookie-consent-manager' ); ?></h2>
-						<button type="button" class="uccm-icon-button" data-uccm-action="close" aria-label="<?php esc_attr_e( 'Close cookie preferences', 'uk-cookie-consent-manager' ); ?>">&times;</button>
+						<h2 id="uccm-preferences-title" class="uccm-title" tabindex="-1"><?php echo esc_html( (string) $content['preferences_title'] ); ?></h2>
+						<button type="button" class="uccm-icon-button" data-uccm-action="close" aria-label="<?php echo esc_attr( (string) $content['close_preferences'] ); ?>">&times;</button>
 					</div>
-					<p id="uccm-preferences-intro" class="uccm-copy"><?php esc_html_e( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ); ?></p>
-					<p id="uccm-preferences-cookie" class="uccm-copy"><?php echo esc_html( $cookie_copy ); ?></p>
+					<p id="uccm-preferences-intro" class="uccm-copy"><?php echo esc_html( (string) $content['preferences_intro'] ); ?></p>
+					<p id="uccm-preferences-cookie" class="uccm-copy"><?php echo esc_html( (string) $content['cookie_copy'] ); ?></p>
+					<p><a class="uccm-policy-link" data-uccm-policy-link href="<?php echo esc_url( (string) $content['policy_url'] ); ?>"<?php echo '' === (string) $content['policy_url'] ? ' hidden' : ''; ?>><?php echo esc_html( (string) $content['policy_link_label'] ); ?></a></p>
 
 					<div class="uccm-categories">
 						<label class="uccm-category">
 							<span>
-								<strong><?php esc_html_e( 'Necessary', 'uk-cookie-consent-manager' ); ?></strong>
-								<span><?php esc_html_e( 'Required for the website to function and cannot be switched off.', 'uk-cookie-consent-manager' ); ?></span>
+								<strong><?php echo esc_html( (string) $categories['necessary']['label'] ); ?></strong>
+								<span><?php echo esc_html( (string) $categories['necessary']['description'] ); ?></span>
 							</span>
 							<input type="checkbox" name="necessary" checked disabled aria-disabled="true">
 						</label>
 						<label class="uccm-category">
 							<span>
-								<strong><?php esc_html_e( 'Functional', 'uk-cookie-consent-manager' ); ?></strong>
-								<span><?php esc_html_e( 'Remember choices and provide enhanced website features.', 'uk-cookie-consent-manager' ); ?></span>
+								<strong><?php echo esc_html( (string) $categories['functional']['label'] ); ?></strong>
+								<span><?php echo esc_html( (string) $categories['functional']['description'] ); ?></span>
 							</span>
 							<input type="checkbox" name="functional">
 						</label>
 						<label class="uccm-category">
 							<span>
-								<strong><?php esc_html_e( 'Analytics', 'uk-cookie-consent-manager' ); ?></strong>
-								<span><?php esc_html_e( 'Help the site owner understand how the website is used.', 'uk-cookie-consent-manager' ); ?></span>
+								<strong><?php echo esc_html( (string) $categories['analytics']['label'] ); ?></strong>
+								<span><?php echo esc_html( (string) $categories['analytics']['description'] ); ?></span>
 							</span>
 							<input type="checkbox" name="analytics">
 						</label>
 						<label class="uccm-category">
 							<span>
-								<strong><?php esc_html_e( 'Marketing', 'uk-cookie-consent-manager' ); ?></strong>
-								<span><?php esc_html_e( 'Support advertising and measurement across websites.', 'uk-cookie-consent-manager' ); ?></span>
+								<strong><?php echo esc_html( (string) $categories['marketing']['label'] ); ?></strong>
+								<span><?php echo esc_html( (string) $categories['marketing']['description'] ); ?></span>
 							</span>
 							<input type="checkbox" name="marketing">
 						</label>
 					</div>
 
 					<div class="uccm-actions">
-						<button type="button" class="uccm-button" data-uccm-action="save"><?php esc_html_e( 'Save choices', 'uk-cookie-consent-manager' ); ?></button>
-						<button type="button" class="uccm-button uccm-button--secondary" data-uccm-action="withdraw"><?php esc_html_e( 'Withdraw optional consent', 'uk-cookie-consent-manager' ); ?></button>
+						<button type="button" class="uccm-button" data-uccm-action="save"><?php echo esc_html( (string) $content['save_choices'] ); ?></button>
+						<button type="button" class="uccm-button uccm-button--secondary" data-uccm-action="withdraw"><?php echo esc_html( (string) $content['withdraw_consent'] ); ?></button>
 					</div>
 				</div>
 			</dialog>

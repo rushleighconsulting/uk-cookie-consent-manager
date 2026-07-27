@@ -95,6 +95,8 @@ final class Consent_Receipts {
 		$receipt_id = isset( $payload['receiptId'] ) ? (string) $payload['receiptId'] : '';
 		$action     = isset( $payload['action'] ) ? (string) $payload['action'] : '';
 		$policy     = isset( $payload['policyVersion'] ) ? (string) $payload['policyVersion'] : '';
+		$language   = Language_Content::normalise_locale( (string) ( $payload['language'] ?? '' ) );
+		$wording    = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', (string) ( $payload['wordingVersion'] ?? '' ) );
 		$choices    = isset( $payload['categories'] ) && is_array( $payload['categories'] )
 			? self::normalise_choices( $payload['categories'] )
 			: null;
@@ -109,9 +111,11 @@ final class Consent_Receipts {
 
 		$policy = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', $policy );
 
-		if ( '' === $policy || null === $choices ) {
+		if ( '' === $policy || '' === $language || '' === $wording || null === $choices ) {
 			return new \WP_Error( 'uccm_invalid_decision', __( 'The consent decision is incomplete.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
 		}
+
+		$wording = substr( $wording, 0, 40 );
 
 		$source_ip = null === $ip ? IP_Privacy::client_ip() : $ip;
 		$limited   = self::consume_rate_limit( $source_ip );
@@ -134,6 +138,8 @@ final class Consent_Receipts {
 			'action'          => $action,
 			'choices'         => $encoded,
 			'policy_version'  => $policy,
+			'language'        => $language,
+			'wording_version' => $wording,
 			'plugin_version'  => UCCM_VERSION,
 			'site_identifier' => self::site_identifier(),
 			'wp_user_id'      => self::current_user_id(),
@@ -150,7 +156,7 @@ final class Consent_Receipts {
 		$stored = $wpdb->insert(
 			$table,
 			$row,
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( false === $stored ) {
@@ -231,7 +237,7 @@ final class Consent_Receipts {
 
 		$limit  = max( 1, min( 1000, $limit ) );
 		$table  = Database::table_names()['consents'];
-		$fields = 'id, receipt_id, occurred_at, action, choices, policy_version, plugin_version, site_identifier, wp_user_id, ip_masked';
+		$fields = 'id, receipt_id, occurred_at, action, choices, policy_version, language, wording_version, plugin_version, site_identifier, wp_user_id, ip_masked';
 
 		if ( $include_integrity ) {
 			$fields .= ', ip_fingerprint, integrity_hash';
