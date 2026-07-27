@@ -27,6 +27,9 @@ $GLOBALS['uccm_test_fired_actions']    = array();
 $GLOBALS['uccm_test_enqueued_styles']  = array();
 $GLOBALS['uccm_test_enqueued_scripts'] = array();
 $GLOBALS['uccm_test_localized']        = array();
+$GLOBALS['uccm_test_script_translations'] = array();
+$GLOBALS['uccm_test_loaded_textdomains']  = array();
+$GLOBALS['uccm_test_translations']        = array();
 $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
@@ -610,6 +613,10 @@ function plugin_basename( string $file ): string {
 	return basename( dirname( $file ) ) . '/' . basename( $file );
 }
 
+function plugin_dir_path( string $file ): string {
+	return rtrim( dirname( $file ), '/\\' ) . '/';
+}
+
 function get_bloginfo( string $show = '' ): string {
 	return 'version' === $show ? '6.8' : '';
 }
@@ -674,6 +681,17 @@ function wp_localize_script( string $handle, string $object_name, array $data ):
 	return true;
 }
 
+function wp_set_script_translations( string $handle, string $domain = 'default', string $path = '' ): bool {
+	$GLOBALS['uccm_test_script_translations'][ $handle ] = compact( 'domain', 'path' );
+	return true;
+}
+
+function load_plugin_textdomain( string $domain, bool $deprecated = false, string $plugin_rel_path = '' ): bool {
+	unset( $deprecated );
+	$GLOBALS['uccm_test_loaded_textdomains'][ $domain ] = $plugin_rel_path;
+	return true;
+}
+
 function wp_create_nonce( string|int $action = -1 ): string {
 	return 'nonce-' . (string) $action;
 }
@@ -703,13 +721,12 @@ function sanitize_key( string $key ): string {
 }
 
 function __( string $text, string $domain = 'default' ): string {
-	unset( $domain );
-	return $text;
+	return (string) ( $GLOBALS['uccm_test_translations'][ $domain ][ $text ] ?? $text );
 }
 
 function _n( string $single, string $plural, int $number, string $domain = 'default' ): string {
-	unset( $domain );
-	return 1 === $number ? $single : $plural;
+	$key = 1 === $number ? $single : $plural;
+	return (string) ( $GLOBALS['uccm_test_translations'][ $domain ][ $key ] ?? $key );
 }
 
 function esc_html__( string $text, string $domain = 'default' ): string {
@@ -760,12 +777,11 @@ function submit_button( string $text = 'Save Changes' ): void {
 }
 
 function esc_html_e( string $text, string $domain = 'default' ): void {
-	unset( $domain );
-	echo htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+	echo esc_html( __( $text, $domain ) );
 }
 
 function esc_attr_e( string $text, string $domain = 'default' ): void {
-	esc_html_e( $text, $domain );
+	echo esc_attr( __( $text, $domain ) );
 }
 
 function add_menu_page( string $page_title, string $menu_title, string $capability, string $menu_slug, callable $callback, string $icon_url = '', int|float|null $position = null ): string {

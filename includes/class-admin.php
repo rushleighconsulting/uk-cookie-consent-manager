@@ -565,18 +565,15 @@ final class Admin {
 			return array();
 		}
 
-		wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array(), UCCM_VERSION, true );
+		wp_enqueue_script( 'uccm-scan-progress', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-progress.js', array( 'wp-i18n' ), UCCM_VERSION, true );
+		wp_set_script_translations( 'uccm-scan-progress', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 		wp_localize_script(
 			'uccm-scan-progress',
 			'UCCMScanProgress',
 			array(
-				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'uccm_scan_progress' ),
-				'runIds'   => $active_runs,
-				'messages' => array(
-					'working' => __( 'The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress.', 'uk-cookie-consent-manager' ),
-					'failed'  => __( 'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.', 'uk-cookie-consent-manager' ),
-				),
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'uccm_scan_progress' ),
+				'runIds'  => $active_runs,
 			)
 		);
 
@@ -861,10 +858,11 @@ final class Admin {
 		wp_enqueue_script(
 			'uccm-blocking-editor',
 			plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/admin-blocking.js',
-			array(),
+			array( 'wp-i18n' ),
 			UCCM_VERSION,
 			true
 		);
+		wp_set_script_translations( 'uccm-blocking-editor', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 		wp_localize_script(
 			'uccm-blocking-editor',
 			'UCCMBlockingEditor',
@@ -1030,7 +1028,8 @@ final class Admin {
 			$browser_token     = Post_Password_Access::issue_browser_token( $scan_id, $protected_targets );
 			$consent_config    = Consent_State::configuration();
 
-			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array(), UCCM_VERSION, true );
+			wp_enqueue_script( 'uccm-scan-runner', plugin_dir_url( UCCM_PLUGIN_FILE ) . 'assets/js/scan-runner.js', array( 'wp-i18n' ), UCCM_VERSION, true );
+			wp_set_script_translations( 'uccm-scan-runner', 'uk-cookie-consent-manager', plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages' );
 			wp_localize_script(
 				'uccm-scan-runner',
 				'UCCMScanRunner',

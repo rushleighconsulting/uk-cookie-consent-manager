@@ -42,6 +42,7 @@ final class Plugin {
 	 * Register runtime hooks and apply versioned upgrades.
 	 */
 	public function boot(): void {
+		add_action( 'init', array( self::class, 'load_textdomain' ), 0 );
 		Database::maybe_upgrade();
 		Capabilities::maybe_upgrade();
 		Consent_Receipts::register();
@@ -63,5 +64,17 @@ final class Plugin {
 		 * @param Plugin $plugin Main plugin coordinator.
 		 */
 		do_action( 'uccm_loaded', $this );
+	}
+
+	/**
+	 * Register the bundled translation path while retaining WordPress.org
+	 * language-pack discovery under WP_LANG_DIR/plugins.
+	 */
+	public static function load_textdomain(): void {
+		load_plugin_textdomain(
+			'uk-cookie-consent-manager',
+			false,
+			dirname( plugin_basename( UCCM_PLUGIN_FILE ) ) . '/languages'
+		);
 	}
 }
