@@ -46,37 +46,37 @@ msgid "Banner"
 msgstr ""
 
 #: includes/class-admin.php:61
-#: includes/class-admin.php:940
+#: includes/class-admin.php:952
 msgid "View Categories"
 msgstr ""
 
 #: includes/class-admin.php:66
-#: includes/class-admin.php:981
+#: includes/class-admin.php:993
 msgid "Script Blocking"
 msgstr ""
 
 #: includes/class-admin.php:71
-#: includes/class-admin.php:1062
+#: includes/class-admin.php:1074
 msgid "Cookie Inventory"
 msgstr ""
 
 #: includes/class-admin.php:76
-#: includes/class-admin.php:1156
+#: includes/class-admin.php:1168
 msgid "Scans"
 msgstr ""
 
 #: includes/class-admin.php:81
-#: includes/class-admin.php:1365
+#: includes/class-admin.php:1377
 msgid "Consent Records"
 msgstr ""
 
 #: includes/class-admin.php:86
-#: includes/class-admin.php:1399
+#: includes/class-admin.php:1411
 msgid "Privacy"
 msgstr ""
 
 #: includes/class-admin.php:91
-#: includes/class-admin.php:1451
+#: includes/class-admin.php:1463
 msgid "Advanced"
 msgstr ""
 
@@ -112,7 +112,7 @@ msgid "Rule ID must contain letters, numbers, hyphens or underscores."
 msgstr ""
 
 #: includes/class-admin.php:314
-#: includes/class-admin.php:977
+#: includes/class-admin.php:989
 #: assets/js/admin-blocking.js:104
 msgid "Each Rule ID must be unique."
 msgstr ""
@@ -319,840 +319,840 @@ msgstr ""
 msgid "Reading direction"
 msgstr ""
 
-#: includes/class-admin.php:853
+#: includes/class-admin.php:855
 msgid "Automatic"
 msgstr ""
 
-#: includes/class-admin.php:853
+#: includes/class-admin.php:856
 msgid "Left to right"
 msgstr ""
 
-#: includes/class-admin.php:853
+#: includes/class-admin.php:857
 msgid "Right to left"
 msgstr ""
 
-#: includes/class-admin.php:858
+#: includes/class-admin.php:864
 msgid "Cookie policy URL"
 msgstr ""
 
-#: includes/class-admin.php:862
+#: includes/class-admin.php:868
 msgid "Banner heading"
 msgstr ""
 
-#: includes/class-admin.php:863
+#: includes/class-admin.php:869
 msgid "Banner message"
 msgstr ""
 
-#: includes/class-admin.php:864
+#: includes/class-admin.php:870
 msgid "Preferences heading"
 msgstr ""
 
-#: includes/class-admin.php:865
+#: includes/class-admin.php:871
 msgid "Preferences introduction"
 msgstr ""
 
-#: includes/class-admin.php:866
+#: includes/class-admin.php:872
 msgid "Necessary-cookie explanation"
 msgstr ""
 
-#: includes/class-admin.php:867
+#: includes/class-admin.php:873
 msgid "Accept button"
 msgstr ""
 
-#: includes/class-admin.php:868
+#: includes/class-admin.php:874
 msgid "Reject button"
 msgstr ""
 
-#: includes/class-admin.php:869
+#: includes/class-admin.php:875
 msgid "Manage button"
 msgstr ""
 
-#: includes/class-admin.php:870
+#: includes/class-admin.php:876
 msgid "Save button"
 msgstr ""
 
-#: includes/class-admin.php:871
+#: includes/class-admin.php:877
 msgid "Withdraw button"
 msgstr ""
 
-#: includes/class-admin.php:872
+#: includes/class-admin.php:878
 msgid "Close-button screen-reader label"
 msgstr ""
 
-#: includes/class-admin.php:873
+#: includes/class-admin.php:879
 msgid "Cookie-icon screen-reader label"
 msgstr ""
 
-#: includes/class-admin.php:874
+#: includes/class-admin.php:880
 msgid "Cookie policy link label"
 msgstr ""
 
-#: includes/class-admin.php:880
+#: includes/class-admin.php:886
 msgid "Category wording"
 msgstr ""
 
-#: includes/class-admin.php:885
+#: includes/class-admin.php:891
 msgid "Label"
 msgstr ""
 
-#: includes/class-admin.php:886
+#: includes/class-admin.php:892
 msgid "Description"
 msgstr ""
 
-#: includes/class-admin.php:925
+#: includes/class-admin.php:937
 msgid "Banner preview"
 msgstr ""
 
-#: includes/class-admin.php:928
-#: includes/class-language-content.php:130
+#: includes/class-admin.php:940
+#: includes/class-language-content.php:133
 msgid "Your cookie choices"
 msgstr ""
 
-#: includes/class-admin.php:928
+#: includes/class-admin.php:940
 msgid "We use one necessary cookie to remember your choice. Optional cookies need your permission."
 msgstr ""
 
-#: includes/class-admin.php:929
-#: includes/class-language-content.php:135
+#: includes/class-admin.php:941
+#: includes/class-language-content.php:138
 #: assets/js/scan-runner.js:21
 msgid "Accept all"
 msgstr ""
 
-#: includes/class-admin.php:929
-#: includes/class-language-content.php:136
+#: includes/class-admin.php:941
+#: includes/class-language-content.php:139
 #: assets/js/scan-runner.js:20
 msgid "Reject non-essential"
 msgstr ""
 
-#: includes/class-admin.php:929
-#: includes/class-language-content.php:137
+#: includes/class-admin.php:941
+#: includes/class-language-content.php:140
 msgid "Manage preferences"
 msgstr ""
 
-#: includes/class-admin.php:941
-#: includes/class-admin.php:1074
+#: includes/class-admin.php:953
+#: includes/class-admin.php:1086
 msgid "Category"
 msgstr ""
 
-#: includes/class-admin.php:941
-#: includes/class-admin.php:1074
-#: includes/class-admin.php:1637
+#: includes/class-admin.php:953
+#: includes/class-admin.php:1086
+#: includes/class-admin.php:1649
 msgid "Purpose"
 msgstr ""
 
-#: includes/class-admin.php:941
+#: includes/class-admin.php:953
 msgid "Required"
 msgstr ""
 
-#: includes/class-admin.php:944
+#: includes/class-admin.php:956
 msgid "Yes"
 msgstr ""
 
-#: includes/class-admin.php:944
+#: includes/class-admin.php:956
 msgid "No"
 msgstr ""
 
-#: includes/class-admin.php:973
-#: includes/class-admin.php:1025
+#: includes/class-admin.php:985
+#: includes/class-admin.php:1037
 #: assets/js/admin-blocking.js:35
 msgid "New rule"
 msgstr ""
 
-#: includes/class-admin.php:974
+#: includes/class-admin.php:986
 msgid "Rule"
 msgstr ""
 
-#: includes/class-admin.php:975
+#: includes/class-admin.php:987
 #: assets/js/admin-blocking.js:110
 msgid "Enter a WordPress handle or an HTTPS source."
 msgstr ""
 
-#: includes/class-admin.php:976
+#: includes/class-admin.php:988
 #: assets/js/admin-blocking.js:115
 #: assets/js/admin-blocking.js:125
 msgid "Enter a complete HTTPS source."
 msgstr ""
 
-#: includes/class-admin.php:983
+#: includes/class-admin.php:995
 msgid "Add only optional resources you recognise. UCCM blocks a configured resource until the visitor allows its category."
 msgstr ""
 
-#: includes/class-admin.php:984
+#: includes/class-admin.php:996
 msgid "Incorrect rules can stop site features from working. Test each rule before using it on a live site."
 msgstr ""
 
-#: includes/class-admin.php:997
+#: includes/class-admin.php:1009
 msgid "No blocking rules have been added yet."
 msgstr ""
 
-#: includes/class-admin.php:998
+#: includes/class-admin.php:1010
 msgid "Add rule"
 msgstr ""
 
-#: includes/class-admin.php:999
+#: includes/class-admin.php:1011
 msgid "Advanced JSON view"
 msgstr ""
 
-#: includes/class-admin.php:1000
+#: includes/class-admin.php:1012
 msgid "This read-only view shows the validated object that will be saved. Use the fields above to make changes."
 msgstr ""
 
-#: includes/class-admin.php:1007
+#: includes/class-admin.php:1019
 msgid "Save blocking rules"
 msgstr ""
 
-#: includes/class-admin.php:1031
+#: includes/class-admin.php:1043
 msgid "Rule ID"
 msgstr ""
 
-#: includes/class-admin.php:1033
+#: includes/class-admin.php:1045
 msgid "A unique name using letters, numbers, hyphens or underscores; for example analytics-test."
 msgstr ""
 
-#: includes/class-admin.php:1034
+#: includes/class-admin.php:1046
 msgid "Resource type"
 msgstr ""
 
-#: includes/class-admin.php:1037
+#: includes/class-admin.php:1049
 msgid "Consent category"
 msgstr ""
 
-#: includes/class-admin.php:1040
+#: includes/class-admin.php:1052
 msgid "WordPress script handle"
 msgstr ""
 
-#: includes/class-admin.php:1042
+#: includes/class-admin.php:1054
 msgid "For scripts registered by WordPress. A script needs a handle, an HTTPS source, or both."
 msgstr ""
 
-#: includes/class-admin.php:1043
+#: includes/class-admin.php:1055
 msgid "HTTPS source"
 msgstr ""
 
-#: includes/class-admin.php:1045
+#: includes/class-admin.php:1057
 msgid "Required for iframes, embeds and pixels. Scripts may use this instead of a WordPress handle."
 msgstr ""
 
-#: includes/class-admin.php:1046
+#: includes/class-admin.php:1058
 msgid "Title"
 msgstr ""
 
-#: includes/class-admin.php:1048
+#: includes/class-admin.php:1060
 msgid "A recognisable administrator label, such as Analytics test script or Location map."
 msgstr ""
 
-#: includes/class-admin.php:1049
+#: includes/class-admin.php:1061
 msgid "Remove rule"
 msgstr ""
 
 #. translators: %d: number of reviewed inventory items.
-#: includes/class-admin.php:1073
+#: includes/class-admin.php:1085
 #, php-format
 msgid "%d reviewed item"
 msgid_plural "%d reviewed items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin.php:1074
+#: includes/class-admin.php:1086
 msgid "Name"
 msgstr ""
 
-#: includes/class-admin.php:1074
+#: includes/class-admin.php:1086
 msgid "Provider / domain"
 msgstr ""
 
-#: includes/class-admin.php:1074
+#: includes/class-admin.php:1086
 msgid "Type"
 msgstr ""
 
-#: includes/class-admin.php:1074
-#: includes/class-admin.php:1563
-#: includes/class-admin.php:1638
+#: includes/class-admin.php:1086
+#: includes/class-admin.php:1575
+#: includes/class-admin.php:1650
 msgid "Duration"
 msgstr ""
 
-#: includes/class-admin.php:1074
-#: includes/class-admin.php:1316
+#: includes/class-admin.php:1086
+#: includes/class-admin.php:1328
 msgid "Review"
 msgstr ""
 
-#: includes/class-admin.php:1077
+#: includes/class-admin.php:1089
 msgid "No inventory items match the current filters."
 msgstr ""
 
-#: includes/class-admin.php:1159
+#: includes/class-admin.php:1171
 msgid "Scan settings saved."
 msgstr ""
 
-#: includes/class-admin.php:1161
+#: includes/class-admin.php:1173
 msgid "The scan has started. This page will keep it moving if your site scheduler is delayed. You can leave and return without losing saved progress."
 msgstr ""
 
-#: includes/class-admin.php:1163
+#: includes/class-admin.php:1175
 msgid "The scan was cancelled and its evidence was retained."
 msgstr ""
 
-#: includes/class-admin.php:1165
+#: includes/class-admin.php:1177
 msgid "The scan has restarted from its last saved point."
 msgstr ""
 
-#: includes/class-admin.php:1167
+#: includes/class-admin.php:1179
 msgid "Your review decision was saved. The cookie inventory was not changed."
 msgstr ""
 
-#: includes/class-admin.php:1170
+#: includes/class-admin.php:1182
 msgid "A scan checks public pages that this site can reach. Pages shown only after sign-in, personal choices or location checks may behave differently."
 msgstr ""
 
-#: includes/class-admin.php:1171
+#: includes/class-admin.php:1183
 msgid "How it works:"
 msgstr ""
 
-#: includes/class-admin.php:1171
+#: includes/class-admin.php:1183
 msgid "The plugin checks public pages in the background first. When that finishes, you can run an optional browser check to look for cookies and other items loaded by those pages."
 msgstr ""
 
-#: includes/class-admin.php:1172
+#: includes/class-admin.php:1184
 msgid "Next monthly run:"
 msgstr ""
 
-#: includes/class-admin.php:1172
+#: includes/class-admin.php:1184
 msgid "Not scheduled"
 msgstr ""
 
-#: includes/class-admin.php:1175
+#: includes/class-admin.php:1187
 msgid "Starting pages"
 msgstr ""
 
-#: includes/class-admin.php:1176
+#: includes/class-admin.php:1188
 msgid "The homepage is always checked. You can add other public pages on this website, one address per line. The scan follows links from these starting pages, up to the saved limit."
 msgstr ""
 
-#: includes/class-admin.php:1180
+#: includes/class-admin.php:1192
 msgid "The scan URLs were not saved. Enter only same-origin public URLs without credentials or fragments."
 msgstr ""
 
 #. translators: %s: rejected scan URL.
-#: includes/class-admin.php:1183
+#: includes/class-admin.php:1195
 #, php-format
 msgid "The scan URL “%s” was not saved. Enter only same-origin public URLs without credentials or fragments."
 msgstr ""
 
-#: includes/class-admin.php:1191
+#: includes/class-admin.php:1203
 msgid "Scan limits"
 msgstr ""
 
-#: includes/class-admin.php:1192
+#: includes/class-admin.php:1204
 #: includes/class-multisite.php:476
 msgid "Maximum pages per scan"
 msgstr ""
 
-#: includes/class-admin.php:1194
+#: includes/class-admin.php:1206
 #: includes/class-multisite.php:477
 msgid "Pages checked at a time"
 msgstr ""
 
-#: includes/class-admin.php:1196
+#: includes/class-admin.php:1208
 msgid "Excluded path patterns"
 msgstr ""
 
-#: includes/class-admin.php:1198
+#: includes/class-admin.php:1210
 msgid "One path pattern per line. Use * as a wildcard. WordPress administration, login, REST and feed paths are always excluded."
 msgstr ""
 
-#: includes/class-admin.php:1199
+#: includes/class-admin.php:1211
 msgid "Password-protected pages"
 msgstr ""
 
-#: includes/class-admin.php:1200
+#: includes/class-admin.php:1212
 msgid "By default, WordPress post-password protected pages are not checked. You can opt in with one shared WordPress post password. This does not sign the scanner into WordPress or other services."
 msgstr ""
 
-#: includes/class-admin.php:1201
+#: includes/class-admin.php:1213
 msgid "Check pages unlocked by the stored WordPress post password"
 msgstr ""
 
-#: includes/class-admin.php:1201
+#: includes/class-admin.php:1213
 msgid "Only published pages and posts on this site that match the stored password become eligible."
 msgstr ""
 
-#: includes/class-admin.php:1202
+#: includes/class-admin.php:1214
 msgid "WordPress post password"
 msgstr ""
 
-#: includes/class-admin.php:1202
+#: includes/class-admin.php:1214
 msgid "Leave blank to keep the stored password"
 msgstr ""
 
-#: includes/class-admin.php:1202
+#: includes/class-admin.php:1214
 msgid "An encrypted post password is configured."
 msgstr ""
 
-#: includes/class-admin.php:1202
+#: includes/class-admin.php:1214
 msgid "No usable post password is configured."
 msgstr ""
 
-#: includes/class-admin.php:1203
+#: includes/class-admin.php:1215
 msgid "Remove the stored post password"
 msgstr ""
 
-#: includes/class-admin.php:1203
+#: includes/class-admin.php:1215
 msgid "The password is never displayed after saving. Removing it makes protected pages ineligible immediately."
 msgstr ""
 
-#: includes/class-admin.php:1204
+#: includes/class-admin.php:1216
 msgid "Save scan settings"
 msgstr ""
 
-#: includes/class-admin.php:1208
+#: includes/class-admin.php:1220
 msgid "The scan checks public pages first. Keeping this page open helps it continue if your site scheduler is delayed, but you can leave and return without losing saved progress. When it finishes, you may run the optional browser check."
 msgstr ""
 
-#: includes/class-admin.php:1209
+#: includes/class-admin.php:1221
 msgid "Run scan now"
 msgstr ""
 
-#: includes/class-admin.php:1212
+#: includes/class-admin.php:1224
 msgid "Recent scan runs"
 msgstr ""
 
-#: includes/class-admin.php:1218
+#: includes/class-admin.php:1230
 msgid "No scan runs have been recorded yet."
 msgstr ""
 
-#: includes/class-admin.php:1220
+#: includes/class-admin.php:1232
 msgid "Run"
 msgstr ""
 
-#: includes/class-admin.php:1220
-#: includes/class-admin.php:1316
+#: includes/class-admin.php:1232
+#: includes/class-admin.php:1328
 msgid "Status"
 msgstr ""
 
-#: includes/class-admin.php:1220
+#: includes/class-admin.php:1232
 msgid "Started (UTC)"
 msgstr ""
 
-#: includes/class-admin.php:1220
+#: includes/class-admin.php:1232
 msgid "Scan coverage"
 msgstr ""
 
-#: includes/class-admin.php:1220
+#: includes/class-admin.php:1232
 msgid "Browser check"
 msgstr ""
 
-#: includes/class-admin.php:1220
-#: includes/class-admin.php:1304
+#: includes/class-admin.php:1232
+#: includes/class-admin.php:1316
 msgid "Items to review"
 msgstr ""
 
-#: includes/class-admin.php:1220
+#: includes/class-admin.php:1232
 msgid "Problems"
 msgstr ""
 
-#: includes/class-admin.php:1220
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1232
+#: includes/class-admin.php:1385
 #: includes/class-privacy.php:112
 msgid "Action"
 msgstr ""
 
 #. translators: 1: eligible WordPress pages/posts, 2: other accepted links, 3: ignored links, 4: checked URLs, 5: remaining URLs.
-#: includes/class-admin.php:1249
+#: includes/class-admin.php:1261
 #, php-format
 msgid "%1$d pages/posts; %2$d other links; %3$d ignored; %4$d checked; %5$d remaining"
 msgstr ""
 
 #. translators: 1: checked URLs, 2: accepted URLs, 3: remaining URLs.
-#: includes/class-admin.php:1258
+#: includes/class-admin.php:1270
 #, php-format
 msgid "%1$d checked; %2$d accepted; %3$d remaining"
 msgstr ""
 
-#: includes/class-admin.php:1267
+#: includes/class-admin.php:1279
 msgid "Resume"
 msgstr ""
 
-#: includes/class-admin.php:1273
+#: includes/class-admin.php:1285
 msgid "Cancel"
 msgstr ""
 
-#: includes/class-admin.php:1288
+#: includes/class-admin.php:1300
 msgid "Browser check for scan "
 msgstr ""
 
-#: includes/class-admin.php:1289
+#: includes/class-admin.php:1301
 msgid "This optional check visits eligible public pages as a temporary visitor, tries the main cookie choices, and lists cookie names, browser storage, scripts, embedded content and tracking images. It does not use your administrator sign-in or saved browser choices."
 msgstr ""
 
-#: includes/class-admin.php:1290
+#: includes/class-admin.php:1302
 msgid "Browser check status:"
 msgstr ""
 
-#: includes/class-admin.php:1295
+#: includes/class-admin.php:1307
 msgid "This browser cannot run the separate visitor check safely. Use a current Chrome, Edge or other Chromium browser."
 msgstr ""
 
-#: includes/class-admin.php:1297
+#: includes/class-admin.php:1309
 msgid "Browser check note:"
 msgstr ""
 
-#: includes/class-admin.php:1299
+#: includes/class-admin.php:1311
 msgid "Run browser check"
 msgstr ""
 
-#: includes/class-admin.php:1300
+#: includes/class-admin.php:1312
 #: assets/js/scan-runner.js:29
 msgid "For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet."
 msgstr ""
 
-#: includes/class-admin.php:1305
+#: includes/class-admin.php:1317
 msgid "The plugin never adds, changes or publishes cookie information automatically. Review each item before changing the cookie inventory."
 msgstr ""
 
-#: includes/class-admin.php:1308
+#: includes/class-admin.php:1320
 msgid "Show findings from all scans"
 msgstr ""
 
-#: includes/class-admin.php:1314
+#: includes/class-admin.php:1326
 msgid "No scan findings match this view."
 msgstr ""
 
-#: includes/class-admin.php:1316
+#: includes/class-admin.php:1328
 msgid "Finding"
 msgstr ""
 
-#: includes/class-admin.php:1316
+#: includes/class-admin.php:1328
 msgid "Observation"
 msgstr ""
 
-#: includes/class-admin.php:1316
+#: includes/class-admin.php:1328
 msgid "Material diff"
 msgstr ""
 
-#: includes/class-admin.php:1323
+#: includes/class-admin.php:1335
 msgid "scan"
 msgstr ""
 
-#: includes/class-admin.php:1332
+#: includes/class-admin.php:1344
 msgid "Mark reviewed"
 msgstr ""
 
-#: includes/class-admin.php:1333
+#: includes/class-admin.php:1345
 msgid "Ignore"
 msgstr ""
 
-#: includes/class-admin.php:1334
+#: includes/class-admin.php:1346
 msgid "Resolve"
 msgstr ""
 
-#: includes/class-admin.php:1368
+#: includes/class-admin.php:1380
 msgid "No consent records are available to display."
 msgstr ""
 
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1385
 msgid "Receipt"
 msgstr ""
 
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1385
 #: includes/class-privacy.php:108
 msgid "Time (UTC)"
 msgstr ""
 
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1385
 msgid "Language"
 msgstr ""
 
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1385
 msgid "Policy / wording"
 msgstr ""
 
-#: includes/class-admin.php:1373
+#: includes/class-admin.php:1385
 msgid "Masked IP"
 msgstr ""
 
-#: includes/class-admin.php:1403
+#: includes/class-admin.php:1415
 #: includes/class-multisite.php:475
 msgid "Consent retention (days)"
 msgstr ""
 
-#: includes/class-admin.php:1405
+#: includes/class-admin.php:1417
 msgid "Store encrypted complete IP addresses"
 msgstr ""
 
-#: includes/class-admin.php:1405
+#: includes/class-admin.php:1417
 msgid "This increases privacy risk and is not required for normal consent evidence."
 msgstr ""
 
-#: includes/class-admin.php:1406
+#: includes/class-admin.php:1418
 msgid "Trust forwarded IP headers"
 msgstr ""
 
-#: includes/class-admin.php:1406
+#: includes/class-admin.php:1418
 msgid "Enable only when every trusted reverse proxy is listed below."
 msgstr ""
 
-#: includes/class-admin.php:1409
+#: includes/class-admin.php:1421
 msgid "Trusted proxy IPs"
 msgstr ""
 
-#: includes/class-admin.php:1409
+#: includes/class-admin.php:1421
 msgid "Enter one proxy IP address per line. Only these proxies may supply a forwarded visitor address."
 msgstr ""
 
-#: includes/class-admin.php:1411
+#: includes/class-admin.php:1423
 msgid "Save privacy settings"
 msgstr ""
 
-#: includes/class-admin.php:1428
+#: includes/class-admin.php:1440
 msgid "Free disk space could not be measured."
 msgstr ""
 
 #. translators: %s: Human-readable free disk space.
-#: includes/class-admin.php:1432
+#: includes/class-admin.php:1444
 #, php-format
 msgid "%s of free disk space is available."
 msgstr ""
 
 #. translators: %s: Human-readable free disk space.
-#: includes/class-admin.php:1438
+#: includes/class-admin.php:1450
 #, php-format
 msgid "Only %s of free disk space is available; make more space before updating."
 msgstr ""
 
-#: includes/class-admin.php:1444
+#: includes/class-admin.php:1456
 msgid "The WordPress loopback check succeeded."
 msgstr ""
 
-#: includes/class-admin.php:1446
+#: includes/class-admin.php:1458
 msgid "The WordPress loopback check failed; fatal-error rollback may not work."
 msgstr ""
 
-#: includes/class-admin.php:1448
+#: includes/class-admin.php:1460
 msgid "Use “Check for updates now” to test the WordPress loopback connection."
 msgstr ""
 
-#: includes/class-admin.php:1454
+#: includes/class-admin.php:1466
 msgid "Updates"
 msgstr ""
 
-#: includes/class-admin.php:1457
+#: includes/class-admin.php:1469
 msgid "Installed version"
 msgstr ""
 
-#: includes/class-admin.php:1458
+#: includes/class-admin.php:1470
 #: includes/class-multisite.php:356
 msgid "Latest available version"
 msgstr ""
 
-#: includes/class-admin.php:1458
-#: includes/class-admin.php:1460
+#: includes/class-admin.php:1470
+#: includes/class-admin.php:1472
 #: includes/class-multisite.php:356
 msgid "Not checked yet"
 msgstr ""
 
-#: includes/class-admin.php:1459
+#: includes/class-admin.php:1471
 msgid "Update channel"
 msgstr ""
 
-#: includes/class-admin.php:1460
+#: includes/class-admin.php:1472
 msgid "Last successful check (UTC)"
 msgstr ""
 
-#: includes/class-admin.php:1461
+#: includes/class-admin.php:1473
 msgid "Last update outcome"
 msgstr ""
 
-#: includes/class-admin.php:1461
+#: includes/class-admin.php:1473
 msgid "No update recorded yet"
 msgstr ""
 
-#: includes/class-admin.php:1465
+#: includes/class-admin.php:1477
 msgid "Last update check problem:"
 msgstr ""
 
-#: includes/class-admin.php:1469
+#: includes/class-admin.php:1481
 msgid "A newer release is being introduced gradually. This site will continue using its current version until its rollout group is enabled."
 msgstr ""
 
-#: includes/class-admin.php:1473
+#: includes/class-admin.php:1485
 msgid "Manage automatic updates in WordPress"
 msgstr ""
 
-#: includes/class-admin.php:1475
+#: includes/class-admin.php:1487
 msgid "Check for updates now"
 msgstr ""
 
-#: includes/class-admin.php:1478
+#: includes/class-admin.php:1490
 msgid "A WordPress administrator with plugin-update permission controls automatic updates and immediate checks."
 msgstr ""
 
-#: includes/class-admin.php:1481
+#: includes/class-admin.php:1493
 msgid "Update recovery readiness"
 msgstr ""
 
-#: includes/class-admin.php:1482
+#: includes/class-admin.php:1494
 msgid "WordPress fatal-error rollback is available."
 msgstr ""
 
-#: includes/class-admin.php:1482
+#: includes/class-admin.php:1494
 msgid "This WordPress version does not provide the required plugin fatal-error rollback."
 msgstr ""
 
-#: includes/class-admin.php:1483
+#: includes/class-admin.php:1495
 msgid "The temporary backup location is writable."
 msgstr ""
 
-#: includes/class-admin.php:1483
+#: includes/class-admin.php:1495
 msgid "The temporary backup location is not writable."
 msgstr ""
 
-#: includes/class-admin.php:1489
+#: includes/class-admin.php:1501
 msgid "Operational error notifications"
 msgstr ""
 
-#: includes/class-admin.php:1490
+#: includes/class-admin.php:1502
 msgid "Email operational error notifications to the site administrator"
 msgstr ""
 
-#: includes/class-admin.php:1490
+#: includes/class-admin.php:1502
 msgid "Disabled by default. Messages use WordPress email delivery and contain no consent records or credentials."
 msgstr ""
 
-#: includes/class-admin.php:1493
+#: includes/class-admin.php:1505
 #: includes/class-multisite.php:479
 msgid "Repeat email suppression (minutes)"
 msgstr ""
 
-#: includes/class-admin.php:1493
+#: includes/class-admin.php:1505
 msgid "Wait this many minutes before the same site, component and scan problem may send another email. Default: 360. Maximum: 1,440 (24 hours)."
 msgstr ""
 
-#: includes/class-admin.php:1499
+#: includes/class-admin.php:1511
 msgid "Delete all UCCM data when the plugin is uninstalled"
 msgstr ""
 
-#: includes/class-admin.php:1502
+#: includes/class-admin.php:1514
 msgid "Network-wide deletion can be approved only by a Network Administrator from Network Admin."
 msgstr ""
 
-#: includes/class-admin.php:1503
+#: includes/class-admin.php:1515
 msgid "Leave disabled to retain settings and evidence by default."
 msgstr ""
 
-#: includes/class-admin.php:1506
+#: includes/class-admin.php:1518
 msgid "Save advanced settings"
 msgstr ""
 
-#: includes/class-admin.php:1526
+#: includes/class-admin.php:1538
 msgid "Storage type:"
 msgstr ""
 
-#: includes/class-admin.php:1530
+#: includes/class-admin.php:1542
 msgid "Seen with:"
 msgstr ""
 
 #. translators: %d: number of affected pages.
-#: includes/class-admin.php:1537
+#: includes/class-admin.php:1549
 #, php-format
 msgid "%d affected page"
 msgid_plural "%d affected pages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin.php:1548
+#: includes/class-admin.php:1560
 msgid "Show affected pages"
 msgstr ""
 
-#: includes/class-admin.php:1564
-#: includes/class-admin.php:1624
+#: includes/class-admin.php:1576
+#: includes/class-admin.php:1636
 msgid "Domain"
 msgstr ""
 
-#: includes/class-admin.php:1565
+#: includes/class-admin.php:1577
 msgid "Source URL"
 msgstr ""
 
-#: includes/class-admin.php:1566
+#: includes/class-admin.php:1578
 msgid "Category candidate"
 msgstr ""
 
-#: includes/class-admin.php:1574
+#: includes/class-admin.php:1586
 msgid "not recorded"
 msgstr ""
 
-#: includes/class-admin.php:1580
+#: includes/class-admin.php:1592
 msgid "New observation"
 msgstr ""
 
-#: includes/class-admin.php:1592
+#: includes/class-admin.php:1604
 msgid "Search inventory"
 msgstr ""
 
-#: includes/class-admin.php:1593
+#: includes/class-admin.php:1605
 msgid "All categories"
 msgstr ""
 
-#: includes/class-admin.php:1595
+#: includes/class-admin.php:1607
 msgid "All statuses"
 msgstr ""
 
-#: includes/class-admin.php:1598
+#: includes/class-admin.php:1610
 msgid "Filter"
 msgstr ""
 
-#: includes/class-admin.php:1612
+#: includes/class-admin.php:1624
 msgid "Export current filters as CSV"
 msgstr ""
 
-#: includes/class-admin.php:1619
+#: includes/class-admin.php:1631
 msgid "Add or update an inventory item"
 msgstr ""
 
-#: includes/class-admin.php:1621
+#: includes/class-admin.php:1633
 msgid "Existing database ID, or zero for a new item"
 msgstr ""
 
-#: includes/class-admin.php:1622
+#: includes/class-admin.php:1634
 msgid "Cookie or storage key"
 msgstr ""
 
-#: includes/class-admin.php:1623
+#: includes/class-admin.php:1635
 msgid "Provider"
 msgstr ""
 
-#: includes/class-admin.php:1640
+#: includes/class-admin.php:1652
 msgid "Save inventory item"
 msgstr ""
 
-#: includes/class-admin.php:1671
+#: includes/class-admin.php:1683
 msgid "Previous"
 msgstr ""
 
-#: includes/class-admin.php:1672
+#: includes/class-admin.php:1684
 msgid "Next"
 msgstr ""
 
-#: includes/class-admin.php:1676
+#: includes/class-admin.php:1688
 msgid "Inventory pages"
 msgstr ""
 
-#: includes/class-admin.php:1725
+#: includes/class-admin.php:1737
 msgid "You are not allowed to access this Cookie Consent screen."
 msgstr ""
 
-#: includes/class-admin.php:1790
+#: includes/class-admin.php:1802
 msgid "Settings saved."
 msgstr ""
 
-#: includes/class-admin.php:1792
+#: includes/class-admin.php:1804
 msgid "The update check finished. The latest result is shown below."
 msgstr ""
 
-#: includes/class-admin.php:1807
+#: includes/class-admin.php:1819
 msgid "This value is locked by the Network Administrator."
 msgstr ""
 
-#: includes/class-admin.php:1811
+#: includes/class-admin.php:1823
 msgid "Use the network default for this site"
 msgstr ""
 
@@ -1299,7 +1299,7 @@ msgid "The discovered link is invalid."
 msgstr ""
 
 #. translators: %d: configured consent lifetime.
-#: includes/class-language-content.php:107
+#: includes/class-language-content.php:110
 #, php-format
 msgid "We use one necessary cookie to remember your choice for %d day. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo."
 msgid_plural "We use one necessary cookie to remember your choice for %d days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo."
@@ -1307,38 +1307,38 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: configured consent lifetime.
-#: includes/class-language-content.php:117
+#: includes/class-language-content.php:120
 #, php-format
 msgid "We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies."
 msgid_plural "We set one necessary cookie. This cookie remembers your cookie choices for %d days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-language-content.php:132
+#: includes/class-language-content.php:135
 msgid "Cookie preferences"
 msgstr ""
 
-#: includes/class-language-content.php:133
+#: includes/class-language-content.php:136
 msgid "Choose which optional cookie categories this website may use. Necessary cookies are always active."
 msgstr ""
 
-#: includes/class-language-content.php:138
+#: includes/class-language-content.php:141
 msgid "Save choices"
 msgstr ""
 
-#: includes/class-language-content.php:139
+#: includes/class-language-content.php:142
 msgid "Withdraw optional consent"
 msgstr ""
 
-#: includes/class-language-content.php:140
+#: includes/class-language-content.php:143
 msgid "Close cookie preferences"
 msgstr ""
 
-#: includes/class-language-content.php:141
+#: includes/class-language-content.php:144
 msgid "Cookie settings"
 msgstr ""
 
-#: includes/class-language-content.php:142
+#: includes/class-language-content.php:145
 msgid "Cookie policy"
 msgstr ""
 
