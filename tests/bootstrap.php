@@ -31,6 +31,7 @@ $GLOBALS['uccm_test_is_admin']         = false;
 $GLOBALS['uccm_test_scheduled_hooks']  = array();
 $GLOBALS['uccm_test_schedule_events']  = array();
 $GLOBALS['uccm_test_spawn_cron_calls'] = array();
+$GLOBALS['uccm_test_spawn_cron_result'] = true;
 $GLOBALS['uccm_test_wp_update_plugins_calls'] = 0;
 $GLOBALS['uccm_test_transients']       = array();
 $GLOBALS['uccm_test_site_transients']  = array();
@@ -377,6 +378,10 @@ function wp_next_scheduled( string $hook, array $arguments = array() ): int|fals
 	return $GLOBALS['uccm_test_scheduled_hooks'][ $key ] ?? false;
 }
 
+function wp_doing_cron(): bool {
+	return false;
+}
+
 function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
 	$GLOBALS['uccm_test_scheduled_hooks'][ $hook ] = $timestamp;
 	$GLOBALS['uccm_test_schedule_events'][]        = compact( 'timestamp', 'recurrence', 'hook' );
@@ -397,7 +402,7 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $argument
 
 function spawn_cron( int $gmt_time = 0 ): bool {
 	$GLOBALS['uccm_test_spawn_cron_calls'][] = $gmt_time;
-	return true;
+	return true === $GLOBALS['uccm_test_spawn_cron_result'];
 }
 
 function get_transient( string $name ): mixed {
@@ -667,6 +672,10 @@ function wp_localize_script( string $handle, string $object_name, array $data ):
 	unset( $handle );
 	$GLOBALS['uccm_test_localized'][ $object_name ] = $data;
 	return true;
+}
+
+function wp_create_nonce( string|int $action = -1 ): string {
+	return 'nonce-' . (string) $action;
 }
 
 function esc_attr( string $text ): string {

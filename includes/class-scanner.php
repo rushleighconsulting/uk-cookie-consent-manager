@@ -1109,9 +1109,40 @@ final class Scanner {
 			wp_schedule_single_event( time() + ( $dispatch ? 0 : 5 ), self::BATCH_HOOK, $args );
 		}
 
-		if ( $dispatch && function_exists( 'spawn_cron' ) ) {
-			spawn_cron( time() );
+		if ( $dispatch ) {
+			$is_cron_request = wp_doing_cron();
+
+			if ( ! function_exists( 'spawn_cron' ) || ( ! $is_cron_request && ! spawn_cron( time() ) ) ) {
+				Operational_Alerts::report( 'uccm_scan_dispatch_deferred', 'scanner', $run_id );
+			}
 		}
+	}
+
+	/**
+	 * Return bounded progress for one authenticated administration worker.
+	 *
+	 * @param int $run_id Scan run identifier.
+	 * @return array{status: string, visited: int, remaining: int}|\WP_Error
+	 */
+	public static function progress( int $run_id ): array|\WP_Error {
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) ) {
+			return $run;
+		}
+
+		$coverage = self::decoded_array( $run['coverage'] ?? '' );
+		$status   = sanitize_key( (string) ( $run['status'] ?? '' ) );
+
+		if ( ! in_array( $status, array( 'queued', 'running', 'completed', 'failed', 'cancelled' ), true ) ) {
+			$status = 'failed';
+		}
+
+		return array(
+			'status'    => $status,
+			'visited'   => max( 0, (int) ( $coverage['visited_count'] ?? 0 ) ),
+			'remaining' => max( 0, (int) ( $coverage['remaining_count'] ?? 0 ) ),
+		);
 	}
 
 	/**

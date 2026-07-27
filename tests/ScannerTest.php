@@ -22,6 +22,7 @@ final class ScannerTest extends TestCase {
 		$GLOBALS['uccm_test_scheduled_hooks']    = array();
 		$GLOBALS['uccm_test_schedule_events']    = array();
 		$GLOBALS['uccm_test_spawn_cron_calls']   = array();
+		$GLOBALS['uccm_test_spawn_cron_result']  = true;
 		$GLOBALS['uccm_test_cleared_hooks']      = array();
 		$GLOBALS['uccm_test_capabilities']       = array();
 		$GLOBALS['uccm_test_transients']         = array();
@@ -187,6 +188,35 @@ final class ScannerTest extends TestCase {
 		self::assertSame( array( 1 ), $GLOBALS['uccm_test_schedule_events'][0]['arguments'] );
 		self::assertLessThanOrEqual( time(), $GLOBALS['uccm_test_schedule_events'][0]['timestamp'] );
 		self::assertCount( 1, $GLOBALS['uccm_test_spawn_cron_calls'] );
+	}
+
+	public function test_bounded_progress_exposes_only_worker_state(): void {
+		$GLOBALS['uccm_test_db_rows'] = array(
+			array(
+				'id'       => 7,
+				'status'   => 'running',
+				'coverage' => '{"visited_count":5,"remaining_count":12,"frontier":["https://example.test/private"]}',
+			),
+		);
+
+		self::assertSame(
+			array(
+				'status'    => 'running',
+				'visited'   => 5,
+				'remaining' => 12,
+			),
+			Scanner::progress( 7 )
+		);
+	}
+
+	public function test_failed_initial_cron_dispatch_is_reported_without_losing_the_queue(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$GLOBALS['uccm_test_spawn_cron_result']               = false;
+
+		self::assertSame( 1, Scanner::start() );
+		self::assertSame( 'queued', $GLOBALS['wpdb']->inserts[0]['data']['status'] );
+		self::assertSame( 'uccm_scan_dispatch_deferred', Operational_Alerts::current()[0]['code'] );
+		self::assertSame( 1, Operational_Alerts::current()[0]['run_id'] );
 	}
 
 	public function test_start_seeds_only_eligible_published_wordpress_content(): void {
