@@ -272,6 +272,41 @@ retains data unless explicit full cleanup was enabled beforehand. Treat full
 cleanup and database restoration as destructive operations requiring a verified
 backup.
 
+## Private vulnerability response
+
+The primary reporting route is GitHub Private Vulnerability Reporting:
+
+https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/advisories/new
+
+If that service is unavailable, the fallback is
+security@rushleighconsulting.co.uk. Jeremy Sedgley and Matthew Worley are the
+named security maintainers. Both routes must remain monitored; a test report
+should be acknowledged within two working days without copying its contents into
+ordinary RC support, the UCCM backlog, public issues, GitHub Actions logs or
+general notification channels.
+
+1. Acknowledge receipt without confirming severity.
+2. Restrict the report, evidence and assessment to the security response group.
+3. Remove unnecessary reporter and affected-site personal data.
+4. Assess severity, affected versions, exploitability and immediate containment.
+5. Create restricted remediation work only after assessment. Do not use a public
+   issue or pull request for confidential fixes.
+6. Agree reporter communication, remediation, release and public disclosure as
+   separate approval gates.
+7. Use a private GitHub security advisory and request a CVE when appropriate.
+8. After release and agreed disclosure, securely delete evidence that is no
+   longer required and record only the deletion outcome and retention basis.
+
+Never request real consent records, cookie values, complete IP addresses,
+credentials, access tokens, authentication cookies, database exports or
+unrelated personal data. If a public forum post suggests a vulnerability, direct
+the reporter to the private form without asking for more details publicly.
+
+If GitHub private reporting fails, use the security mailbox. If both primary
+routes fail, use a known Rushleigh Consulting contact only to arrange an
+alternative private channel; do not include vulnerability details in that first
+message.
+
 ## Routine checks
 
 - Daily: confirm normal site operation and investigate consent-receipt failures.
