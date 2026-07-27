@@ -81,9 +81,11 @@ final class ConsentReceiptsTest extends TestCase {
 	public function test_every_valid_decision_creates_one_append_only_receipt(): void {
 		$result = Consent_Receipts::record(
 			array(
-				'receiptId'    => '12345678-1234-1234-1234-123456789abc',
-				'action'       => 'grant',
-				'policyVersion' => '1',
+				'receiptId'      => '12345678-1234-1234-1234-123456789abc',
+				'action'         => 'grant',
+				'policyVersion'  => '1',
+				'language'       => 'cy-GB',
+				'wordingVersion' => 'welsh-2',
 				'categories'    => array(
 					'functional' => false,
 					'analytics'  => true,
@@ -97,6 +99,8 @@ final class ConsentReceiptsTest extends TestCase {
 		self::assertCount( 1, $GLOBALS['wpdb']->inserts );
 		$row = $GLOBALS['wpdb']->inserts[0]['data'];
 		self::assertSame( 'grant', $row['action'] );
+		self::assertSame( 'cy_GB', $row['language'] );
+		self::assertSame( 'welsh-2', $row['wording_version'] );
 		self::assertSame( '192.0.2.0', $row['ip_masked'] );
 		self::assertNull( $row['ip_ciphertext'] );
 		self::assertSame( 64, strlen( $row['ip_fingerprint'] ) );
@@ -108,9 +112,11 @@ final class ConsentReceiptsTest extends TestCase {
 	public function test_invalid_decisions_are_rejected_without_database_writes(): void {
 		$result = Consent_Receipts::record(
 			array(
-				'receiptId'    => '12345678-1234-1234-1234-123456789abc',
-				'action'       => 'assumed',
-				'policyVersion' => '1',
+				'receiptId'      => '12345678-1234-1234-1234-123456789abc',
+				'action'         => 'assumed',
+				'policyVersion'  => '1',
+				'language'       => 'en-GB',
+				'wordingVersion' => '1',
 				'categories'    => array(),
 			),
 			'192.0.2.87'

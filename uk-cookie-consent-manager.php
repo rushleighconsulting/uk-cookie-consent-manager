@@ -32,6 +32,7 @@ require_once UCCM_PLUGIN_DIR . 'includes/class-activator.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-consent-state.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-crawler.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-settings.php';
+require_once UCCM_PLUGIN_DIR . 'includes/class-language-content.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-post-password-access.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-operational-alerts.php';
 require_once UCCM_PLUGIN_DIR . 'includes/class-resource-rules.php';

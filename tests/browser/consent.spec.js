@@ -83,15 +83,57 @@ async function boot( page, options = {} ) {
 			.replace( 'Reject non-essential', 'رفض غير الضروري' )
 			.replace( 'Manage preferences', 'إدارة التفضيلات' )
 			.replaceAll( 'Cookie settings', 'إعدادات ملفات تعريف الارتباط' );
+	} else if ( options.welshTranslated ) {
+		pageFixture = pageFixture.replace( '<html lang="en">', '<html lang="cy">' );
 	}
 
-	await page.addInitScript( () => {
+	await page.addInitScript( ( { rtlTranslated, welshTranslated } ) => {
+		const english = {
+			wording_version: 'english-1',
+			direction: 'ltr',
+			banner_title: 'Your cookie choices',
+			banner_copy: 'We use one necessary cookie to remember your choice for 180 days.',
+			accept_all: 'Accept all',
+			reject_optional: 'Reject non-essential',
+			manage_preferences: 'Manage preferences',
+			settings_label: 'Cookie settings',
+		};
+		const arabic = {
+			wording_version: 'arabic-1',
+			direction: 'rtl',
+			banner_title: 'خيارات ملفات تعريف الارتباط',
+			banner_copy: 'اختر إعدادات ملفات تعريف الارتباط.',
+			accept_all: 'قبول الكل',
+			reject_optional: 'رفض غير الضروري',
+			manage_preferences: 'إدارة التفضيلات',
+			settings_label: 'إعدادات ملفات تعريف الارتباط',
+		};
+		const welsh = {
+			wording_version: 'welsh-1',
+			direction: 'ltr',
+			banner_title: 'Eich dewisiadau cwcis',
+			banner_copy: 'Rydym yn defnyddio un cwci angenrheidiol i gofio eich dewis.',
+			accept_all: 'Derbyn pob un',
+			reject_optional: 'Gwrthod cwcis dewisol',
+			manage_preferences: 'Rheoli dewisiadau',
+			settings_label: 'Gosodiadau cwcis',
+		};
+		const locale = rtlTranslated ? 'ar' : ( welshTranslated ? 'cy' : 'en_GB' );
 		window.uccmConsentConfig = {
 			cookieName: 'uccm_consent',
 			cookiePath: '/',
 			lifetimeDays: 180,
 			policyVersion: '1',
 			pluginVersion: '0.1.0',
+			locale,
+			defaultLocale: 'en_GB',
+			direction: rtlTranslated ? 'rtl' : 'ltr',
+			wordingVersion: rtlTranslated ? 'arabic-1' : ( welshTranslated ? 'welsh-1' : 'english-1' ),
+			languageContent: {
+				en_GB: english,
+				ar: arabic,
+				cy: welsh,
+			},
 			receiptEndpoint: 'https://example.test/wp-json/uccm/v1/consents',
 			messages: {
 				available: 'Cookie choices are available.',
@@ -99,6 +141,9 @@ async function boot( page, options = {} ) {
 				withdrawn: 'Optional cookie consent has been withdrawn.',
 			},
 		};
+	}, {
+		rtlTranslated: Boolean( options.rtlTranslated ),
+		welshTranslated: Boolean( options.welshTranslated ),
 	} );
 
 	await page.route( 'https://example.test/**', async ( route ) => {
@@ -214,6 +259,8 @@ test( 'first visit remains blocked until an equally prominent decision is made',
 	).toBe( '1' );
 	await expect.poll( () => receipts.length ).toBe( 1 );
 	expect( receipts[0].action ).toBe( 'grant' );
+	expect( receipts[0].language ).toBe( 'en_GB' );
+	expect( receipts[0].wordingVersion ).toBe( 'english-1' );
 	expect( receipts[0].categories ).toEqual( {
 		necessary: true,
 		functional: true,
@@ -323,7 +370,7 @@ test( 'mobile landscape remains compact and fully visible', async ( { page } ) =
 
 test( 'right-to-left translated banner remains coherent and inside the viewport', async ( { page } ) => {
 	await page.setViewportSize( { width: 390, height: 844 } );
-	await boot( page, { rtlTranslated: true } );
+	const receipts = await boot( page, { rtlTranslated: true } );
 	await expectBannerWithinViewport( page );
 
 	await expect( page.locator( 'html' ) ).toHaveAttribute( 'dir', 'rtl' );
@@ -334,6 +381,20 @@ test( 'right-to-left translated banner remains coherent and inside the viewport'
 
 	const direction = await page.locator( '#uccm-banner' ).evaluate( ( element ) => getComputedStyle( element ).direction );
 	expect( direction ).toBe( 'rtl' );
+	await page.getByRole( 'button', { name: 'قبول الكل' } ).click();
+	await expect.poll( () => receipts.length ).toBe( 1 );
+	expect( receipts[0].language ).toBe( 'ar' );
+	expect( receipts[0].wordingVersion ).toBe( 'arabic-1' );
+} );
+
+test( 'Welsh page selects Welsh cached content and records its wording version', async ( { page } ) => {
+	const receipts = await boot( page, { welshTranslated: true } );
+
+	await expect( page.getByRole( 'heading', { name: 'Eich dewisiadau cwcis' } ) ).toBeVisible();
+	await page.getByRole( 'button', { name: 'Derbyn pob un' } ).click();
+	await expect.poll( () => receipts.length ).toBe( 1 );
+	expect( receipts[0].language ).toBe( 'cy' );
+	expect( receipts[0].wordingVersion ).toBe( 'welsh-1' );
 } );
 
 test( 'constrained portrait view keeps enlarged content reachable by touch scrolling', async ( { page } ) => {

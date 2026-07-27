@@ -22,6 +22,115 @@
 			return;
 		}
 
+		function normaliseLocale( locale ) {
+			const parts = String( locale || '' ).replace( /-/g, '_' ).split( '_' ).filter( Boolean );
+
+			if ( ! parts.length ) {
+				return '';
+			}
+
+			parts[0] = parts[0].toLowerCase();
+
+			if ( parts[1] ) {
+				parts[1] = 2 === parts[1].length ? parts[1].toUpperCase() : parts[1];
+			}
+
+			return parts.join( '_' );
+		}
+
+		function languageContent() {
+			const catalog = config.languageContent || {};
+			const available = Object.keys( catalog );
+			const requested = normaliseLocale( document.documentElement.lang || config.requestedLocale || config.locale );
+			let locale = available.find( ( candidate ) => normaliseLocale( candidate ) === requested );
+
+			if ( ! locale ) {
+				const language = requested.split( '_' )[0];
+				locale = available.find( ( candidate ) => normaliseLocale( candidate ).split( '_' )[0] === language );
+			}
+
+			if ( ! locale ) {
+				locale = available.find( ( candidate ) => normaliseLocale( candidate ) === normaliseLocale( config.defaultLocale ) ) || available[0];
+			}
+
+			return {
+				locale: normaliseLocale( locale || requested || config.locale || 'en_GB' ),
+				content: catalog[ locale ] || {},
+			};
+		}
+
+		const language = languageContent();
+		const content = language.content;
+
+		function setText( selector, value ) {
+			const element = root.querySelector( selector );
+
+			if ( element && value ) {
+				element.textContent = value;
+			}
+		}
+
+		function hydrateLanguage() {
+			const direction = 'rtl' === content.direction ? 'rtl' : ( 'ltr' === content.direction ? 'ltr' : ( config.direction || document.documentElement.dir ) );
+			root.lang = language.locale.replace( /_/g, '-' );
+			root.dir = direction || 'ltr';
+			root.dataset.uccmLocale = language.locale;
+			root.dataset.uccmWordingVersion = content.wording_version || config.wordingVersion || '1';
+
+			setText( '#uccm-banner-title', content.banner_title );
+			setText( '#uccm-banner-copy', content.banner_copy );
+			setText( '#uccm-preferences-title', content.preferences_title );
+			setText( '#uccm-preferences-intro', content.preferences_intro );
+			setText( '#uccm-preferences-cookie', content.cookie_copy );
+			setText( '[data-uccm-action="accept-all"]', content.accept_all );
+			setText( '[data-uccm-action="reject-optional"]', content.reject_optional );
+			root.querySelectorAll( '[data-uccm-action="manage"]' ).forEach( ( element ) => {
+				if ( element === settingsButton ) {
+					element.setAttribute( 'aria-label', content.settings_label || element.getAttribute( 'aria-label' ) );
+					element.dataset.uccmLabel = content.settings_label || element.dataset.uccmLabel;
+				} else if ( content.manage_preferences ) {
+					element.textContent = content.manage_preferences;
+				}
+			} );
+			setText( '[data-uccm-action="save"]', content.save_choices );
+			setText( '[data-uccm-action="withdraw"]', content.withdraw_consent );
+
+			const close = root.querySelector( '[data-uccm-action="close"]' );
+			if ( close && content.close_preferences ) {
+				close.setAttribute( 'aria-label', content.close_preferences );
+			}
+
+			Object.entries( content.categories || {} ).forEach( ( [ category, values ] ) => {
+				const input = dialog.querySelector( `input[name="${ category }"]` );
+				const text = input && input.closest( '.uccm-category' )?.querySelector( 'span' );
+
+				if ( text ) {
+					const label = text.querySelector( 'strong' );
+					const description = text.querySelector( 'span' );
+					if ( label && values.label ) {
+						label.textContent = values.label;
+					}
+					if ( description && values.description ) {
+						description.textContent = values.description;
+					}
+				}
+			} );
+
+			root.querySelectorAll( '[data-uccm-policy-link]' ).forEach( ( policyLink ) => {
+				if ( content.policy_link_label ) {
+					policyLink.textContent = content.policy_link_label;
+				}
+				if ( content.policy_url ) {
+					policyLink.href = content.policy_url;
+					policyLink.hidden = false;
+				} else {
+					policyLink.hidden = true;
+				}
+			} );
+		}
+
+		hydrateLanguage();
+
 		function emptyChoices( optionalValue = false ) {
 			return {
 				necessary: true,
@@ -110,6 +219,8 @@
 				receiptId: newReceiptId(),
 				policyVersion: config.policyVersion,
 				pluginVersion: config.pluginVersion,
+				language: language.locale,
+				wordingVersion: content.wording_version || config.wordingVersion || '1',
 				decidedAt: new Date( now ).toISOString(),
 				expiresAt: now + ( lifetimeSeconds * 1000 ),
 				action,

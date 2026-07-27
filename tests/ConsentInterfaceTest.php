@@ -34,6 +34,9 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertFalse( $configuration['categories']['marketing']['required'] );
 		self::assertSame( 180, $configuration['lifetimeDays'] );
 		self::assertSame( '1', $configuration['policyVersion'] );
+		self::assertSame( 'en_GB', $configuration['locale'] );
+		self::assertSame( '1', $configuration['wordingVersion'] );
+		self::assertArrayHasKey( 'en_GB', $configuration['languageContent'] );
 		self::assertSame( 'https://example.test/wp-json/uccm/v1/consents', $configuration['receiptEndpoint'] );
 	}
 
@@ -69,6 +72,9 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'data-uccm-action="accept-all"', $markup );
 		self::assertStringContainsString( 'data-uccm-action="reject-optional"', $markup );
 		self::assertStringContainsString( 'data-uccm-action="manage"', $markup );
+		self::assertStringContainsString( 'data-uccm-locale="en_GB"', $markup );
+		self::assertStringContainsString( 'data-uccm-wording-version="1"', $markup );
+		self::assertStringContainsString( 'lang="en-GB"', $markup );
 		self::assertStringContainsString( 'class="uccm-settings"', $markup );
 		self::assertStringContainsString( 'aria-label="Cookie settings"', $markup );
 		self::assertStringContainsString( 'data-uccm-label="Cookie settings"', $markup );

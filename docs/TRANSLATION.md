@@ -49,9 +49,38 @@ domain. Machine identifiers, consent category keys and error codes remain
 stable and are not translated; any label shown to a person is translated
 separately.
 
-## Scope boundary
+## Multilingual consent content
 
-This translation workflow makes the plugin’s own interface translation-ready.
-Selecting different administrator-authored consent copy, policies or links for
-each language version of a multilingual site belongs to UCCM-44.
+The Banner screen also accepts locally authored consent content for each
+language used by the site. Each entry has a WordPress locale, wording version,
+reading direction, policy URL, banner and preferences wording, action labels,
+and category labels and descriptions. `{days}` in authored copy is replaced
+with the current Consent lifetime setting.
 
+UCCM resolves the public-page language in this order:
+
+1. WordPress's current page locale;
+2. the current WPML language, when WPML is active;
+3. the current Polylang locale, when Polylang is active; and
+4. the value returned by the `uccm_public_locale` filter.
+
+The filter is the documented integration point for another multilingual
+plugin. It receives the locale found by the preceding steps and must return a
+WordPress locale or HTML language tag.
+
+Exact locale matches are preferred, followed by the same base language and
+then the configured default consent language. The Banner screen reports
+incomplete authored entries; empty fields use the safe default wording. UCCM
+does not call a translation service.
+
+The complete local language catalogue is sent with the dependency-free consent
+script. Before displaying controls, the browser selects content from the
+current page's `<html lang>` value. This keeps the consent fragment aligned
+with a language-specific cached page instead of relying only on a
+server-selected fragment. Full-page caches must still keep the site's own
+language-specific URLs or cache variants separate.
+
+Consent receipts record the selected language, policy version and wording
+version. Automatic right-to-left layout is provided for Arabic, Persian,
+Hebrew, Pashto and Urdu; administrators can explicitly choose either direction
+for another locale.

@@ -146,6 +146,9 @@ final class AdminInventoryTest extends TestCase {
 		self::assertStringContainsString( 'name="uccm[banner_font]"', $markup );
 		self::assertStringContainsString( 'name="uccm[banner_position]"', $markup );
 		self::assertStringContainsString( 'name="uccm[icon_position]"', $markup );
+		self::assertStringContainsString( 'name="uccm[default_content_locale]"', $markup );
+		self::assertStringContainsString( 'name="uccm[language_content][0][locale]"', $markup );
+		self::assertStringContainsString( 'UCCM never sends this content to an external translation service.', $markup );
 		self::assertStringContainsString( 'name="reset_banner_style"', $markup );
 		self::assertStringContainsString( 'keeps the main Accept and Reject choices equally prominent', $markup );
 	}

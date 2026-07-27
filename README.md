@@ -62,6 +62,9 @@ UCCM-3 adds:
 - A `uccm:consent-changed` browser event and document category-state attributes
   for later script blocking and server-side receipt integration.
 - Responsive styles, visible keyboard focus and reduced-motion handling.
+- Locally authored per-language consent wording, category descriptions and
+  policy links with WordPress, WPML and Polylang locale resolution, explicit
+  fallback diagnostics, right-to-left layout and cache-safe browser selection.
 
 The browser decision is the active interface state. Server-side evidential
 consent receipts, privacy-preserving IP processing and retention are delivered

@@ -43,6 +43,8 @@ final class Settings {
 		return array(
 			'consent_lifetime_days'           => 180,
 			'consent_policy_version'          => Consent_State::POLICY_VERSION,
+			'default_content_locale'          => 'en_GB',
+			'language_content'                => array(),
 			'banner_surface_color'            => '#ffffff',
 			'banner_text_color'               => '#172033',
 			'banner_muted_color'              => '#536079',
@@ -133,6 +135,15 @@ final class Settings {
 		if ( array_key_exists( 'consent_policy_version', $input ) ) {
 			$version                            = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', (string) $input['consent_policy_version'] );
 			$settings['consent_policy_version'] = '' === $version ? Consent_State::POLICY_VERSION : substr( $version, 0, 40 );
+		}
+
+		if ( array_key_exists( 'default_content_locale', $input ) ) {
+			$locale                             = Language_Content::normalise_locale( (string) $input['default_content_locale'] );
+			$settings['default_content_locale'] = '' === $locale ? 'en_GB' : $locale;
+		}
+
+		if ( array_key_exists( 'language_content', $input ) ) {
+			$settings['language_content'] = Language_Content::sanitise_catalog( $input['language_content'] );
 		}
 
 		$style_input = array_intersect_key( $input, array_fill_keys( self::banner_style_keys(), true ) );

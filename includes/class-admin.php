@@ -160,6 +160,8 @@ final class Admin {
 					array(
 						'consent_lifetime_days'  => $submitted['consent_lifetime_days'] ?? 180,
 						'consent_policy_version' => $submitted['consent_policy_version'] ?? Consent_State::POLICY_VERSION,
+						'default_content_locale' => $submitted['default_content_locale'] ?? 'en_GB',
+						'language_content'       => $submitted['language_content'] ?? array(),
 					)
 				),
 				$inherit
@@ -757,6 +759,9 @@ final class Admin {
 		self::number_field( 'consent_lifetime_days', __( 'Consent lifetime (days)', 'uk-cookie-consent-manager' ), (int) $settings['consent_lifetime_days'], 1, 730, Settings::is_network_locked( 'consent_lifetime_days' ) );
 		self::network_setting_control( 'consent_lifetime_days' );
 		self::text_field( 'consent_policy_version', __( 'Consent policy version', 'uk-cookie-consent-manager' ), (string) $settings['consent_policy_version'] );
+		self::text_field( 'default_content_locale', __( 'Default consent language', 'uk-cookie-consent-manager' ), (string) $settings['default_content_locale'] );
+		echo '<p class="description">' . esc_html__( 'Use a WordPress locale such as en_GB, cy or ar. This language is used when the current page has no matching consent content.', 'uk-cookie-consent-manager' ) . '</p>';
+		self::render_language_content_editor( $settings );
 		echo '<h2>' . esc_html__( 'Appearance', 'uk-cookie-consent-manager' ) . '</h2>';
 		echo '<div class="uccm-banner-editor" data-uccm-banner-editor>';
 		echo '<div class="uccm-banner-editor__controls">';
@@ -801,6 +806,104 @@ final class Admin {
 		echo '<p><button type="submit" class="button button-secondary" name="reset_banner_style" value="1" formnovalidate>' . esc_html__( 'Reset appearance to defaults', 'uk-cookie-consent-manager' ) . '</button></p>';
 		self::form_close();
 		self::close_page();
+	}
+
+	/**
+	 * Render locally authored language variants and completeness diagnostics.
+	 *
+	 * @param array<string, mixed> $settings Current settings.
+	 */
+	private static function render_language_content_editor( array $settings ): void {
+		$stored      = Language_Content::sanitise_catalog( $settings['language_content'] ?? array() );
+		$diagnostics = Language_Content::diagnostics();
+		$rows        = array_values( $stored );
+
+		foreach ( array_keys( $stored ) as $index => $locale ) {
+			$rows[ $index ]['locale'] = $locale;
+		}
+
+		$rows[] = array( 'locale' => '' );
+		echo '<h2>' . esc_html__( 'Consent languages', 'uk-cookie-consent-manager' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Add wording only for languages your site uses. Empty fields safely fall back to the default wording. UCCM never sends this content to an external translation service.', 'uk-cookie-consent-manager' ) . '</p>';
+
+		foreach ( $diagnostics as $locale => $missing ) {
+			echo '<div class="notice notice-warning inline"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: locale, 2: comma-separated field names. */
+					__( '%1$s uses fallback wording for: %2$s', 'uk-cookie-consent-manager' ),
+					$locale,
+					implode( ', ', $missing )
+				)
+			);
+			echo '</p></div>';
+		}
+
+		foreach ( $rows as $index => $content ) {
+			$locale     = (string) ( $content['locale'] ?? '' );
+			$categories = is_array( $content['categories'] ?? null ) ? $content['categories'] : array();
+			$summary    = '' === $locale ? __( 'Add another language', 'uk-cookie-consent-manager' ) : $locale;
+			$prefix     = 'uccm[language_content][' . $index . ']';
+			echo '<details style="max-width:980px;margin:0 0 12px;border:1px solid #c3c4c7;padding:12px"' . ( '' === $locale ? '' : ' open' ) . '>';
+			echo '<summary><strong>' . esc_html( $summary ) . '</strong></summary>';
+			echo '<p><label><strong>' . esc_html__( 'Locale', 'uk-cookie-consent-manager' ) . '</strong><br><input class="regular-text" name="' . esc_attr( $prefix . '[locale]' ) . '" value="' . esc_attr( $locale ) . '" placeholder="cy"></label></p>';
+			self::language_text_input( $prefix, 'wording_version', __( 'Wording version', 'uk-cookie-consent-manager' ), (string) ( $content['wording_version'] ?? '1' ), false );
+			echo '<p><label><strong>' . esc_html__( 'Reading direction', 'uk-cookie-consent-manager' ) . '</strong><br><select name="' . esc_attr( $prefix . '[direction]' ) . '">';
+
+			foreach ( array( 'auto' => __( 'Automatic', 'uk-cookie-consent-manager' ), 'ltr' => __( 'Left to right', 'uk-cookie-consent-manager' ), 'rtl' => __( 'Right to left', 'uk-cookie-consent-manager' ) ) as $value => $label ) {
+				echo '<option value="' . esc_attr( $value ) . '" ' . selected( (string) ( $content['direction'] ?? 'auto' ), $value, false ) . '>' . esc_html( $label ) . '</option>';
+			}
+
+			echo '</select></label></p>';
+			echo '<p><label><strong>' . esc_html__( 'Cookie policy URL', 'uk-cookie-consent-manager' ) . '</strong><br><input type="url" class="large-text" name="' . esc_attr( $prefix . '[policy_url]' ) . '" value="' . esc_attr( (string) ( $content['policy_url'] ?? '' ) ) . '"></label></p>';
+
+			foreach (
+				array(
+					'banner_title'       => __( 'Banner heading', 'uk-cookie-consent-manager' ),
+					'banner_copy'        => __( 'Banner message', 'uk-cookie-consent-manager' ),
+					'preferences_title'  => __( 'Preferences heading', 'uk-cookie-consent-manager' ),
+					'preferences_intro'  => __( 'Preferences introduction', 'uk-cookie-consent-manager' ),
+					'cookie_copy'        => __( 'Necessary-cookie explanation', 'uk-cookie-consent-manager' ),
+					'accept_all'         => __( 'Accept button', 'uk-cookie-consent-manager' ),
+					'reject_optional'    => __( 'Reject button', 'uk-cookie-consent-manager' ),
+					'manage_preferences' => __( 'Manage button', 'uk-cookie-consent-manager' ),
+					'save_choices'       => __( 'Save button', 'uk-cookie-consent-manager' ),
+					'withdraw_consent'   => __( 'Withdraw button', 'uk-cookie-consent-manager' ),
+					'close_preferences'  => __( 'Close-button screen-reader label', 'uk-cookie-consent-manager' ),
+					'settings_label'     => __( 'Cookie-icon screen-reader label', 'uk-cookie-consent-manager' ),
+					'policy_link_label'  => __( 'Cookie policy link label', 'uk-cookie-consent-manager' ),
+				) as $field => $label
+			) {
+				self::language_text_input( $prefix, $field, $label, (string) ( $content[ $field ] ?? '' ), in_array( $field, array( 'banner_copy', 'preferences_intro', 'cookie_copy' ), true ) );
+			}
+
+			echo '<h3>' . esc_html__( 'Category wording', 'uk-cookie-consent-manager' ) . '</h3>';
+
+			foreach ( array( 'necessary', 'functional', 'analytics', 'marketing' ) as $category ) {
+				$values = is_array( $categories[ $category ] ?? null ) ? $categories[ $category ] : array();
+				echo '<fieldset style="margin:0 0 12px"><legend><strong>' . esc_html( ucfirst( $category ) ) . '</strong></legend>';
+				self::language_text_input( $prefix . '[categories][' . $category . ']', 'label', __( 'Label', 'uk-cookie-consent-manager' ), (string) ( $values['label'] ?? '' ), false );
+				self::language_text_input( $prefix . '[categories][' . $category . ']', 'description', __( 'Description', 'uk-cookie-consent-manager' ), (string) ( $values['description'] ?? '' ), true );
+				echo '</fieldset>';
+			}
+
+			echo '</details>';
+		}
+	}
+
+	/**
+	 * Render one plain-text language-content field.
+	 */
+	private static function language_text_input( string $prefix, string $field, string $label, string $value, bool $multiline ): void {
+		echo '<p><label><strong>' . esc_html( $label ) . '</strong><br>';
+
+		if ( $multiline ) {
+			echo '<textarea class="large-text" rows="3" name="' . esc_attr( $prefix . '[' . $field . ']' ) . '">' . esc_textarea( $value ) . '</textarea>';
+		} else {
+			echo '<input class="large-text" name="' . esc_attr( $prefix . '[' . $field . ']' ) . '" value="' . esc_attr( $value ) . '">';
+		}
+
+		echo '</label></p>';
 	}
 
 	/**
@@ -1267,10 +1370,10 @@ final class Admin {
 			return;
 		}
 
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Receipt', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Time (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Policy', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Masked IP', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Receipt', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Time (UTC)', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Action', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Language', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Policy / wording', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Masked IP', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
 
 		foreach ( $records as $record ) {
-			echo '<tr><td><code>' . esc_html( (string) $record['receipt_id'] ) . '</code></td><td>' . esc_html( (string) $record['occurred_at'] ) . '</td><td>' . esc_html( (string) $record['action'] ) . '</td><td>' . esc_html( (string) $record['policy_version'] ) . '</td><td>' . esc_html( (string) $record['ip_masked'] ) . '</td></tr>';
+			echo '<tr><td><code>' . esc_html( (string) $record['receipt_id'] ) . '</code></td><td>' . esc_html( (string) $record['occurred_at'] ) . '</td><td>' . esc_html( (string) $record['action'] ) . '</td><td>' . esc_html( (string) $record['language'] ) . '</td><td>' . esc_html( (string) $record['policy_version'] ) . ' / ' . esc_html( (string) $record['wording_version'] ) . '</td><td>' . esc_html( (string) $record['ip_masked'] ) . '</td></tr>';
 		}
 
 		echo '</tbody></table>';
