@@ -59,13 +59,23 @@ final class Consent_Interface {
 		$configuration = Consent_State::configuration();
 		$lifetime_days = (int) ( $configuration['lifetimeDays'] ?? 180 );
 		$banner_copy   = sprintf(
-			/* translators: %d: configured consent lifetime in days. */
-			__( 'We use one necessary cookie to remember your choice for a %d-day period. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing.', 'uk-cookie-consent-manager' ),
+			/* translators: %d: configured consent lifetime. */
+			_n(
+				'We use one necessary cookie to remember your choice for %d day. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
+				'We use one necessary cookie to remember your choice for %d days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
+				$lifetime_days,
+				'uk-cookie-consent-manager'
+			),
 			$lifetime_days
 		);
 		$cookie_copy = sprintf(
-			/* translators: %d: configured consent lifetime in days. */
-			__( 'is a first-party necessary cookie. It remembers your saved choice for a %d-day period and is set when you accept, reject, save preferences or withdraw optional consent. Changing the lifetime setting affects your next saved choice; it does not extend an existing cookie.', 'uk-cookie-consent-manager' ),
+			/* translators: %d: configured consent lifetime. */
+			_n(
+				'We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
+				'We set one necessary cookie. This cookie remembers your cookie choices for %d days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
+				$lifetime_days,
+				'uk-cookie-consent-manager'
+			),
 			$lifetime_days
 		);
 		?>
@@ -96,7 +106,7 @@ final class Consent_Interface {
 						<button type="button" class="uccm-icon-button" data-uccm-action="close" aria-label="<?php esc_attr_e( 'Close cookie preferences', 'uk-cookie-consent-manager' ); ?>">&times;</button>
 					</div>
 					<p class="uccm-copy"><?php esc_html_e( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ); ?></p>
-					<p class="uccm-copy"><strong><?php echo esc_html( Consent_State::COOKIE_NAME ); ?></strong> <?php echo esc_html( $cookie_copy ); ?></p>
+					<p class="uccm-copy"><?php echo esc_html( $cookie_copy ); ?></p>
 
 					<div class="uccm-categories">
 						<label class="uccm-category">

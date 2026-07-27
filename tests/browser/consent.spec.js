@@ -20,7 +20,7 @@ const fixture = `
 	<section id="uccm-banner" class="uccm-banner" aria-labelledby="uccm-banner-title" hidden>
 		<div class="uccm-banner__content">
 			<h2 id="uccm-banner-title" class="uccm-title">Your cookie choices</h2>
-			<p class="uccm-copy">We use one necessary cookie to remember your choice for a 180-day period. It is set whether you accept or reject optional cookies, so we do not ask you again.</p>
+			<p class="uccm-copy">We use one necessary cookie to remember your choice for 180 days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.</p>
 		</div>
 		<div class="uccm-actions uccm-actions--primary">
 			<button type="button" class="uccm-button" data-uccm-action="accept-all">Accept all</button>
@@ -40,6 +40,8 @@ const fixture = `
 				<h2 id="uccm-preferences-title" tabindex="-1">Cookie preferences</h2>
 				<button type="button" data-uccm-action="close" aria-label="Close cookie preferences">Close</button>
 			</div>
+			<p>Choose which optional cookie categories this website may use. Necessary cookies are always active.</p>
+			<p>We set one necessary cookie. This cookie remembers your cookie choices for 180 days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.</p>
 			<label>Necessary <input type="checkbox" name="necessary" checked disabled aria-disabled="true"></label>
 			<label>Functional <input type="checkbox" name="functional"></label>
 			<label>Analytics <input type="checkbox" name="analytics"></label>

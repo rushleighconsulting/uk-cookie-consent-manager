@@ -81,11 +81,14 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'name="marketing"', $markup );
 		self::assertStringContainsString( 'aria-live="polite"', $markup );
 		self::assertStringContainsString( 'whether you accept or reject optional cookies', $markup );
-		self::assertStringContainsString( 'uccm_consent', $markup );
-		self::assertStringContainsString( '180-day period', $markup );
+		self::assertStringContainsString( 'You may change your choice at any time by clicking the little cookie logo.', $markup );
+		self::assertStringContainsString( 'We set one necessary cookie.', $markup );
+		self::assertStringContainsString( 'You may reject any other cookies.', $markup );
+		self::assertSame( 2, substr_count( $markup, '180 days' ) );
+		self::assertStringNotContainsString( 'uccm_consent', $markup );
 	}
 
-	public function test_markup_uses_the_configured_lifetime_for_newly_saved_choices(): void {
+	public function test_markup_uses_the_configured_lifetime_in_both_messages(): void {
 		$GLOBALS['uccm_test_options']['uccm_settings'] = array(
 			'consent_lifetime_days' => 365,
 		);
@@ -94,9 +97,22 @@ final class ConsentInterfaceTest extends TestCase {
 		Consent_Interface::render();
 		$markup = (string) ob_get_clean();
 
-		self::assertStringContainsString( '365-day period', $markup );
-		self::assertStringContainsString( 'affects your next saved choice', $markup );
-		self::assertStringContainsString( 'does not extend an existing cookie', $markup );
+		self::assertSame( 2, substr_count( $markup, '365 days' ) );
+		self::assertStringContainsString( 'remember your choice for 365 days', $markup );
+		self::assertStringContainsString( 'remembers your cookie choices for 365 days', $markup );
+	}
+
+	public function test_markup_uses_singular_day_wording_for_one_day_lifetime(): void {
+		$GLOBALS['uccm_test_options']['uccm_settings'] = array(
+			'consent_lifetime_days' => 1,
+		);
+
+		ob_start();
+		Consent_Interface::render();
+		$markup = (string) ob_get_clean();
+
+		self::assertSame( 2, substr_count( $markup, '1 day' ) );
+		self::assertStringNotContainsString( '1 days', $markup );
 	}
 
 	public function test_browser_script_persists_versioned_state_and_publishes_changes(): void {
