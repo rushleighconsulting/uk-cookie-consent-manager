@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.15
+Stable tag: 0.1.0-rc.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Privacy-by-design cookie consent and management for UK WordPress sites.
 
 == Description ==
 
-UK Cookie Consent Manager 0.1.0-rc.15 is a release candidate for controlled
+UK Cookie Consent Manager 0.1.0-rc.16 is a release candidate for controlled
 staging acceptance. It is not approved for production use.
 
 Release 1 provides an accessible consent banner, granular preferences, prior
@@ -37,6 +37,13 @@ or guarantee compliance.
 Do not install GitHub's automatic Source code archives.
 
 == Changelog ==
+
+= 0.1.0-rc.16 =
+* Recovers queued manual scans from the authenticated Scans screen when WordPress cron loopback dispatch is delayed.
+* Uses the persisted per-run lock so the Scans-screen worker and WordPress cron cannot process the same batch concurrently.
+* Shows live checked and remaining counts while preserving resumable progress when an administrator leaves and returns.
+* Records an operational problem when initial background dispatch cannot start instead of silently leaving a scan queued.
+* Adds desktop, mobile and PHP regression coverage for stalled-scan recovery.
 
 = 0.1.0-rc.15 =
 * Adds WordPress Multisite Network Activation with resumable, bounded installation and upgrade batches.
