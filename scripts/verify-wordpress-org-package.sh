@@ -12,6 +12,7 @@ fi
 plugin_file="${package_directory}/uk-cookie-consent-manager.php"
 readme="${package_directory}/readme.txt"
 updater="${package_directory}/includes/class-secure-updater.php"
+source_plugin_file="uk-cookie-consent-manager.php"
 
 for required in "${plugin_file}" "${readme}" "${updater}"; do
   if [[ ! -f "${required}" ]]; then
@@ -31,6 +32,13 @@ fi
 
 if grep -q '^ \* Update URI:' "${plugin_file}"; then
   echo "The WordPress.org entry point declares an external Update URI." >&2
+  exit 1
+fi
+
+if [[ -f "${source_plugin_file}" ]] && ! diff -u \
+  <(sed -n "s/^require_once UCCM_PLUGIN_DIR \. '\\([^']*\\)';$/\\1/p" "${source_plugin_file}") \
+  <(sed -n "s/^require_once UCCM_PLUGIN_DIR \. '\\([^']*\\)';$/\\1/p" "${plugin_file}"); then
+  echo "The WordPress.org entry point does not load the same runtime files as the source entry point." >&2
   exit 1
 fi
 
