@@ -256,7 +256,7 @@ jobs:
           wp core multisite-convert --path="${RUNNER_TEMP}/wordpress" --title=UCCM
           unzip -q dist/uk-cookie-consent-manager-0.1.0-ci.zip -d "${RUNNER_TEMP}/wordpress/wp-content/plugins"
           wp plugin activate uk-cookie-consent-manager --network --path="${RUNNER_TEMP}/wordpress"
-          wp plugin status uk-cookie-consent-manager --network --path="${RUNNER_TEMP}/wordpress"
+          wp plugin is-active uk-cookie-consent-manager --network --path="${RUNNER_TEMP}/wordpress"
           wp site create --path="${RUNNER_TEMP}/wordpress" --slug=second --title=Second --email=second@example.test
 
       - name: Verify per-site schema, jobs, isolation and network precedence
