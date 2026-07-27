@@ -720,7 +720,7 @@ final class Admin {
 	public static function render_help(): void {
 		self::require_capability( 'manage_uccm_settings' );
 		$security_url = 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/security/advisories/new';
-		$security_email = 'security@rushleighconsulting.co.uk';
+		$security_email   = 'security@rushleighconsulting.co.uk';
 
 		self::open_page( __( 'Help', 'uk-cookie-consent-manager' ) );
 		echo '<h2>' . esc_html__( 'Report a security vulnerability privately', 'uk-cookie-consent-manager' ) . '</h2>';
