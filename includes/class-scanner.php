@@ -938,7 +938,7 @@ final class Scanner {
 			return;
 		}
 
-		$reference = (string) (
+		$reference      = (string) (
 			$coverage['browser_heartbeat_at']
 			?? $coverage['browser_started_at']
 			?? $run['completed_at']
