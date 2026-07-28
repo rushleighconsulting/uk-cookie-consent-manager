@@ -24,6 +24,7 @@ $GLOBALS['uccm_test_cleared_hooks']    = array();
 $GLOBALS['uccm_test_actions']          = array();
 $GLOBALS['uccm_test_filters']          = array();
 $GLOBALS['uccm_test_fired_actions']    = array();
+$GLOBALS['uccm_test_registered_styles'] = array();
 $GLOBALS['uccm_test_enqueued_styles']  = array();
 $GLOBALS['uccm_test_inline_styles']    = array();
 $GLOBALS['uccm_test_enqueued_scripts'] = array();
@@ -667,15 +668,30 @@ function plugin_dir_url( string $file ): string {
 	return UCCM_PLUGIN_URL;
 }
 
-function wp_enqueue_style( string $handle, string|bool $source = '', array $dependencies = array(), string|bool|null $version = false ): void {
-	$GLOBALS['uccm_test_enqueued_styles'][ $handle ] = array(
+function wp_register_style( string $handle, string|bool $source, array $dependencies = array(), string|bool|null $version = false ): bool {
+	$GLOBALS['uccm_test_registered_styles'][ $handle ] = array(
 		'source'       => $source,
 		'dependencies' => $dependencies,
 		'version'      => $version,
 	);
+	return true;
+}
+
+function wp_enqueue_style( string $handle, string|bool $source = '', array $dependencies = array(), string|bool|null $version = false ): void {
+	if ( $source ) {
+		wp_register_style( $handle, $source, $dependencies, $version );
+	}
+
+	if ( isset( $GLOBALS['uccm_test_registered_styles'][ $handle ] ) ) {
+		$GLOBALS['uccm_test_enqueued_styles'][ $handle ] = $GLOBALS['uccm_test_registered_styles'][ $handle ];
+	}
 }
 
 function wp_add_inline_style( string $handle, string $data ): bool {
+	if ( ! isset( $GLOBALS['uccm_test_registered_styles'][ $handle ] ) || '' === $data ) {
+		return false;
+	}
+
 	$GLOBALS['uccm_test_inline_styles'][ $handle ][] = $data;
 	return true;
 }
