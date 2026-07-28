@@ -65,6 +65,35 @@ wp plugin deactivate uk-cookie-consent-manager --path="${wp_path}" --url="${root
 # Network Activation must initialize all existing sites.
 wp plugin activate uk-cookie-consent-manager --network --path="${wp_path}"
 wp plugin is-active uk-cookie-consent-manager --network --path="${wp_path}"
+
+# The real WordPress style loader must register, enqueue and emit the inline-only visitor stylesheet.
+wp eval '
+do_action( "wp_enqueue_scripts" );
+if ( ! wp_style_is( "uccm-consent", "registered" ) ) {
+    throw new RuntimeException( "The inline visitor stylesheet handle was not registered." );
+}
+if ( ! wp_style_is( "uccm-consent", "enqueued" ) ) {
+    throw new RuntimeException( "The inline visitor stylesheet handle was not enqueued." );
+}
+$registered = wp_styles()->registered["uccm-consent"];
+if ( false !== $registered->src ) {
+    throw new RuntimeException( "The visitor stylesheet handle has an external source." );
+}
+$inline = wp_styles()->get_data( "uccm-consent", "after" );
+if ( ! is_array( $inline ) || false === strpos( implode( "\n", $inline ), "--uccm-focus" ) ) {
+    throw new RuntimeException( "The inline visitor stylesheet data was not attached." );
+}
+ob_start();
+wp_print_styles( "uccm-consent" );
+$styles = (string) ob_get_clean();
+if ( false === strpos( $styles, "--uccm-focus" ) ) {
+    throw new RuntimeException( "The inline visitor stylesheet was not emitted: " . substr( $styles, 0, 200 ) );
+}
+if ( false !== strpos( $styles, "visitor-interface.css" ) ) {
+    throw new RuntimeException( "An external visitor stylesheet request was emitted." );
+}
+' --url="${root_url}" --path="${wp_path}"
+
 table_exists "wp_uccm_consents"
 table_exists "wp_2_uccm_consents"
 
