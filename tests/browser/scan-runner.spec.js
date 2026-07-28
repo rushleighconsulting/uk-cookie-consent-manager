@@ -86,6 +86,7 @@ test( 'runner leaves server recovery possible when terminal and fallback submiss
 			runId: 44,
 			maxTargets: 100,
 			stepDelayMs: 250,
+			submitRetryAttempts: 1,
 			targets: []
 		};
 	} );
@@ -121,6 +122,55 @@ test( 'runner leaves server recovery possible when terminal and fallback submiss
 	expect( submissions.map( ( payload ) => payload.status ) ).toEqual( [ 'running', 'completed', 'failed' ] );
 } );
 
+test( 'runner retries a transient progress-save failure before scanning', async ( { page } ) => {
+	const submissions = [];
+
+	await page.addInitScript( () => {
+		window.UCCMScanRunner = {
+			ajaxUrl: 'https://example.test/wp-admin/admin-ajax.php',
+			nonce: 'test-nonce',
+			runId: 45,
+			maxTargets: 5,
+			stepDelayMs: 250,
+			submitRetryAttempts: 2,
+			submitTimeoutMs: 2000,
+			targets: []
+		};
+	} );
+
+	await page.route( '**/*', async ( route ) => {
+		const request = route.request();
+
+		if ( 'POST' === request.method() ) {
+			const submitted = new URLSearchParams( request.postData() || '' );
+			submissions.push( JSON.parse( submitted.get( 'payload' ) ) );
+
+			if ( 1 === submissions.length ) {
+				await route.abort( 'connectionrefused' );
+				return;
+			}
+
+			await route.fulfill( {
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify( { success: true, data: { saved: true } } )
+			} );
+			return;
+		}
+
+		await route.fulfill( { status: 200, contentType: 'text/html', body: adminFixture } );
+	} );
+
+	await page.goto( 'https://example.test/wp-admin/admin.php?page=uccm-scans&scan_id=45' );
+	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/scan-runner.js' ) } );
+	await page.getByRole( 'button', { name: 'Run browser observations' } ).click();
+
+	await expect( page.locator( '#uccm-browser-observation-status' ) ).toHaveText(
+		'Browser check saved. Reload this scan to review the results.'
+	);
+	expect( submissions.map( ( payload ) => payload.status ) ).toEqual( [ 'running', 'running', 'completed' ] );
+} );
+
 test( 'runner isolates administrator state, uses bounded post-password bootstrap and groups affected pages', async ( { page } ) => {
 	const submissions = [];
 	let bootstrapRequests = 0;
@@ -132,6 +182,7 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 			runId: 42,
 			maxTargets: 100,
 			stepDelayMs: 250,
+			submitRetryAttempts: 1,
 			cookieName: 'uccm_consent',
 			cookiePath: '/',
 			policyVersion: '1',
