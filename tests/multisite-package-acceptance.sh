@@ -49,7 +49,7 @@ case "${topology}" in
     existing_url="https://existing.example.test"
     ;;
   domain-mapped)
-    wp site update "${existing_id}" --path="${wp_path}" --domain=tenant.example.test --path=/
+    wp db query "UPDATE wp_blogs SET domain='tenant.example.test', path='/' WHERE blog_id=${existing_id};" --path="${wp_path}"
     existing_url="https://tenant.example.test"
     ;;
 esac
@@ -80,7 +80,7 @@ case "${topology}" in
     later_url="https://later.example.test"
     ;;
   domain-mapped)
-    wp site update "${later_id}" --path="${wp_path}" --domain=later.example.test --path=/
+    wp db query "UPDATE wp_blogs SET domain='later.example.test', path='/' WHERE blog_id=${later_id};" --path="${wp_path}"
     later_url="https://later.example.test"
     ;;
 esac
