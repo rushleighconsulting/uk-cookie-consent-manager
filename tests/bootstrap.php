@@ -372,8 +372,10 @@ function is_main_site(): bool {
 	return true === $GLOBALS['uccm_test_is_main_site'];
 }
 
-function wp_clear_scheduled_hook( string $hook ): int {
+function wp_clear_scheduled_hook( string $hook, array $arguments = array() ): int {
 	$GLOBALS['uccm_test_cleared_hooks'][] = $hook;
+	$key = array() === $arguments ? $hook : $hook . ':' . md5( wp_json_encode( $arguments ) );
+	unset( $GLOBALS['uccm_test_scheduled_hooks'][ $key ] );
 	return 1;
 }
 
