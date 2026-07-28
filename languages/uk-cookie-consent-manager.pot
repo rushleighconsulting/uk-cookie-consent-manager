@@ -801,7 +801,7 @@ msgid "Run browser check"
 msgstr ""
 
 #: includes/class-admin.php:1331
-#: assets/js/scan-runner.js:30
+#: assets/js/scan-runner.js:32
 msgid "For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet."
 msgstr ""
 
@@ -1813,32 +1813,33 @@ msgstr ""
 msgid "Marketing only"
 msgstr ""
 
-#: assets/js/scan-runner.js:303
+#: assets/js/scan-runner.js:305
 msgid "Cookie scan temporary visitor frame"
 msgstr ""
 
-#: assets/js/scan-runner.js:318
+#: assets/js/scan-runner.js:320
 msgid "Cookie scan preparation"
 msgstr ""
 
-#: assets/js/scan-runner.js:353
+#: assets/js/scan-runner.js:365
+#: assets/js/scan-runner.js:382
 msgid "The browser check could not be saved."
 msgstr ""
 
 #. translators: 1: current page number, 2: total pages, 3: consent scenario.
-#: assets/js/scan-runner.js:375
+#: assets/js/scan-runner.js:403
 #, js-format
 msgid "Checking page %1$d of %2$d (%3$s)…"
 msgstr ""
 
-#: assets/js/scan-runner.js:422
+#: assets/js/scan-runner.js:450
 msgid "Browser check saved. Reload this scan to review the results."
 msgstr ""
 
-#: assets/js/scan-runner.js:423
+#: assets/js/scan-runner.js:451
 msgid "Browser check saved, but some pages could not be checked. Reload this scan for details."
 msgstr ""
 
-#: assets/js/scan-runner.js:438
+#: assets/js/scan-runner.js:466
 msgid "The browser check could not be completed."
 msgstr ""

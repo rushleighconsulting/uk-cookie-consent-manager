@@ -59,12 +59,12 @@ final class Scanner {
 	/**
 	 * Maximum pages inspected by one administrator browser session.
 	 */
-	public const BROWSER_MAX_TARGETS = 100;
+	public const BROWSER_MAX_TARGETS = 5;
 
 	/**
 	 * Delay between browser observation scenarios to avoid request bursts.
 	 */
-	public const BROWSER_STEP_DELAY_MS = 500;
+	public const BROWSER_STEP_DELAY_MS = 3000;
 
 	/**
 	 * Recovery hook for an administrator browser check whose client disappeared.

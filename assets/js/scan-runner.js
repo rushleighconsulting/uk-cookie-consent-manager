@@ -24,7 +24,9 @@
 		{ name: 'marketing', label: __( 'Marketing only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'marketing' ] }
 	];
 	var sourceLimit = 20;
-	var stepDelayMs = Math.max( 250, Math.min( 5000, Number( config.stepDelayMs ) || 500 ) );
+	var stepDelayMs = Math.max( 250, Math.min( 5000, Number( config.stepDelayMs ) || 3000 ) );
+	var submitTimeoutMs = Math.max( 2000, Math.min( 15000, Number( config.submitTimeoutMs ) || 8000 ) );
+	var submitRetryAttempts = Math.max( 1, Math.min( 3, Number( config.submitRetryAttempts ) || 2 ) );
 	var protectedLookup = {};
 	var isolatedContextAvailable = 'credentialless' in HTMLIFrameElement.prototype;
 	var browserRequirement = __( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'uk-cookie-consent-manager' );
@@ -341,17 +343,43 @@
 		body.set( 'scan_id', String( config.runId || 0 ) );
 		body.set( 'payload', JSON.stringify( payload ) );
 
-		var response = await window.fetch( config.ajaxUrl, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-			body: body.toString()
-		} );
-		var result = await response.json();
+		var lastError;
 
-		if ( ! response.ok || ! result.success ) {
-			throw new Error( result.data && result.data.message ? result.data.message : __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
+		for ( var attempt = 0; attempt < submitRetryAttempts; attempt += 1 ) {
+			var controller = 'AbortController' in window ? new AbortController() : null;
+			var timeout = controller ? window.setTimeout( function () {
+				controller.abort();
+			}, submitTimeoutMs ) : null;
+
+			try {
+				var response = await window.fetch( config.ajaxUrl, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+					body: body.toString(),
+					signal: controller ? controller.signal : undefined
+				} );
+				var result = await response.json();
+
+				if ( ! response.ok || ! result.success ) {
+					throw new Error( result.data && result.data.message ? result.data.message : __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
+				}
+
+				return;
+			} catch ( error ) {
+				lastError = error;
+			} finally {
+				if ( timeout ) {
+					window.clearTimeout( timeout );
+				}
+			}
+
+			if ( attempt + 1 < submitRetryAttempts ) {
+				await wait( 500 * Math.pow( 3, attempt ) );
+			}
 		}
+
+		throw lastError instanceof Error ? lastError : new Error( __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
 	}
 
 	button.addEventListener( 'click', async function () {
