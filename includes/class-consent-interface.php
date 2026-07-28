@@ -32,12 +32,18 @@ final class Consent_Interface {
 
 		$plugin_url = plugin_dir_url( UCCM_PLUGIN_FILE );
 
+		$stylesheet = file_get_contents( UCCM_PLUGIN_DIR . 'assets/css/visitor-interface.css' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read-only bundled stylesheet.
+
 		wp_enqueue_style(
 			'uccm-consent',
-			$plugin_url . 'assets/css/visitor-interface.css',
+			false,
 			array(),
 			UCCM_VERSION
 		);
+
+		if ( is_string( $stylesheet ) && '' !== trim( $stylesheet ) ) {
+			wp_add_inline_style( 'uccm-consent', $stylesheet );
+		}
 		wp_enqueue_script(
 			'uccm-consent',
 			$plugin_url . 'assets/js/consent.js',
