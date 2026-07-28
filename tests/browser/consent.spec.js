@@ -13,7 +13,7 @@ const fixture = `
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Consent test</title>
-	<link rel="stylesheet" href="/assets/css/visitor-interface.css">
+	<style data-uccm-inline-style>${ consentCss }</style>
 </head>
 <body>
 <div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown" data-uccm-banner-position="bottom" data-uccm-icon-position="right">
@@ -159,11 +159,6 @@ async function boot( page, options = {} ) {
 			return;
 		}
 
-		if ( request.url().endsWith( '/assets/css/visitor-interface.css' ) ) {
-			await route.fulfill( { status: 200, contentType: 'text/css', body: consentCss } );
-			return;
-		}
-
 		if ( request.url().endsWith( '/assets/js/blocker.js' ) ) {
 			await route.fulfill( { status: 200, contentType: 'text/javascript', body: blockerScript } );
 			return;
@@ -216,7 +211,7 @@ async function expectPreferencesClosedAcrossNavigations( page ) {
 	}
 }
 
-test( 'neutral visitor stylesheet remains applied without requesting the blocked legacy filename', async ( { page } ) => {
+test( 'inline visitor stylesheet remains applied without a blockable plugin CSS request', async ( { page } ) => {
 	const stylesheetRequests = [];
 
 	page.on( 'request', ( request ) => {
@@ -227,8 +222,9 @@ test( 'neutral visitor stylesheet remains applied without requesting the blocked
 
 	await boot( page );
 
-	expect( stylesheetRequests ).toContain( '/assets/css/visitor-interface.css' );
+	expect( stylesheetRequests ).not.toContain( '/assets/css/visitor-interface.css' );
 	expect( stylesheetRequests ).not.toContain( '/assets/css/consent.css' );
+	await expect( page.locator( 'style[data-uccm-inline-style]' ) ).toHaveCount( 1 );
 	await expect( page.locator( '#uccm-banner' ) ).toHaveCSS( 'display', 'grid' );
 
 	const actions = page.locator( '#uccm-banner .uccm-actions--primary button' );
