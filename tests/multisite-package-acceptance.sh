@@ -65,6 +65,21 @@ wp plugin deactivate uk-cookie-consent-manager --path="${wp_path}" --url="${root
 # Network Activation must initialize all existing sites.
 wp plugin activate uk-cookie-consent-manager --network --path="${wp_path}"
 wp plugin is-active uk-cookie-consent-manager --network --path="${wp_path}"
+
+# The real WordPress style loader must emit the inline-only visitor stylesheet.
+wp eval '
+do_action( "wp_enqueue_scripts" );
+ob_start();
+wp_print_styles( "uccm-consent" );
+$styles = (string) ob_get_clean();
+if ( false === strpos( $styles, "id=\"uccm-consent-inline-css\"" ) || false === strpos( $styles, "--uccm-focus" ) ) {
+    throw new RuntimeException( "The inline visitor stylesheet was not emitted." );
+}
+if ( false !== strpos( $styles, "visitor-interface.css" ) ) {
+    throw new RuntimeException( "An external visitor stylesheet request was emitted." );
+}
+' --url="${root_url}" --path="${wp_path}"
+
 table_exists "wp_uccm_consents"
 table_exists "wp_2_uccm_consents"
 
