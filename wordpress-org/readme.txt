@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.20
+Stable tag: 0.1.0-rc.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,7 +102,13 @@ data. See the repository SECURITY.md for the coordinated-disclosure process.
 
 == Changelog ==
 
-= 0.1.0-rc.20 =
+= 0.1.0-rc.21 =
+
+* Registers the source-free visitor stylesheet handle before attaching and enqueueing the canonical inline CSS.
+* Restores the accessible consent presentation without an external plugin CSS request.
+* Adds real WordPress Multisite package acceptance for the inline-only style-loader contract.
+
+= 0.1.0-rc.21 =
 
 * Delivers the canonical visitor-interface stylesheet inline through WordPress, removing the external plugin CSS request.
 * Preserves the accessible consent presentation from one maintainable stylesheet.
