@@ -76,6 +76,51 @@ test( 'runner disables the action before use when isolated visitor frames are un
 	expect( submissions ).toBe( 0 );
 } );
 
+test( 'runner leaves server recovery possible when terminal and fallback submissions both lose connectivity', async ( { page } ) => {
+	const submissions = [];
+
+	await page.addInitScript( () => {
+		window.UCCMScanRunner = {
+			ajaxUrl: 'https://example.test/wp-admin/admin-ajax.php',
+			nonce: 'test-nonce',
+			runId: 44,
+			maxTargets: 100,
+			stepDelayMs: 250,
+			targets: []
+		};
+	} );
+
+	await page.route( '**/*', async ( route ) => {
+		const request = route.request();
+
+		if ( 'POST' === request.method() ) {
+			const submitted = new URLSearchParams( request.postData() || '' );
+			submissions.push( JSON.parse( submitted.get( 'payload' ) ) );
+
+			if ( 1 === submissions.length ) {
+				await route.fulfill( {
+					status: 200,
+					contentType: 'application/json',
+					body: JSON.stringify( { success: true, data: { saved: true } } )
+				} );
+				return;
+			}
+
+			await route.abort( 'connectionrefused' );
+			return;
+		}
+
+		await route.fulfill( { status: 200, contentType: 'text/html', body: adminFixture } );
+	} );
+
+	await page.goto( 'https://example.test/wp-admin/admin.php?page=uccm-scans&scan_id=44' );
+	await page.addScriptTag( { path: path.join( process.cwd(), 'assets/js/scan-runner.js' ) } );
+	await page.getByRole( 'button', { name: 'Run browser observations' } ).click();
+
+	await expect( page.locator( '#uccm-browser-observation-status' ) ).toHaveText( 'Failed to fetch' );
+	expect( submissions.map( ( payload ) => payload.status ) ).toEqual( [ 'running', 'completed', 'failed' ] );
+} );
+
 test( 'runner isolates administrator state, uses bounded post-password bootstrap and groups affected pages', async ( { page } ) => {
 	const submissions = [];
 	let bootstrapRequests = 0;
@@ -86,6 +131,7 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 			nonce: 'test-nonce',
 			runId: 42,
 			maxTargets: 100,
+			stepDelayMs: 250,
 			cookieName: 'uccm_consent',
 			cookiePath: '/',
 			policyVersion: '1',
@@ -164,6 +210,7 @@ test( 'runner isolates administrator state, uses bounded post-password bootstrap
 		target_count: 2,
 		scenario_count: 6
 	} ) );
+	expect( submissions.filter( ( submission ) => 'running' === submission.status ) ).toHaveLength( 2 );
 
 	const payload = submissions.at( -1 );
 	expect( {
