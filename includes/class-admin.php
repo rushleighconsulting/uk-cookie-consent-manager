@@ -1112,6 +1112,24 @@ final class Admin {
 		$protected_enabled  = ! empty( $settings['scan_protected_content_enabled'] );
 		$protected_password = Post_Password_Access::has_password();
 		$runs               = Scanner::recent_runs( 20 );
+
+		if ( is_array( $runs ) ) {
+			$browser_recovery_checked = false;
+
+			foreach ( $runs as $candidate_run ) {
+				$candidate_coverage = json_decode( (string) ( $candidate_run['coverage'] ?? '' ), true );
+
+				if ( is_array( $candidate_coverage ) && 'running' === (string) ( $candidate_coverage['browser_status'] ?? '' ) ) {
+					Scanner::recover_browser_check( (int) $candidate_run['id'] );
+					$browser_recovery_checked = true;
+				}
+			}
+
+			if ( $browser_recovery_checked ) {
+				$runs = Scanner::recent_runs( 20 );
+			}
+		}
+
 		$next               = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
@@ -1156,6 +1174,7 @@ final class Admin {
 					'protectedTargets'  => $protected_targets,
 					'postPasswordToken' => $browser_token,
 					'maxTargets'        => Scanner::BROWSER_MAX_TARGETS,
+					'stepDelayMs'       => Scanner::BROWSER_STEP_DELAY_MS,
 					'cookieName'        => (string) $consent_config['cookieName'],
 					'cookiePath'        => (string) $consent_config['cookiePath'],
 					'policyVersion'     => (string) $consent_config['policyVersion'],
