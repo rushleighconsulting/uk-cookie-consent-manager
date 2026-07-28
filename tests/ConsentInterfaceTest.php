@@ -20,6 +20,7 @@ final class ConsentInterfaceTest extends TestCase {
 		$GLOBALS['uccm_test_options']          = array();
 		$GLOBALS['uccm_test_actions']          = array();
 		$GLOBALS['uccm_test_enqueued_styles']  = array();
+		$GLOBALS['uccm_test_inline_styles']    = array();
 		$GLOBALS['uccm_test_enqueued_scripts'] = array();
 		$GLOBALS['uccm_test_localized']        = array();
 		$GLOBALS['uccm_test_is_admin']         = false;
@@ -56,6 +57,11 @@ final class ConsentInterfaceTest extends TestCase {
 		Consent_Interface::enqueue_assets();
 
 		self::assertArrayHasKey( 'uccm-consent', $GLOBALS['uccm_test_enqueued_styles'] );
+		self::assertSame( '', $GLOBALS['uccm_test_enqueued_styles']['uccm-consent']['source'] );
+		self::assertArrayHasKey( 'uccm-consent', $GLOBALS['uccm_test_inline_styles'] );
+		self::assertCount( 1, $GLOBALS['uccm_test_inline_styles']['uccm-consent'] );
+		self::assertStringContainsString( '--uccm-focus', $GLOBALS['uccm_test_inline_styles']['uccm-consent'][0] );
+		self::assertStringNotContainsString( 'visitor-interface.css', (string) $GLOBALS['uccm_test_enqueued_styles']['uccm-consent']['source'] );
 		self::assertArrayHasKey( 'uccm-consent', $GLOBALS['uccm_test_enqueued_scripts'] );
 		self::assertSame( array(), $GLOBALS['uccm_test_enqueued_scripts']['uccm-consent']['dependencies'] );
 		self::assertSame(
