@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.19
+Stable tag: 0.1.0-rc.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,12 @@ addresses, credentials, access tokens, database exports and unrelated personal
 data. See the repository SECURITY.md for the coordinated-disclosure process.
 
 == Changelog ==
+
+= 0.1.0-rc.20 =
+
+* Delivers the canonical visitor-interface stylesheet inline through WordPress, removing the external plugin CSS request.
+* Preserves the accessible consent presentation from one maintainable stylesheet.
+* Adds unit and browser regression coverage for source-free inline style delivery.
 
 = 0.1.0-rc.19 =
 
