@@ -24,6 +24,7 @@
 		{ name: 'marketing', label: __( 'Marketing only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'marketing' ] }
 	];
 	var sourceLimit = 20;
+	var stepDelayMs = Math.max( 250, Math.min( 5000, Number( config.stepDelayMs ) || 500 ) );
 	var protectedLookup = {};
 	var isolatedContextAvailable = 'credentialless' in HTMLIFrameElement.prototype;
 	var browserRequirement = __( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'uk-cookie-consent-manager' );
@@ -47,6 +48,12 @@
 
 	function announce( message ) {
 		status.textContent = message;
+	}
+
+	function wait( milliseconds ) {
+		return new Promise( function ( resolve ) {
+			window.setTimeout( resolve, milliseconds );
+		} );
 	}
 
 	function safeName( value ) {
@@ -376,6 +383,21 @@
 					} catch ( error ) {
 						failedSteps += 1;
 					}
+
+					if ( completedSteps + failedSteps < totalSteps ) {
+						await wait( stepDelayMs );
+					}
+				}
+
+				if ( targetIndex + 1 < targets.length ) {
+					await submit( {
+						status: 'running',
+						observations: [],
+						target_count: targets.length,
+						scenario_count: scenarios.length,
+						completed_steps: completedSteps,
+						total_steps: totalSteps
+					} );
 				}
 			}
 

@@ -468,9 +468,43 @@ final class ScannerTest extends TestCase {
 		$coverage = json_decode( (string) $GLOBALS['wpdb']->updates[0]['data']['coverage'], true );
 		self::assertSame( 'running', $coverage['browser_status'] );
 		self::assertSame( 6, $coverage['browser_scenario_count'] );
+		self::assertNotEmpty( $coverage['browser_started_at'] );
+		self::assertNotEmpty( $coverage['browser_heartbeat_at'] );
+		self::assertSame( Scanner::BROWSER_RECOVERY_HOOK, $GLOBALS['uccm_test_schedule_events'][0]['hook'] );
+		self::assertSame( array( 8 ), $GLOBALS['uccm_test_schedule_events'][0]['arguments'] );
 	}
 
-public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
+	public function test_stale_browser_running_status_recovers_to_a_visible_failure(): void {
+		$GLOBALS['uccm_test_capabilities']['run_uccm_scans'] = true;
+		$run = array(
+			'id'            => 9,
+			'status'        => 'completed',
+			'coverage'      => wp_json_encode(
+				array(
+					'browser_status'       => 'running',
+					'browser_started_at'   => gmdate( 'Y-m-d H:i:s', time() - Scanner::BROWSER_LEASE_SECONDS - 60 ),
+					'browser_heartbeat_at' => gmdate( 'Y-m-d H:i:s', time() - Scanner::BROWSER_LEASE_SECONDS - 60 ),
+				)
+			),
+			'pages_visited' => wp_json_encode( array() ),
+			'summary'       => wp_json_encode( array( 'findings' => 0, 'finding_counts' => array() ) ),
+			'started_at'    => gmdate( 'Y-m-d H:i:s', time() - 7200 ),
+			'completed_at'  => gmdate( 'Y-m-d H:i:s', time() - 7000 ),
+		);
+		$GLOBALS['uccm_test_db_row_queue'] = array( $run );
+
+		Scanner::recover_browser_check( 9 );
+
+		self::assertCount( 1, $GLOBALS['wpdb']->updates );
+		$coverage = json_decode( (string) $GLOBALS['wpdb']->updates[0]['data']['coverage'], true );
+		self::assertSame( 'failed', $coverage['browser_status'] );
+		self::assertSame( 'browser-check-timed-out', $coverage['browser_problem'] );
+		self::assertNotEmpty( $coverage['browser_completed_at'] );
+		self::assertSame( 'uccm_browser_check-timed-out', Operational_Alerts::current()[0]['code'] );
+		self::assertSame( 9, Operational_Alerts::current()[0]['run_id'] );
+	}
+
+	public function test_configured_targets_are_sanitised_to_the_temporary_ceiling(): void {
 		$urls = array();
 
 		self::assertSame( 1024, Scanner::MAX_TARGETS );

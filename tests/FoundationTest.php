@@ -117,7 +117,7 @@ final class FoundationTest extends TestCase {
 		Activator::deactivate();
 
 		self::assertSame(
-			array( 'uccm_monthly_scan', 'uccm_scan_batch', 'uccm_retention_cleanup' ),
+			array( 'uccm_monthly_scan', 'uccm_scan_batch', 'uccm_browser_check_recovery', 'uccm_retention_cleanup' ),
 			$GLOBALS['uccm_test_cleared_hooks']
 		);
 		self::assertSame( $options_before, $GLOBALS['uccm_test_options'] );
