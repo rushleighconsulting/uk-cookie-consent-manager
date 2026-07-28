@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.17
+Stable tag: 0.1.0-rc.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,17 @@ addresses, credentials, access tokens, database exports and unrelated personal
 data. See the repository SECURITY.md for the coordinated-disclosure process.
 
 == Changelog ==
+
+= 0.1.0-rc.18 =
+
+* Limits the optional administrator browser check to five eligible pages and spaces consent scenarios by three seconds.
+* Bounds status saves and retries one transient connection failure without creating a retry storm.
+* Retains per-page heartbeats and abandoned-client recovery.
+
+= 0.1.0-rc.17 =
+
+* Persists browser-check heartbeats and terminal timestamps.
+* Recovers an abandoned browser check to a visible terminal failure while preserving server scan evidence.
 
 = 0.1.0-rc.16 =
 
