@@ -1130,7 +1130,7 @@ final class Admin {
 			}
 		}
 
-		$next               = wp_next_scheduled( Scanner::HOOK );
+		$next = wp_next_scheduled( Scanner::HOOK );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
 		$scan_id = max( 0, (int) self::request_value( $_GET, 'scan_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded filter and notice state.
