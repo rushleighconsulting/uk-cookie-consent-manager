@@ -62,6 +62,21 @@ final class Scanner {
 	public const BROWSER_MAX_TARGETS = 100;
 
 	/**
+	 * Delay between browser observation scenarios to avoid request bursts.
+	 */
+	public const BROWSER_STEP_DELAY_MS = 500;
+
+	/**
+	 * Recovery hook for an administrator browser check whose client disappeared.
+	 */
+	public const BROWSER_RECOVERY_HOOK = 'uccm_browser_check_recovery';
+
+	/**
+	 * Maximum time a browser check may remain running without a heartbeat.
+	 */
+	public const BROWSER_LEASE_SECONDS = 30 * 60;
+
+	/**
 	 * Maximum authenticated runner submissions per minute.
 	 */
 	private const RUNNER_RATE_LIMIT = 30;
@@ -73,6 +88,7 @@ final class Scanner {
 		add_filter( 'cron_schedules', array( self::class, 'cron_schedules' ) );
 		add_action( self::HOOK, array( self::class, 'run_scheduled' ) );
 		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ), 10, 1 );
+		add_action( self::BROWSER_RECOVERY_HOOK, array( self::class, 'recover_browser_check' ), 10, 1 );
 		self::schedule();
 	}
 
@@ -831,6 +847,7 @@ final class Scanner {
 		$coverage = self::decoded_array( $run['coverage'] ?? '' );
 		$summary  = self::decoded_array( $run['summary'] ?? '' );
 		$counts   = self::empty_finding_counts();
+		$now      = gmdate( 'Y-m-d H:i:s' );
 		$accepted = array();
 
 		if ( 'running' !== $browser_status ) {
@@ -849,6 +866,14 @@ final class Scanner {
 				$summary['finding_counts'] = $merged;
 				$summary['findings']       = $merged['actionable'];
 			}
+		}
+
+		if ( 'running' === $browser_status ) {
+			$coverage['browser_started_at']   = (string) ( $coverage['browser_started_at'] ?? $now );
+			$coverage['browser_heartbeat_at'] = $now;
+			unset( $coverage['browser_completed_at'] );
+		} else {
+			$coverage['browser_completed_at'] = $now;
 		}
 
 		$coverage['browser_status']            = $browser_status;
@@ -874,11 +899,87 @@ final class Scanner {
 			return new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
 		}
 
+		if ( 'running' === $browser_status ) {
+			self::schedule_browser_recovery( $run_id );
+		} else {
+			wp_clear_scheduled_hook( self::BROWSER_RECOVERY_HOOK, array( $run_id ) );
+		}
+
 		if ( 'completed' === $browser_status ) {
 			Operational_Alerts::resolve_component( 'browser-check', $run_id );
 		}
 
 		return $counts;
+	}
+
+
+	/**
+	 * Recover a browser check whose client stopped reporting.
+	 *
+	 * The scheduled lease is the primary recovery path. Administration-screen
+	 * reconciliation may also call this method so legacy stale runs become
+	 * terminal after an upgrade.
+	 *
+	 * @param int $run_id Scan run identifier.
+	 */
+	public static function recover_browser_check( int $run_id ): void {
+		global $wpdb;
+
+		$run = self::run_record( $run_id );
+
+		if ( is_wp_error( $run ) || 'completed' !== (string) $run['status'] ) {
+			return;
+		}
+
+		$coverage = self::decoded_array( $run['coverage'] ?? '' );
+
+		if ( 'running' !== (string) ( $coverage['browser_status'] ?? 'not-run' ) ) {
+			wp_clear_scheduled_hook( self::BROWSER_RECOVERY_HOOK, array( $run_id ) );
+			return;
+		}
+
+		$reference = (string) (
+			$coverage['browser_heartbeat_at']
+			?? $coverage['browser_started_at']
+			?? $run['completed_at']
+			?? $run['started_at']
+			?? ''
+		);
+		$reference_time = strtotime( $reference );
+		$elapsed        = false === $reference_time ? self::BROWSER_LEASE_SECONDS : time() - $reference_time;
+
+		if ( self::BROWSER_LEASE_SECONDS > $elapsed ) {
+			self::schedule_browser_recovery( $run_id, self::BROWSER_LEASE_SECONDS - max( 0, $elapsed ) );
+			return;
+		}
+
+		$coverage['browser_status']       = 'failed';
+		$coverage['browser_problem']      = 'browser-check-timed-out';
+		$coverage['browser_completed_at'] = gmdate( 'Y-m-d H:i:s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Recovers bounded plugin-owned browser-check state.
+		$updated = $wpdb->update(
+			Database::table_names()['scan_runs'],
+			array( 'coverage' => wp_json_encode( $coverage ) ),
+			array( 'id' => $run_id )
+		);
+
+		if ( false !== $updated ) {
+			Operational_Alerts::report( 'uccm_browser_check-timed-out', 'browser-check', $run_id );
+		}
+	}
+
+	/**
+	 * Queue one unique browser-check lease expiry.
+	 *
+	 * @param int $run_id Scan run identifier.
+	 * @param int $delay  Delay in seconds.
+	 */
+	private static function schedule_browser_recovery( int $run_id, int $delay = self::BROWSER_LEASE_SECONDS ): void {
+		$args = array( $run_id );
+
+		wp_clear_scheduled_hook( self::BROWSER_RECOVERY_HOOK, $args );
+		wp_schedule_single_event( time() + max( 1, $delay ), self::BROWSER_RECOVERY_HOOK, $args );
 	}
 
 	/**
