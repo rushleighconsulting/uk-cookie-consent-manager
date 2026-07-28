@@ -1,0 +1,371 @@
+.uccm-consent {
+	--uccm-ink: #172033;
+	--uccm-surface: #ffffff;
+	--uccm-muted: #536079;
+	--uccm-border: #cbd2df;
+	--uccm-accent: #174ea6;
+	--uccm-button-text: #ffffff;
+	--uccm-radius: 12px;
+	--uccm-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--uccm-focus-inner: #ffffff;
+	--uccm-focus-outer: #111111;
+	--uccm-shadow: 0 16px 48px rgba(23, 32, 51, 0.2);
+}
+
+.uccm-consent,
+.uccm-consent * {
+	box-sizing: border-box;
+}
+
+.uccm-banner {
+	position: fixed;
+	z-index: 2147483000;
+	right: 1rem;
+	bottom: 1rem;
+	left: 1rem;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 1.5rem;
+	align-items: center;
+	max-width: 76rem;
+	max-height: calc(100vh - 2rem);
+	max-height: calc(100dvh - 2rem);
+	margin: 0 auto;
+	padding: 1.25rem;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	color: var(--uccm-ink);
+	background: var(--uccm-surface);
+	border: 1px solid var(--uccm-border);
+	border-radius: var(--uccm-radius);
+	box-shadow: var(--uccm-shadow);
+	font-family: var(--uccm-font-family);
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: start;
+}
+
+.uccm-consent[data-uccm-banner-position="top"] .uccm-banner {
+	top: 1rem;
+	bottom: auto;
+}
+
+.uccm-title {
+	margin: 0 0 0.5rem;
+	color: var(--uccm-ink);
+	font-size: 1.35rem;
+	line-height: 1.25;
+}
+
+.uccm-copy {
+	max-width: 52rem;
+	margin: 0;
+	color: var(--uccm-muted);
+}
+
+.uccm-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1.25rem;
+}
+
+.uccm-actions--primary {
+	margin-top: 0;
+}
+
+.uccm-button,
+.uccm-settings,
+.uccm-icon-button {
+	min-height: 2.75rem;
+	padding: 0.65rem 1rem;
+	color: var(--uccm-button-text);
+	background: var(--uccm-accent);
+	border: 2px solid var(--uccm-accent);
+	border-radius: min(var(--uccm-radius), 0.6rem);
+	font-family: var(--uccm-font-family);
+	font-size: 0.95rem;
+	font-weight: 700;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.uccm-button:hover,
+.uccm-settings:hover,
+.uccm-icon-button:hover {
+	text-decoration: underline;
+}
+
+.uccm-button:focus-visible,
+.uccm-settings:focus-visible,
+.uccm-icon-button:focus-visible,
+.uccm-category input:focus-visible {
+	outline: 3px solid var(--uccm-focus-inner);
+	outline-offset: 3px;
+	box-shadow: 0 0 0 6px var(--uccm-focus-outer);
+}
+
+.uccm-button--secondary {
+	color: var(--uccm-button-text);
+	background: var(--uccm-accent);
+}
+
+.uccm-settings {
+	position: fixed;
+	z-index: 2147482999;
+	right: 1rem;
+	bottom: 1rem;
+	width: 3rem;
+	min-width: 3rem;
+	height: 3rem;
+	min-height: 3rem;
+	padding: 0.65rem;
+	color: var(--uccm-accent);
+	background: var(--uccm-surface);
+	border-color: var(--uccm-accent);
+	border-radius: 50%;
+	box-shadow: 0 4px 12px rgba(23, 32, 51, 0.18);
+}
+
+.uccm-settings:hover {
+	color: var(--uccm-accent);
+	background: var(--uccm-surface);
+	border-color: var(--uccm-accent);
+}
+
+.uccm-consent[data-uccm-icon-position="left"] .uccm-settings {
+	right: auto;
+	left: 1rem;
+}
+
+.uccm-settings__icon {
+	display: block;
+	width: 100%;
+	height: 100%;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.uccm-settings::after {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 0.5rem);
+	width: max-content;
+	max-width: min(15rem, calc(100vw - 2rem));
+	padding: 0.4rem 0.6rem;
+	color: var(--uccm-surface);
+	background: var(--uccm-ink);
+	border-radius: 0.3rem;
+	content: attr(data-uccm-label);
+	font-family: var(--uccm-font-family);
+	font-size: 0.8rem;
+	font-weight: 600;
+	line-height: 1.25;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(0.25rem);
+	transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.uccm-settings:hover::after,
+.uccm-settings:focus-visible::after {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.uccm-consent[data-uccm-icon-position="left"] .uccm-settings::after {
+	right: auto;
+	left: 0;
+}
+
+.uccm-banner:not([hidden]) ~ .uccm-settings {
+	display: none;
+}
+
+.uccm-dialog {
+	display: none;
+	width: min(42rem, calc(100% - 2rem));
+	max-height: calc(100% - 2rem);
+	padding: 0;
+	color: var(--uccm-ink);
+	background: var(--uccm-surface);
+	border: 1px solid var(--uccm-border);
+	border-radius: var(--uccm-radius);
+	box-shadow: var(--uccm-shadow);
+	font-family: var(--uccm-font-family);
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: start;
+}
+
+.uccm-dialog[open][data-uccm-explicit-open="true"] {
+	display: block;
+}
+
+.uccm-dialog::backdrop {
+	background: rgba(12, 18, 30, 0.68);
+}
+
+.uccm-dialog__inner {
+	padding: 1.5rem;
+}
+
+.uccm-dialog__header {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.uccm-icon-button {
+	min-width: 2.75rem;
+	padding: 0.45rem;
+	font-size: 1.4rem;
+}
+
+.uccm-categories {
+	display: grid;
+	gap: 0.75rem;
+	margin-top: 1.25rem;
+}
+
+.uccm-category {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 1rem;
+	align-items: center;
+	padding: 1rem;
+	border: 1px solid var(--uccm-border);
+	border-radius: 0.5rem;
+}
+
+.uccm-category strong,
+.uccm-category span {
+	display: block;
+}
+
+.uccm-category span span {
+	margin-top: 0.25rem;
+	color: var(--uccm-muted);
+}
+
+.uccm-category input {
+	width: 1.4rem;
+	height: 1.4rem;
+	margin: 0;
+	accent-color: var(--uccm-accent);
+}
+
+.uccm-status {
+	position: fixed;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.uccm-consent [hidden] {
+	display: none !important;
+}
+
+@media (max-width: 52rem) {
+	.uccm-banner {
+		grid-template-columns: 1fr;
+	}
+
+	.uccm-actions--primary .uccm-button {
+		flex: 1 1 12rem;
+	}
+}
+
+@media (max-width: 34rem) {
+	.uccm-banner {
+		right: max(0.5rem, env(safe-area-inset-right, 0px));
+		bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+		left: max(0.5rem, env(safe-area-inset-left, 0px));
+		max-height: calc(100vh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		max-height: calc(100dvh - 1rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		padding: 1rem;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.uccm-consent[data-uccm-banner-position="top"] .uccm-banner {
+		top: max(0.5rem, env(safe-area-inset-top, 0px));
+		bottom: auto;
+	}
+
+	.uccm-actions,
+	.uccm-actions--primary {
+		flex-direction: column;
+	}
+
+	.uccm-button,
+	.uccm-actions--primary .uccm-button {
+		flex: 0 0 auto;
+		width: 100%;
+	}
+
+	.uccm-dialog {
+		width: calc(100% - 1rem);
+		max-height: calc(100% - 1rem);
+	}
+
+	.uccm-dialog__inner {
+		padding: 1rem;
+	}
+}
+
+@media (forced-colors: active) {
+	.uccm-banner,
+	.uccm-dialog,
+	.uccm-category {
+		color: CanvasText;
+		background: Canvas;
+		border-color: CanvasText;
+		box-shadow: none;
+		forced-color-adjust: auto;
+	}
+
+	.uccm-title,
+	.uccm-copy,
+	.uccm-category span span {
+		color: CanvasText;
+	}
+
+	.uccm-button,
+	.uccm-settings,
+	.uccm-icon-button {
+		color: ButtonText;
+		background: ButtonFace;
+		border-color: ButtonText;
+		forced-color-adjust: auto;
+	}
+
+	.uccm-button:focus-visible,
+	.uccm-settings:focus-visible,
+	.uccm-icon-button:focus-visible,
+	.uccm-category input:focus-visible {
+		outline: 3px solid Highlight;
+		box-shadow: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.uccm-consent *,
+	.uccm-consent *::before,
+	.uccm-consent *::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+}
