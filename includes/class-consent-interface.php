@@ -34,7 +34,7 @@ final class Consent_Interface {
 
 		wp_enqueue_style(
 			'uccm-consent',
-			$plugin_url . 'assets/css/consent.css',
+			$plugin_url . 'assets/css/visitor-interface.css',
 			array(),
 			UCCM_VERSION
 		);
