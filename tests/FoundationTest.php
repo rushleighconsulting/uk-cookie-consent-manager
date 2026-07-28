@@ -43,7 +43,7 @@ final class FoundationTest extends TestCase {
 		self::assertSame( 1, preg_match( '/^ \* Version:\\s*(\\S+)$/m', $wordpress_org_plugin, $wordpress_org_header ) );
 		self::assertSame( 1, preg_match( "/^define\\( 'UCCM_VERSION', '([^']+)' \\);$/m", $wordpress_org_plugin, $wordpress_org_constant ) );
 		self::assertSame( 1, preg_match( '/^Stable tag:\\s*(\\S+)$/m', $wordpress_org_readme, $wordpress_org_stable ) );
-		self::assertSame( '0.1.0-rc.20', $header[1] );
+		self::assertSame( '0.1.0-rc.21', $header[1] );
 		self::assertSame( $header[1], $constant[1] );
 		self::assertSame( $header[1], $stable[1] );
 		self::assertSame( $header[1], $wordpress_org_header[1] );
