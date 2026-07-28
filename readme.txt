@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 0.1.0-rc.17
+Stable tag: 0.1.0-rc.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Privacy-by-design cookie consent and management for UK WordPress sites.
 
 == Description ==
 
-UK Cookie Consent Manager 0.1.0-rc.16 is a release candidate for controlled
+UK Cookie Consent Manager 0.1.0-rc.18 is a release candidate for controlled
 staging acceptance. It is not approved for production use.
 
 Release 1 provides an accessible consent banner, granular preferences, prior
@@ -50,6 +50,19 @@ addresses, credentials, access tokens, database exports and unrelated personal
 data. See the repository SECURITY.md for the coordinated-disclosure process.
 
 == Changelog ==
+
+= 0.1.0-rc.18 =
+* Limits the optional administrator browser check to five eligible HTML pages for a provider-neutral gentle default.
+* Spaces consent-scenario navigations by three seconds to avoid request bursts on shared and managed hosting.
+* Bounds browser status saves with an eight-second timeout and retries one transient failure with backoff.
+* Preserves per-page heartbeats and the 30-minute abandoned-client recovery lease.
+* Adds browser regression coverage for recovery after a transient connection refusal.
+
+= 0.1.0-rc.17 =
+* Adds per-page browser-check heartbeats and persists start, heartbeat and terminal timestamps.
+* Recovers an abandoned browser check to a visible, privacy-safe terminal failure after a 30-minute lease.
+* Preserves server scan evidence and site isolation when the administrator browser loses connectivity.
+* Adds regression coverage for double connectivity failure and stale-running recovery.
 
 = 0.1.0-rc.16 =
 * Recovers queued manual scans from the authenticated Scans screen when WordPress cron loopback dispatch is delayed.
