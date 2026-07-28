@@ -2,7 +2,7 @@ const fs = require( 'node:fs' );
 const path = require( 'node:path' );
 const { test, expect } = require( '@playwright/test' );
 
-const consentCss = fs.readFileSync( path.join( process.cwd(), 'assets/css/consent.css' ), 'utf8' );
+const consentCss = fs.readFileSync( path.join( process.cwd(), 'assets/css/visitor-interface.css' ), 'utf8' );
 const blockerScript = fs.readFileSync( path.join( process.cwd(), 'assets/js/blocker.js' ), 'utf8' );
 const consentScript = fs.readFileSync( path.join( process.cwd(), 'assets/js/consent.js' ), 'utf8' );
 
@@ -13,7 +13,7 @@ const fixture = `
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Consent test</title>
-	<link rel="stylesheet" href="/assets/css/consent.css">
+	<link rel="stylesheet" href="/assets/css/visitor-interface.css">
 </head>
 <body>
 <div id="uccm-consent-root" class="uccm-consent" data-uccm-state="unknown" data-uccm-banner-position="bottom" data-uccm-icon-position="right">
@@ -159,7 +159,7 @@ async function boot( page, options = {} ) {
 			return;
 		}
 
-		if ( request.url().endsWith( '/assets/css/consent.css' ) ) {
+		if ( request.url().endsWith( '/assets/css/visitor-interface.css' ) ) {
 			await route.fulfill( { status: 200, contentType: 'text/css', body: consentCss } );
 			return;
 		}
@@ -215,6 +215,39 @@ async function expectPreferencesClosedAcrossNavigations( page ) {
 		await expect( dialog ).toBeHidden();
 	}
 }
+
+test( 'neutral visitor stylesheet remains applied without requesting the blocked legacy filename', async ( { page } ) => {
+	const stylesheetRequests = [];
+
+	page.on( 'request', ( request ) => {
+		if ( 'stylesheet' === request.resourceType() ) {
+			stylesheetRequests.push( new URL( request.url() ).pathname );
+		}
+	} );
+
+	await boot( page );
+
+	expect( stylesheetRequests ).toContain( '/assets/css/visitor-interface.css' );
+	expect( stylesheetRequests ).not.toContain( '/assets/css/consent.css' );
+	await expect( page.locator( '#uccm-banner' ) ).toHaveCSS( 'display', 'grid' );
+
+	const actions = page.locator( '#uccm-banner .uccm-actions--primary button' );
+	const actionStyles = await actions.evaluateAll( ( buttons ) => buttons.map( ( button ) => {
+		const style = getComputedStyle( button );
+		const box = button.getBoundingClientRect();
+
+		return {
+			background: style.backgroundColor,
+			fontWeight: style.fontWeight,
+			height: box.height,
+		};
+	} ) );
+
+	expect( actionStyles ).toHaveLength( 3 );
+	expect( actionStyles.every( ( style ) => style.height >= 44 ) ).toBe( true );
+	expect( new Set( actionStyles.map( ( style ) => style.background ) ).size ).toBe( 1 );
+	expect( new Set( actionStyles.map( ( style ) => style.fontWeight ) ).size ).toBe( 1 );
+} );
 
 test( 'first visit remains blocked until an equally prominent decision is made', async ( { page } ) => {
 	const receipts = await boot( page );
