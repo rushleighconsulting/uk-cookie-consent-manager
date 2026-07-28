@@ -78,6 +78,7 @@ final class Activator {
 	public static function clear_scheduled_work(): void {
 		wp_clear_scheduled_hook( 'uccm_monthly_scan' );
 		wp_clear_scheduled_hook( Scanner::BATCH_HOOK );
+		wp_clear_scheduled_hook( Scanner::BROWSER_RECOVERY_HOOK );
 		wp_clear_scheduled_hook( 'uccm_retention_cleanup' );
 	}
 }
