@@ -97,7 +97,7 @@ final class ConsentInterfaceTest extends TestCase {
 		self::assertStringContainsString( 'You may reject any other cookies.', $markup );
 		self::assertSame( 2, substr_count( $markup, '180 days' ) );
 		self::assertStringNotContainsString( 'uccm_consent', $markup );
-		self::assertStringContainsString( '--uccm-focus', file_get_contents( dirname( __DIR__ ) . '/assets/css/consent.css' ) );
+		self::assertStringContainsString( '--uccm-focus', file_get_contents( dirname( __DIR__ ) . '/assets/css/visitor-interface.css' ) );
 	}
 
 	public function test_markup_applies_validated_custom_appearance_without_changing_actions(): void {
