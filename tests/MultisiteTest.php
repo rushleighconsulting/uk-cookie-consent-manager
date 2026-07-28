@@ -160,7 +160,7 @@ final class MultisiteTest extends TestCase {
 		Activator::deactivate( true );
 
 		self::assertSame( range( 1, 28 ), $GLOBALS['uccm_test_switched_blogs'] );
-		self::assertCount( 85, $GLOBALS['uccm_test_cleared_hooks'] );
+		self::assertCount( 1 + ( 28 * 4 ), $GLOBALS['uccm_test_cleared_hooks'] );
 		self::assertSame( Multisite::BATCH_HOOK, $GLOBALS['uccm_test_cleared_hooks'][0] );
 		self::assertSame( 1, $GLOBALS['uccm_test_current_blog_id'] );
 	}
