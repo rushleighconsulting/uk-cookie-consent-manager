@@ -57,7 +57,7 @@ final class ConsentInterfaceTest extends TestCase {
 		Consent_Interface::enqueue_assets();
 
 		self::assertArrayHasKey( 'uccm-consent', $GLOBALS['uccm_test_enqueued_styles'] );
-		self::assertFalse( $GLOBALS['uccm_test_enqueued_styles']['uccm-consent']['source'] );
+		self::assertSame( '', $GLOBALS['uccm_test_enqueued_styles']['uccm-consent']['source'] );
 		self::assertArrayHasKey( 'uccm-consent', $GLOBALS['uccm_test_inline_styles'] );
 		self::assertCount( 1, $GLOBALS['uccm_test_inline_styles']['uccm-consent'] );
 		self::assertStringContainsString( '--uccm-focus', $GLOBALS['uccm_test_inline_styles']['uccm-consent'][0] );
