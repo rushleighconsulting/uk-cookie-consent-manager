@@ -48,18 +48,47 @@ Completed evidence:
   content.
 - Six approved WordPress.org screenshots and their readme captions are
   committed.
-- Stable `1.0.0` version metadata is prepared consistently in both entry
-  points, both readmes, the translation template and the version-agreement test.
+- Stable `1.0.1` corrective version metadata is prepared consistently in both
+  entry points, both readmes, the translation template and the version-agreement test.
 
 Do not submit until all of the following remaining gates are true:
 
-1. The exact stable source is approved and the immutable `v1.0.0` tag is
-   created from that accepted revision.
+1. The exact corrective stable source is approved and an immutable `v1.0.1`
+   tag is created from that accepted revision.
 2. Current source, privacy, licensing, trademark and manual security review is
    complete.
 3. Full WordPress Plugin Check passes against the exact directory package.
 4. Upload of that exact package for WordPress.org review is explicitly approved.
 5. WordPress.org has approved the submission and provisioned the SVN repository.
+
+## Plugin Check manual disposition for 1.0.1
+
+The prepare-only 1.0.0 run completed with no Plugin Check errors and 28
+warnings. Version 1.0.1 removes the one actionable warning by deleting the
+obsolete manual `load_plugin_textdomain()` call. Modern WordPress and the
+Plugin Directory load language packs just in time for the declared text domain.
+
+The remaining warning classes have this reviewed disposition:
+
+- Direct database query warnings are accepted where values are passed through
+  `$wpdb->prepare()` and identifiers are drawn only from fixed plugin-owned
+  table and field definitions. The queries are bounded or lifecycle operations,
+  capability-gated where exposed to administrators, and retain their explicit
+  PHPCS rationale. No visitor-controlled SQL structure is accepted.
+- The resource blocker is intentionally loaded early and on public pages because
+  deferring it can allow configured optional scripts, frames, embeds or pixels
+  to execute before consent. This privacy control takes precedence over the
+  generic non-blocking-script recommendation.
+- The consent interface script is intentionally available on public pages and
+  loaded in the footer. Adding asynchronous execution could reorder it against
+  the early blocker and consent state; the current deterministic order is
+  retained.
+- `wpml_current_language` is an intentional third-party WPML compatibility
+  hook and therefore cannot use the UCCM prefix.
+
+These dispositions do not suppress Plugin Check output. They require the exact
+1.0.1 package to complete Plugin Check without errors and to emit only the
+reviewed warning classes before upload approval.
 
 ## One-time GitHub configuration after directory approval
 
@@ -75,7 +104,7 @@ Committers must be able to receive its tokenised emails directly.
 
 ## Release procedure
 
-1. Approve and create an immutable stable Git tag such as `v1.0.0`.
+1. Approve and create the immutable corrective stable Git tag `v1.0.1`.
 2. Run **WordPress.org publication** manually with that exact tag and leave
    **Release confirmation** at `NOT APPROVED`.
 3. Review the generated package, checksum manifest, assets and Plugin Check

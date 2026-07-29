@@ -30,15 +30,11 @@ final class InternationalizationTest extends TestCase {
 		$GLOBALS['uccm_test_is_admin']            = false;
 	}
 
-	public function test_plugin_registers_native_language_pack_loading(): void {
-		Plugin::instance()->boot();
+	public function test_plugin_uses_native_just_in_time_language_pack_loading(): void {
+		$plugin = file_get_contents( dirname( __DIR__ ) . '/includes/class-plugin.php' );
 
-		self::assertArrayHasKey( 'init', $GLOBALS['uccm_test_actions'] );
-		do_action( 'init' );
-		self::assertSame(
-			'uk-cookie-consent-manager/languages',
-			$GLOBALS['uccm_test_loaded_textdomains']['uk-cookie-consent-manager']
-		);
+		self::assertIsString( $plugin );
+		self::assertStringNotContainsString( 'load_plugin_textdomain', $plugin );
 	}
 
 	public function test_translatable_javascript_uses_wordpress_i18n_runtime(): void {
