@@ -34,21 +34,27 @@ from the approved Git tag, then substitutes only those committed overlay files.
 It excludes tests, build tools, repository automation and development metadata.
 `SOURCE-MANIFEST.sha256` records the exact resulting publication bytes.
 
-## Submission blockers
+## Submission readiness
 
-Do not submit until all of the following are true:
+Completed evidence:
+
+- UCCM-32 Windows 11/NVDA acceptance passed on `0.1.0-rc.21`.
+- UCCM-34 established the ordinary support and triage route. Live
+  WordPress.org forum-feed testing remains post-listing evidence.
+- UCCM-35 established and tested the private vulnerability-reporting route.
+- Six approved WordPress.org screenshots and their readme captions are
+  committed with the publication preparation change.
+
+Do not submit until all of the following remaining gates are true:
 
 1. A named maintainer has a personal WordPress.org account and the contributor
    username in `wordpress-org/readme.txt` is confirmed.
-2. UCCM-34 has established the ordinary support and triage route.
-3. UCCM-35 has established and tested the private vulnerability-reporting route.
-4. A stable release version such as `1.0.0` replaces the release-candidate
+2. A stable release version such as `1.0.0` replaces the release-candidate
    version in both entry points and both readmes.
-5. Current source, privacy, licensing, trademark and manual security review is
+3. Current source, privacy, licensing, trademark and manual security review is
    complete.
-6. Full WordPress Plugin Check passes against the directory package.
-7. Real screenshots and their readme captions have been approved.
-8. WordPress.org has approved the submission and provisioned the SVN repository.
+4. Full WordPress Plugin Check passes against the directory package.
+5. WordPress.org has approved the submission and provisioned the SVN repository.
 
 ## One-time GitHub configuration after directory approval
 
@@ -69,8 +75,8 @@ Committers must be able to receive its tokenised emails directly.
    **Release confirmation** at `NOT APPROVED`.
 3. Review the generated package, checksum manifest, assets and Plugin Check
    result.
-4. After UCCM-34 and UCCM-35 are accepted, re-run with the same tag,
-   `APPROVED` and support/security routes `VERIFIED`.
+4. Once the remaining submission gates above are accepted, re-run with the same
+   tag, `APPROVED` and support/security routes `VERIFIED`.
 5. Approve the protected `wordpress-org-release` GitHub environment.
 6. Confirm the SVN commit contains the same package bytes, versioned tag and
    directory assets.

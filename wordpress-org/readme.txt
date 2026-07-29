@@ -100,6 +100,15 @@ Before sending evidence, remove consent records, cookie values, complete IP
 addresses, credentials, access tokens, database exports and unrelated personal
 data. See the repository SECURITY.md for the coordinated-disclosure process.
 
+== Screenshots ==
+
+1. Accessible first-visit banner with equally prominent Accept all, Reject non-essential and Manage preferences actions.
+2. Anonymous Cookie preferences dialog for Necessary, Functional, Analytics and Marketing choices.
+3. Banner settings with controlled colours, font, position, consent lifetime, policy version and preview controls.
+4. Multisite network status and shared defaults with site-specific override and lock visibility.
+5. Privacy-conscious scanning settings with bounded coverage and explicit browser-check controls and limitations.
+6. Privacy-by-default settings for retention, masked identifiers and optional full-IP collection disabled.
+
 == Changelog ==
 
 = 0.1.0-rc.21 =
@@ -108,7 +117,7 @@ data. See the repository SECURITY.md for the coordinated-disclosure process.
 * Restores the accessible consent presentation without an external plugin CSS request.
 * Adds real WordPress Multisite package acceptance for the inline-only style-loader contract.
 
-= 0.1.0-rc.21 =
+= 0.1.0-rc.20 =
 
 * Delivers the canonical visitor-interface stylesheet inline through WordPress, removing the external plugin CSS request.
 * Preserves the accessible consent presentation from one maintainable stylesheet.

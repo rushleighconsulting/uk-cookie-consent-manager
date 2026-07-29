@@ -56,7 +56,7 @@ data. See the repository SECURITY.md for the coordinated-disclosure process.
 * Restores the accessible grid layout, focus treatment, minimum targets and equal first-layer consent choices without an external plugin CSS request.
 * Adds real WordPress Multisite package acceptance for the inline-only style-loader contract.
 
-= 0.1.0-rc.21 =
+= 0.1.0-rc.20 =
 * Delivers the canonical visitor-interface stylesheet inline through WordPress, removing the external plugin CSS request.
 * Preserves the accessible grid layout, focus treatment, minimum targets and equal first-layer consent choices from one maintainable stylesheet.
 * Adds unit and browser regression coverage for the source-free style handle and inline delivery.
