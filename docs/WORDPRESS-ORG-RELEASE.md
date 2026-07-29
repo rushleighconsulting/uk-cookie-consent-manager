@@ -75,8 +75,8 @@ Committers must be able to receive its tokenised emails directly.
    **Release confirmation** at `NOT APPROVED`.
 3. Review the generated package, checksum manifest, assets and Plugin Check
    result.
-4. After UCCM-34 and UCCM-35 are accepted, re-run with the same tag,
-   `APPROVED` and support/security routes `VERIFIED`.
+4. Once the remaining submission gates above are accepted, re-run with the same
+   tag, `APPROVED` and support/security routes `VERIFIED`.
 5. Approve the protected `wordpress-org-release` GitHub environment.
 6. Confirm the SVN commit contains the same package bytes, versioned tag and
    directory assets.
