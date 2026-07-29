@@ -18,6 +18,9 @@ final class ScannerTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['wpdb']                         = new wpdb();
 		$GLOBALS['uccm_test_options']            = array();
+		$GLOBALS['uccm_test_actions']            = array();
+		$GLOBALS['uccm_test_filters']            = array();
+		$GLOBALS['uccm_test_fired_actions']      = array();
 		$GLOBALS['uccm_test_mail']               = array();
 		$GLOBALS['uccm_test_scheduled_hooks']    = array();
 		$GLOBALS['uccm_test_schedule_events']    = array();
@@ -33,6 +36,21 @@ final class ScannerTest extends TestCase {
 		$GLOBALS['uccm_test_posts']              = array();
 		$GLOBALS['uccm_test_url_post_ids']       = array();
 		$GLOBALS['uccm_test_get_posts_arguments'] = array();
+	}
+
+	public function test_monthly_schedule_is_deferred_until_init(): void {
+		Scanner::register();
+
+		self::assertCount( 0, $GLOBALS['uccm_test_schedule_events'] );
+		self::assertSame(
+			array( Scanner::class, 'schedule' ),
+			$GLOBALS['uccm_test_actions']['init'][0]['callback']
+		);
+
+		do_action( 'init' );
+
+		self::assertCount( 1, $GLOBALS['uccm_test_schedule_events'] );
+		self::assertSame( Scanner::RECURRENCE, $GLOBALS['uccm_test_schedule_events'][0]['recurrence'] );
 	}
 
 	public function test_monthly_schedule_is_idempotent_and_deactivation_clears_it(): void {
