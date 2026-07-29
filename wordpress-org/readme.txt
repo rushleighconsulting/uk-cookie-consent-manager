@@ -4,7 +4,7 @@ Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,11 @@ data. See the repository SECURITY.md for the coordinated-disclosure process.
 6. Privacy-by-default settings for retention, masked identifiers and optional full-IP collection disabled.
 
 == Changelog ==
+
+= 1.0.1 =
+
+* Removes obsolete manual text-domain loading so WordPress.org language packs load through modern WordPress just-in-time translation handling.
+* Records the reviewed disposition of the remaining Plugin Check warnings without changing consent or blocking behaviour.
 
 = 1.0.0 =
 
