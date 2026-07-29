@@ -38,22 +38,27 @@ It excludes tests, build tools, repository automation and development metadata.
 
 Completed evidence:
 
+- The named maintainer account and contributor username
+  `rushleighconsulting` are confirmed.
 - UCCM-32 Windows 11/NVDA acceptance passed on `0.1.0-rc.21`.
 - UCCM-34 established the ordinary support and triage route. Live
   WordPress.org forum-feed testing remains post-listing evidence.
 - UCCM-35 established and tested the private vulnerability-reporting route.
+- UCCM-43 and UCCM-44 completed translation readiness and per-language consent
+  content.
 - Six approved WordPress.org screenshots and their readme captions are
-  committed with the publication preparation change.
+  committed.
+- Stable `1.0.0` version metadata is prepared consistently in both entry
+  points, both readmes, the translation template and the version-agreement test.
 
 Do not submit until all of the following remaining gates are true:
 
-1. A named maintainer has a personal WordPress.org account and the contributor
-   username in `wordpress-org/readme.txt` is confirmed.
-2. A stable release version such as `1.0.0` replaces the release-candidate
-   version in both entry points and both readmes.
-3. Current source, privacy, licensing, trademark and manual security review is
+1. The exact stable source is approved and the immutable `v1.0.0` tag is
+   created from that accepted revision.
+2. Current source, privacy, licensing, trademark and manual security review is
    complete.
-4. Full WordPress Plugin Check passes against the directory package.
+3. Full WordPress Plugin Check passes against the exact directory package.
+4. Upload of that exact package for WordPress.org review is explicitly approved.
 5. WordPress.org has approved the submission and provisioned the SVN repository.
 
 ## One-time GitHub configuration after directory approval
