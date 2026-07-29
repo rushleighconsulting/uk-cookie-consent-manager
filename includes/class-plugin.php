@@ -64,5 +64,4 @@ final class Plugin {
 		 */
 		do_action( 'uccm_loaded', $this );
 	}
-
 }
