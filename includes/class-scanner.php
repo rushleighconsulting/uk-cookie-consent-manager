@@ -89,7 +89,7 @@ final class Scanner {
 		add_action( self::HOOK, array( self::class, 'run_scheduled' ) );
 		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ), 10, 1 );
 		add_action( self::BROWSER_RECOVERY_HOOK, array( self::class, 'recover_browser_check' ), 10, 1 );
-		self::schedule();
+		add_action( 'init', array( self::class, 'schedule' ) );
 	}
 
 	/**
