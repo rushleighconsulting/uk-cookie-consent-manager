@@ -3,7 +3,7 @@ set -euo pipefail
 
 version="${1:-}"
 output_directory="${2:-dist/wordpress-org}"
-slug="uk-cookie-consent-manager"
+slug="rushleigh-cookie-choices"
 target="${output_directory}/${slug}"
 
 if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
@@ -16,8 +16,8 @@ if [[ -e "${target}" ]]; then
   exit 1
 fi
 
-source_version="$(git show "HEAD:uk-cookie-consent-manager.php" | sed -n 's/^ \* Version:[[:space:]]*//p')"
-directory_version="$(git show "HEAD:wordpress-org/uk-cookie-consent-manager.php" | sed -n 's/^ \* Version:[[:space:]]*//p')"
+source_version="$(git show "HEAD:rushleigh-cookie-choices.php" | sed -n 's/^ \* Version:[[:space:]]*//p')"
+directory_version="$(git show "HEAD:wordpress-org/rushleigh-cookie-choices.php" | sed -n 's/^ \* Version:[[:space:]]*//p')"
 stable_tag="$(git show "HEAD:wordpress-org/readme.txt" | sed -n 's/^Stable tag:[[:space:]]*//p')"
 
 if [[ "${version}" != "${source_version}" || "${version}" != "${directory_version}" || "${version}" != "${stable_tag}" ]]; then
@@ -30,7 +30,7 @@ trap 'rm -rf "${temporary}"' EXIT
 
 mkdir -p "${temporary}/${slug}" "${output_directory}"
 git archive --format=tar HEAD assets includes languages uninstall.php | tar -xf - -C "${temporary}/${slug}"
-git show "HEAD:wordpress-org/uk-cookie-consent-manager.php" > "${temporary}/${slug}/uk-cookie-consent-manager.php"
+git show "HEAD:wordpress-org/rushleigh-cookie-choices.php" > "${temporary}/${slug}/rushleigh-cookie-choices.php"
 git show "HEAD:wordpress-org/class-secure-updater.php" > "${temporary}/${slug}/includes/class-secure-updater.php"
 git show "HEAD:wordpress-org/readme.txt" > "${temporary}/${slug}/readme.txt"
 

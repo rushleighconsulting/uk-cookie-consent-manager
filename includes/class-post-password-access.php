@@ -27,11 +27,11 @@ final class Post_Password_Access {
 	 */
 	public static function save_password( string $password ): bool|\WP_Error {
 		if ( '' === $password ) {
-			return new \WP_Error( 'uccm_post_password_empty', __( 'The post password cannot be empty.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_post_password_empty', __( 'The post password cannot be empty.', 'rushleigh-cookie-choices' ) );
 		}
 
 		if ( ! function_exists( 'openssl_encrypt' ) ) {
-			return new \WP_Error( 'uccm_post_password_crypto_unavailable', __( 'OpenSSL is required to protect the post password.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_post_password_crypto_unavailable', __( 'OpenSSL is required to protect the post password.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$nonce      = random_bytes( 12 );
@@ -39,7 +39,7 @@ final class Post_Password_Access {
 		$ciphertext = openssl_encrypt( $password, 'aes-256-gcm', self::key(), OPENSSL_RAW_DATA, $nonce, $tag );
 
 		if ( false === $ciphertext || 16 !== strlen( $tag ) ) {
-			return new \WP_Error( 'uccm_post_password_protection_failed', __( 'The post password could not be protected.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_post_password_protection_failed', __( 'The post password could not be protected.', 'rushleigh-cookie-choices' ) );
 		}
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary encrypted storage requires a text-safe representation.

@@ -28,9 +28,9 @@ final class FoundationTest extends TestCase {
 	}
 
 	public function test_release_version_metadata_agrees(): void {
-		$plugin               = file_get_contents( dirname( __DIR__ ) . '/uk-cookie-consent-manager.php' );
+		$plugin               = file_get_contents( dirname( __DIR__ ) . '/rushleigh-cookie-choices.php' );
 		$readme               = file_get_contents( dirname( __DIR__ ) . '/readme.txt' );
-		$wordpress_org_plugin = file_get_contents( dirname( __DIR__ ) . '/wordpress-org/uk-cookie-consent-manager.php' );
+		$wordpress_org_plugin = file_get_contents( dirname( __DIR__ ) . '/wordpress-org/rushleigh-cookie-choices.php' );
 		$wordpress_org_readme = file_get_contents( dirname( __DIR__ ) . '/wordpress-org/readme.txt' );
 
 		self::assertIsString( $plugin );
@@ -43,7 +43,7 @@ final class FoundationTest extends TestCase {
 		self::assertSame( 1, preg_match( '/^ \* Version:\\s*(\\S+)$/m', $wordpress_org_plugin, $wordpress_org_header ) );
 		self::assertSame( 1, preg_match( "/^define\\( 'UCCM_VERSION', '([^']+)' \\);$/m", $wordpress_org_plugin, $wordpress_org_constant ) );
 		self::assertSame( 1, preg_match( '/^Stable tag:\\s*(\\S+)$/m', $wordpress_org_readme, $wordpress_org_stable ) );
-		self::assertSame( '1.0.1', $header[1] );
+		self::assertSame( '1.0.2', $header[1] );
 		self::assertSame( $header[1], $constant[1] );
 		self::assertSame( $header[1], $stable[1] );
 		self::assertSame( $header[1], $wordpress_org_header[1] );

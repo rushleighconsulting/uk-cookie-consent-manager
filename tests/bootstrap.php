@@ -9,9 +9,9 @@ declare(strict_types=1);
 
 define( 'ABSPATH', __DIR__ . '/fixtures/' );
 define( 'UCCM_VERSION', '0.1.0-dev' );
-define( 'UCCM_PLUGIN_FILE', dirname( __DIR__ ) . '/uk-cookie-consent-manager.php' );
+define( 'UCCM_PLUGIN_FILE', dirname( __DIR__ ) . '/rushleigh-cookie-choices.php' );
 define( 'UCCM_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
-define( 'UCCM_PLUGIN_URL', 'https://example.test/wp-content/plugins/uk-cookie-consent-manager/' );
+define( 'UCCM_PLUGIN_URL', 'https://example.test/wp-content/plugins/rushleigh-cookie-choices/' );
 define( 'WP_CONTENT_DIR', dirname( __DIR__ ) . '/tests/fixtures/wp-content' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
@@ -620,6 +620,10 @@ function wp_update_plugins(): void {
 }
 
 function plugin_basename( string $file ): string {
+	if ( UCCM_PLUGIN_FILE === $file ) {
+		return 'rushleigh-cookie-choices/rushleigh-cookie-choices.php';
+	}
+
 	return basename( dirname( $file ) ) . '/' . basename( $file );
 }
 

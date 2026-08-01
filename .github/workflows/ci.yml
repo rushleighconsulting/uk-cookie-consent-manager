@@ -33,14 +33,14 @@ jobs:
 
       - name: Generate translation template for inspection
         if: always()
-        run: bash scripts/generate-pot.sh "${RUNNER_TEMP}/uk-cookie-consent-manager.pot"
+        run: bash scripts/generate-pot.sh "${RUNNER_TEMP}/rushleigh-cookie-choices.pot"
 
       - name: Upload generated translation template
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: uccm-generated-pot
-          path: ${{ runner.temp }}/uk-cookie-consent-manager.pot
+          path: ${{ runner.temp }}/rushleigh-cookie-choices.pot
           if-no-files-found: error
           retention-days: 7
 
@@ -168,13 +168,13 @@ jobs:
         run: bash scripts/build-package.sh 0.1.0-ci
 
       - name: Verify clean archive and credential regression cases
-        run: bash tests/package-verification.sh "dist/uk-cookie-consent-manager-0.1.0-ci.zip"
+        run: bash tests/package-verification.sh "dist/rushleigh-cookie-choices-0.1.0-ci.zip"
 
       - name: Upload verified package
         uses: actions/upload-artifact@v4
         with:
           name: uccm-ci-package
-          path: dist/uk-cookie-consent-manager-0.1.0-ci.zip
+          path: dist/rushleigh-cookie-choices-0.1.0-ci.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -237,12 +237,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          archive="dist/uk-cookie-consent-manager-0.1.0-ci.zip"
-          expected_version="$(unzip -p "${archive}" uk-cookie-consent-manager/uk-cookie-consent-manager.php | sed -n 's/^ \* Version:[[:space:]]*//p')"
+          archive="dist/rushleigh-cookie-choices-0.1.0-ci.zip"
+          expected_version="$(unzip -p "${archive}" rushleigh-cookie-choices/rushleigh-cookie-choices.php | sed -n 's/^ \* Version:[[:space:]]*//p')"
           test -n "${expected_version}"
           unzip -q "${archive}" -d "${RUNNER_TEMP}/wordpress/wp-content/plugins"
-          wp plugin activate uk-cookie-consent-manager --path="${RUNNER_TEMP}/wordpress"
-          wp plugin status uk-cookie-consent-manager --path="${RUNNER_TEMP}/wordpress"
+          wp plugin activate rushleigh-cookie-choices --path="${RUNNER_TEMP}/wordpress"
+          wp plugin status rushleigh-cookie-choices --path="${RUNNER_TEMP}/wordpress"
           test "$(wp eval 'echo defined( "UCCM_VERSION" ) ? UCCM_VERSION : "";' --path="${RUNNER_TEMP}/wordpress")" = "${expected_version}"
 
       - name: Verify scheduled operating jobs
@@ -296,9 +296,9 @@ jobs:
           wp config create --path="${RUNNER_TEMP}/wordpress" --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1:3306
           wp core install --path="${RUNNER_TEMP}/wordpress" --url=https://example.test --title=UCCM --admin_user=admin --admin_password=test-password --admin_email=admin@example.test --skip-email
           wp core multisite-convert --path="${RUNNER_TEMP}/wordpress" --title=UCCM
-          unzip -q dist/uk-cookie-consent-manager-0.1.0-ci.zip -d "${RUNNER_TEMP}/wordpress/wp-content/plugins"
-          wp plugin activate uk-cookie-consent-manager --network --path="${RUNNER_TEMP}/wordpress"
-          wp plugin is-active uk-cookie-consent-manager --network --path="${RUNNER_TEMP}/wordpress"
+          unzip -q dist/rushleigh-cookie-choices-0.1.0-ci.zip -d "${RUNNER_TEMP}/wordpress/wp-content/plugins"
+          wp plugin activate rushleigh-cookie-choices --network --path="${RUNNER_TEMP}/wordpress"
+          wp plugin is-active rushleigh-cookie-choices --network --path="${RUNNER_TEMP}/wordpress"
           wp site create --path="${RUNNER_TEMP}/wordpress" --slug=second --title=Second --email=second@example.test
 
       - name: Verify per-site schema, jobs, isolation and network precedence
@@ -368,22 +368,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(sed -n 's/^ \* Version:[[:space:]]*//p' uk-cookie-consent-manager.php)"
+          version="$(sed -n 's/^ \* Version:[[:space:]]*//p' rushleigh-cookie-choices.php)"
           bash scripts/build-wordpress-org-package.sh "${version}"
-          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/rushleigh-cookie-choices
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
       - name: Run WordPress Plugin Check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: dist/wordpress-org/uk-cookie-consent-manager
+          build-dir: dist/wordpress-org/rushleigh-cookie-choices
 
       - name: Upload directory preparation evidence
         uses: actions/upload-artifact@v4
         with:
           name: uccm-wordpress-org-${{ steps.package.outputs.version }}
           path: |
-            dist/wordpress-org/uk-cookie-consent-manager
+            dist/wordpress-org/rushleigh-cookie-choices
             dist/wordpress-org/SOURCE-MANIFEST.sha256
             wordpress-org/assets
           if-no-files-found: error

@@ -18,7 +18,7 @@
 
 	status.textContent = __(
 		'The scan is checking your public pages. Keep this page open while it works; you can leave and return without losing saved progress.',
-		'uk-cookie-consent-manager'
+		'rushleigh-cookie-choices'
 	);
 
 	function next( delay ) {
@@ -48,7 +48,7 @@
 
 			status.textContent = sprintf(
 				/* translators: 1: number of pages checked, 2: number of pages remaining. */
-				__( '%1$d checked; %2$d remaining.', 'uk-cookie-consent-manager' ),
+				__( '%1$d checked; %2$d remaining.', 'rushleigh-cookie-choices' ),
 				Number( payload.data.visited || 0 ),
 				Number( payload.data.remaining || 0 )
 			);
@@ -70,7 +70,7 @@
 			void error;
 			status.textContent = __(
 				'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.',
-				'uk-cookie-consent-manager'
+				'rushleigh-cookie-choices'
 			);
 		}
 	}

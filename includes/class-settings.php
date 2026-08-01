@@ -230,7 +230,7 @@ final class Settings {
 			if ( 1 !== preg_match( '/^#[0-9a-f]{6}$/', $value ) ) {
 				return new \WP_Error(
 					'uccm_invalid_banner_colour',
-					__( 'Choose colours in the six-digit format shown, for example #174ea6.', 'uk-cookie-consent-manager' )
+					__( 'Choose colours in the six-digit format shown, for example #174ea6.', 'rushleigh-cookie-choices' )
 				);
 			}
 
@@ -257,10 +257,10 @@ final class Settings {
 		}
 
 		$checks = array(
-			array( 'banner_text_color', 'banner_surface_color', 4.5, __( 'Banner text must have at least 4.5:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
-			array( 'banner_muted_color', 'banner_surface_color', 4.5, __( 'Banner supporting text must have at least 4.5:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
-			array( 'banner_button_text_color', 'banner_button_color', 4.5, __( 'Button text must have at least 4.5:1 contrast against the button colour.', 'uk-cookie-consent-manager' ) ),
-			array( 'banner_button_color', 'banner_surface_color', 3.0, __( 'Buttons must have at least 3:1 contrast against the banner background.', 'uk-cookie-consent-manager' ) ),
+			array( 'banner_text_color', 'banner_surface_color', 4.5, __( 'Banner text must have at least 4.5:1 contrast against the banner background.', 'rushleigh-cookie-choices' ) ),
+			array( 'banner_muted_color', 'banner_surface_color', 4.5, __( 'Banner supporting text must have at least 4.5:1 contrast against the banner background.', 'rushleigh-cookie-choices' ) ),
+			array( 'banner_button_text_color', 'banner_button_color', 4.5, __( 'Button text must have at least 4.5:1 contrast against the button colour.', 'rushleigh-cookie-choices' ) ),
+			array( 'banner_button_color', 'banner_surface_color', 3.0, __( 'Buttons must have at least 3:1 contrast against the banner background.', 'rushleigh-cookie-choices' ) ),
 		);
 
 		foreach ( $checks as $check ) {

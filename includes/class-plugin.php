@@ -58,7 +58,7 @@ final class Plugin {
 		}
 
 		/**
-		 * Fires after the UK Cookie Consent Manager foundation has loaded.
+		 * Fires after the Rushleigh Cookie Choices foundation has loaded.
 		 *
 		 * @param Plugin $plugin Main plugin coordinator.
 		 */

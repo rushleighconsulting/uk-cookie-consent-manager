@@ -102,17 +102,17 @@ final class Consent_Receipts {
 			: null;
 
 		if ( 1 !== preg_match( '/^[A-Za-z0-9-]{16,64}$/', $receipt_id ) ) {
-			return new \WP_Error( 'uccm_invalid_receipt_id', __( 'The consent receipt identifier is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_invalid_receipt_id', __( 'The consent receipt identifier is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $action, array( 'grant', 'reject', 'update', 'withdraw' ), true ) ) {
-			return new \WP_Error( 'uccm_invalid_action', __( 'The consent action is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_invalid_action', __( 'The consent action is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$policy = (string) preg_replace( '/[^A-Za-z0-9._-]/', '', $policy );
 
 		if ( '' === $policy || '' === $language || '' === $wording || null === $choices ) {
-			return new \WP_Error( 'uccm_invalid_decision', __( 'The consent decision is incomplete.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_invalid_decision', __( 'The consent decision is incomplete.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$wording = substr( $wording, 0, 40 );
@@ -129,7 +129,7 @@ final class Consent_Receipts {
 		$encoded     = wp_json_encode( $choices );
 
 		if ( false === $encoded ) {
-			return new \WP_Error( 'uccm_invalid_choices', __( 'The consent choices could not be encoded.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_invalid_choices', __( 'The consent choices could not be encoded.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$row                   = array(
@@ -160,7 +160,7 @@ final class Consent_Receipts {
 		);
 
 		if ( false === $stored ) {
-			return new \WP_Error( 'uccm_receipt_not_stored', __( 'The consent receipt could not be stored.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_receipt_not_stored', __( 'The consent receipt could not be stored.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		do_action( 'uccm_consent_receipt_stored', $receipt_id, $action );
@@ -232,7 +232,7 @@ final class Consent_Receipts {
 		global $wpdb;
 
 		if ( ! current_user_can( $capability ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to access consent records.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to access consent records.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$limit  = max( 1, min( 1000, $limit ) );
@@ -260,7 +260,7 @@ final class Consent_Receipts {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'view_uccm_consents' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to reveal complete IP addresses.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to reveal complete IP addresses.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$table = Database::table_names()['consents'];
@@ -269,12 +269,12 @@ final class Consent_Receipts {
 		$ciphertext = $wpdb->get_var( $query );
 
 		if ( ! is_string( $ciphertext ) || '' === $ciphertext ) {
-			return new \WP_Error( 'uccm_full_ip_unavailable', __( 'No complete IP address is stored for this receipt.', 'uk-cookie-consent-manager' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'uccm_full_ip_unavailable', __( 'No complete IP address is stored for this receipt.', 'rushleigh-cookie-choices' ), array( 'status' => 404 ) );
 		}
 
 		$ip = IP_Privacy::decrypt( $ciphertext );
 		return '' === $ip
-			? new \WP_Error( 'uccm_ip_decryption_failed', __( 'The stored IP address could not be decrypted.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) )
+			? new \WP_Error( 'uccm_ip_decryption_failed', __( 'The stored IP address could not be decrypted.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) )
 			: $ip;
 	}
 
@@ -328,7 +328,7 @@ final class Consent_Receipts {
 		$home   = wp_parse_url( home_url( '/' ) );
 
 		if ( ! is_array( $source ) || ! is_array( $home ) ) {
-			return new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$source_port = (int) ( $source['port'] ?? ( 'https' === ( $source['scheme'] ?? '' ) ? 443 : 80 ) );
@@ -339,7 +339,7 @@ final class Consent_Receipts {
 
 		return $same_origin
 			? true
-			: new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			: new \WP_Error( 'uccm_consent_cross_origin', __( 'Cross-origin consent submissions are not allowed.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 	}
 
 	/**
@@ -353,7 +353,7 @@ final class Consent_Receipts {
 		$count = (int) get_transient( $key );
 
 		if ( self::RATE_LIMIT <= $count ) {
-			return new \WP_Error( 'uccm_consent_rate_limited', __( 'Too many consent events were submitted. Please try again shortly.', 'uk-cookie-consent-manager' ), array( 'status' => 429 ) );
+			return new \WP_Error( 'uccm_consent_rate_limited', __( 'Too many consent events were submitted. Please try again shortly.', 'rushleigh-cookie-choices' ), array( 'status' => 429 ) );
 		}
 
 		set_transient( $key, $count + 1, MINUTE_IN_SECONDS );

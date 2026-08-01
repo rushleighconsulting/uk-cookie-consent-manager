@@ -101,7 +101,7 @@ final class Scanner {
 	public static function cron_schedules( array $schedules ): array {
 		$schedules[ self::RECURRENCE ] = array(
 			'interval' => 30 * DAY_IN_SECONDS,
-			'display'  => __( 'Every 30 days', 'uk-cookie-consent-manager' ),
+			'display'  => __( 'Every 30 days', 'rushleigh-cookie-choices' ),
 		);
 
 		return $schedules;
@@ -139,21 +139,21 @@ final class Scanner {
 	 */
 	public static function accept_browser_observations( array $payload, string $token ): array|\WP_Error {
 		if ( '' === $token || ! hash_equals( self::runner_token(), $token ) ) {
-			return new \WP_Error( 'uccm_runner_unauthorised', __( 'The browser runner could not be authenticated.', 'uk-cookie-consent-manager' ), array( 'status' => 401 ) );
+			return new \WP_Error( 'uccm_runner_unauthorised', __( 'The browser runner could not be authenticated.', 'rushleigh-cookie-choices' ), array( 'status' => 401 ) );
 		}
 
 		$rate_key = 'uccm_runner_rate_' . substr( hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ), 0, 32 );
 		$count    = (int) get_transient( $rate_key );
 
 		if ( self::RUNNER_RATE_LIMIT <= $count ) {
-			return new \WP_Error( 'uccm_runner_rate_limited', __( 'The browser runner request limit has been reached.', 'uk-cookie-consent-manager' ), array( 'status' => 429 ) );
+			return new \WP_Error( 'uccm_runner_rate_limited', __( 'The browser runner request limit has been reached.', 'rushleigh-cookie-choices' ), array( 'status' => 429 ) );
 		}
 
 		set_transient( $rate_key, $count + 1, MINUTE_IN_SECONDS );
 		$observations = $payload['observations'] ?? array();
 
 		if ( ! is_array( $observations ) ) {
-			return new \WP_Error( 'uccm_runner_invalid_payload', __( 'Browser observations must be supplied as a list.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_runner_invalid_payload', __( 'Browser observations must be supplied as a list.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$accepted = array();
@@ -212,7 +212,7 @@ final class Scanner {
 		$home      = wp_parse_url( $site_home );
 
 		if ( '' === $target || ! is_array( $parts ) || ! is_array( $home ) ) {
-			return new \WP_Error( 'uccm_scan_invalid_target', __( 'A scan target is not a valid public URL.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_scan_invalid_target', __( 'A scan target is not a valid public URL.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$scheme      = strtolower( (string) ( $parts['scheme'] ?? '' ) );
@@ -232,15 +232,15 @@ final class Scanner {
 			isset( $parts['pass'] ) ||
 			isset( $parts['fragment'] )
 		) {
-			return new \WP_Error( 'uccm_scan_disallowed_target', __( 'Scan targets must be same-origin public URLs without credentials or fragments.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_scan_disallowed_target', __( 'Scan targets must be same-origin public URLs without credentials or fragments.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( filter_var( $host, FILTER_VALIDATE_IP ) && ! self::is_public_ip( $host ) ) {
-			return new \WP_Error( 'uccm_scan_private_target', __( 'Private and reserved network targets are not allowed.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_scan_private_target', __( 'Private and reserved network targets are not allowed.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( false === wp_http_validate_url( $target ) ) {
-			return new \WP_Error( 'uccm_scan_unsafe_target', __( 'The target failed WordPress safe-HTTP validation.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_scan_unsafe_target', __( 'The target failed WordPress safe-HTTP validation.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		return $target;
@@ -448,7 +448,7 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( $require_capability && ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$settings   = Settings::current();
@@ -511,7 +511,7 @@ final class Scanner {
 
 		if ( false === $created ) {
 			Operational_Alerts::report( 'uccm_scan_not_created', 'scanner' );
-			return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 		}
 
 		$run_id = (int) $wpdb->insert_id;
@@ -573,7 +573,7 @@ final class Scanner {
 		$lock_key = 'uccm_scan_batch_' . $run_id;
 
 		if ( get_transient( $lock_key ) ) {
-			return new \WP_Error( 'uccm_scan_batch_busy', __( 'This scan batch is already running.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_scan_batch_busy', __( 'This scan batch is already running.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		set_transient( $lock_key, '1', 2 * MINUTE_IN_SECONDS );
@@ -701,7 +701,7 @@ final class Scanner {
 
 			if ( false === $updated ) {
 				self::fail_run( $run_id, 'uccm_scan_progress_not_saved' );
-				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved and can be resumed after review.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+				return new \WP_Error( 'uccm_scan_progress_not_saved', __( 'The scan progress could not be saved and can be resumed after review.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 			}
 
 			if ( 'running' === $status && $schedule_next ) {
@@ -714,7 +714,7 @@ final class Scanner {
 		} catch ( \Throwable $throwable ) {
 			unset( $throwable );
 			self::fail_run( $run_id, 'uccm_scan_batch_failed' );
-			return new \WP_Error( 'uccm_scan_batch_failed', __( 'The scan batch failed and can be resumed after review.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'uccm_scan_batch_failed', __( 'The scan batch failed and can be resumed after review.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 		} finally {
 			delete_transient( $lock_key );
 		}
@@ -730,7 +730,7 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to cancel cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to cancel cookie scans.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$run = self::run_record( $run_id );
@@ -740,7 +740,7 @@ final class Scanner {
 		}
 
 		if ( ! in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
-			return new \WP_Error( 'uccm_scan_not_cancellable', __( 'This scan is not cancellable.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_scan_not_cancellable', __( 'This scan is not cancellable.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
@@ -771,7 +771,7 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to resume cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to resume cookie scans.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$run = self::run_record( $run_id );
@@ -781,7 +781,7 @@ final class Scanner {
 		}
 
 		if ( ! in_array( (string) $run['status'], array( 'queued', 'running', 'failed' ), true ) ) {
-			return new \WP_Error( 'uccm_scan_not_resumable', __( 'This scan is not resumable.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_scan_not_resumable', __( 'This scan is not resumable.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Updates plugin-owned scan evidence.
@@ -796,7 +796,7 @@ final class Scanner {
 		);
 
 		if ( false === $updated ) {
-			return new \WP_Error( 'uccm_scan_not_resumed', __( 'The scan could not be resumed.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'uccm_scan_not_resumed', __( 'The scan could not be resumed.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 		}
 
 		Operational_Alerts::resolve_component( 'scanner', $run_id );
@@ -816,13 +816,13 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to add browser observations.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to add browser observations.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$browser_status = sanitize_key( (string) ( $payload['status'] ?? 'completed' ) );
 
 		if ( ! in_array( $browser_status, array( 'running', 'completed', 'partial', 'failed' ), true ) ) {
-			return new \WP_Error( 'uccm_browser_scan_invalid_status', __( 'The browser check status is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_browser_scan_invalid_status', __( 'The browser check status is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		/*
@@ -841,7 +841,7 @@ final class Scanner {
 		}
 
 		if ( 'completed' !== (string) $run['status'] ) {
-			return new \WP_Error( 'uccm_browser_scan_not_ready', __( 'The server crawl must complete before browser observations are added.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_browser_scan_not_ready', __( 'The server crawl must complete before browser observations are added.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		$coverage = self::decoded_array( $run['coverage'] ?? '' );
@@ -896,7 +896,7 @@ final class Scanner {
 
 		if ( false === $updated ) {
 			Operational_Alerts::report( 'uccm_browser_scan_not_saved', 'browser-check', $run_id );
-			return new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'uccm_browser_scan_not_saved', __( 'The browser observations could not be saved.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 		}
 
 		if ( 'running' === $browser_status ) {
@@ -1001,11 +1001,11 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( $require_capability && ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to run cookie scans.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		if ( get_transient( 'uccm_scan_lock' ) ) {
-			return new \WP_Error( 'uccm_scan_busy', __( 'A cookie scan is already running.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_scan_busy', __( 'A cookie scan is already running.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		$targets = null === $targets ? self::targets() : self::validate_targets( $targets );
@@ -1043,7 +1043,7 @@ final class Scanner {
 			);
 
 			if ( false === $created ) {
-				return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'uk-cookie-consent-manager' ), array( 'status' => 500 ) );
+				return new \WP_Error( 'uccm_scan_not_created', __( 'The scan run could not be created.', 'rushleigh-cookie-choices' ), array( 'status' => 500 ) );
 			}
 
 			$run_id       = (int) $wpdb->insert_id;
@@ -1262,7 +1262,7 @@ final class Scanner {
 
 		return is_array( $row )
 			? $row
-			: new \WP_Error( 'uccm_scan_not_found', __( 'The scan run was not found.', 'uk-cookie-consent-manager' ), array( 'status' => 404 ) );
+			: new \WP_Error( 'uccm_scan_not_found', __( 'The scan run was not found.', 'rushleigh-cookie-choices' ), array( 'status' => 404 ) );
 	}
 
 	/**
@@ -1359,7 +1359,7 @@ final class Scanner {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to view scan runs.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_scan_forbidden', __( 'You are not allowed to view scan runs.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$table = Database::table_names()['scan_runs'];
@@ -1460,7 +1460,7 @@ final class Scanner {
 		}
 
 		return array() === $validated_targets
-			? new \WP_Error( 'uccm_scan_no_targets', __( 'At least one valid public scan target is required.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) )
+			? new \WP_Error( 'uccm_scan_no_targets', __( 'At least one valid public scan target is required.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) )
 			: $validated_targets;
 	}
 

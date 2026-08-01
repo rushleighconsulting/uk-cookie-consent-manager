@@ -7,11 +7,11 @@ from the Plugin Directory.
 
 ## Permanent identity
 
-- Intended slug: `uk-cookie-consent-manager`
+- Intended slug: `rushleigh-cookie-choices`
 - Directory URL after approval:
-  `https://wordpress.org/plugins/uk-cookie-consent-manager/`
+  `https://wordpress.org/plugins/rushleigh-cookie-choices/`
 - SVN URL after approval:
-  `https://plugins.svn.wordpress.org/uk-cookie-consent-manager`
+  `https://plugins.svn.wordpress.org/rushleigh-cookie-choices`
 
 The WordPress.org plugin API returned `Plugin not found` for the intended slug
 on 27 July 2026. This is evidence that no published plugin currently uses the
@@ -23,7 +23,7 @@ The normal GitHub release contains the signed GitHub updater used during
 controlled release-candidate testing. The WordPress.org package instead uses
 three committed overlays:
 
-- `wordpress-org/uk-cookie-consent-manager.php` omits the external `Update URI`;
+- `wordpress-org/rushleigh-cookie-choices.php` omits the external `Update URI`;
 - `wordpress-org/class-secure-updater.php` reports native WordPress.org update
   state and contains no GitHub package or manifest download path;
 - `wordpress-org/readme.txt` provides directory-specific installation, privacy,
@@ -48,12 +48,12 @@ Completed evidence:
   content.
 - Six approved WordPress.org screenshots and their readme captions are
   committed.
-- Stable `1.0.1` corrective version metadata is prepared consistently in both
+- Stable `1.0.2` corrective version metadata is prepared consistently in both
   entry points, both readmes, the translation template and the version-agreement test.
 
 Do not submit until all of the following remaining gates are true:
 
-1. The exact corrective stable source is approved and an immutable `v1.0.1`
+1. The exact corrective stable source is approved and an immutable `v1.0.2`
    tag is created from that accepted revision.
 2. Current source, privacy, licensing, trademark and manual security review is
    complete.
@@ -61,10 +61,10 @@ Do not submit until all of the following remaining gates are true:
 4. Upload of that exact package for WordPress.org review is explicitly approved.
 5. WordPress.org has approved the submission and provisioned the SVN repository.
 
-## Plugin Check manual disposition for 1.0.1
+## Plugin Check manual disposition for 1.0.2
 
 The prepare-only 1.0.0 run completed with no Plugin Check errors and 28
-warnings. Version 1.0.1 removes the one actionable warning by deleting the
+warnings. Version 1.0.2 removes the one actionable warning by deleting the
 obsolete manual `load_plugin_textdomain()` call. Modern WordPress and the
 Plugin Directory load language packs just in time for the declared text domain.
 
@@ -87,7 +87,7 @@ The remaining warning classes have this reviewed disposition:
   hook and therefore cannot use the UCCM prefix.
 
 These dispositions do not suppress Plugin Check output. They require the exact
-1.0.1 package to complete Plugin Check without errors and to emit only the
+1.0.2 package to complete Plugin Check without errors and to emit only the
 reviewed warning classes before upload approval.
 
 ## One-time GitHub configuration after directory approval
@@ -104,7 +104,7 @@ Committers must be able to receive its tokenised emails directly.
 
 ## Release procedure
 
-1. Approve and create the immutable corrective stable Git tag `v1.0.1`.
+1. Approve and create the immutable corrective stable Git tag `v1.0.2`.
 2. Run **WordPress.org publication** manually with that exact tag and leave
    **Release confirmation** at `NOT APPROVED`.
 3. Review the generated package, checksum manifest, assets and Plugin Check

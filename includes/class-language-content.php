@@ -111,7 +111,7 @@ final class Language_Content {
 				'We use one necessary cookie to remember your choice for %d day. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
 				'We use one necessary cookie to remember your choice for %d days. It is set whether you accept or reject optional cookies, so we do not ask you again. With your permission, we may also use optional cookies for functionality, analytics and marketing. You may change your choice at any time by clicking the little cookie logo.',
 				$lifetime_days,
-				'uk-cookie-consent-manager'
+				'rushleigh-cookie-choices'
 			),
 			$lifetime_days
 		);
@@ -121,7 +121,7 @@ final class Language_Content {
 				'We set one necessary cookie. This cookie remembers your cookie choices for %d day, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
 				'We set one necessary cookie. This cookie remembers your cookie choices for %d days, and is set when you accept, reject, or change your cookie options. You may reject any other cookies.',
 				$lifetime_days,
-				'uk-cookie-consent-manager'
+				'rushleigh-cookie-choices'
 			),
 			$lifetime_days
 		);
@@ -130,19 +130,19 @@ final class Language_Content {
 			'wording_version'    => '1',
 			'policy_url'         => '',
 			'direction'          => 'auto',
-			'banner_title'       => __( 'Your cookie choices', 'uk-cookie-consent-manager' ),
+			'banner_title'       => __( 'Your cookie choices', 'rushleigh-cookie-choices' ),
 			'banner_copy'        => $banner,
-			'preferences_title'  => __( 'Cookie preferences', 'uk-cookie-consent-manager' ),
-			'preferences_intro'  => __( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'uk-cookie-consent-manager' ),
+			'preferences_title'  => __( 'Cookie preferences', 'rushleigh-cookie-choices' ),
+			'preferences_intro'  => __( 'Choose which optional cookie categories this website may use. Necessary cookies are always active.', 'rushleigh-cookie-choices' ),
 			'cookie_copy'        => $cookie,
-			'accept_all'         => __( 'Accept all', 'uk-cookie-consent-manager' ),
-			'reject_optional'    => __( 'Reject non-essential', 'uk-cookie-consent-manager' ),
-			'manage_preferences' => __( 'Manage preferences', 'uk-cookie-consent-manager' ),
-			'save_choices'       => __( 'Save choices', 'uk-cookie-consent-manager' ),
-			'withdraw_consent'   => __( 'Withdraw optional consent', 'uk-cookie-consent-manager' ),
-			'close_preferences'  => __( 'Close cookie preferences', 'uk-cookie-consent-manager' ),
-			'settings_label'     => __( 'Cookie settings', 'uk-cookie-consent-manager' ),
-			'policy_link_label'  => __( 'Cookie policy', 'uk-cookie-consent-manager' ),
+			'accept_all'         => __( 'Accept all', 'rushleigh-cookie-choices' ),
+			'reject_optional'    => __( 'Reject non-essential', 'rushleigh-cookie-choices' ),
+			'manage_preferences' => __( 'Manage preferences', 'rushleigh-cookie-choices' ),
+			'save_choices'       => __( 'Save choices', 'rushleigh-cookie-choices' ),
+			'withdraw_consent'   => __( 'Withdraw optional consent', 'rushleigh-cookie-choices' ),
+			'close_preferences'  => __( 'Close cookie preferences', 'rushleigh-cookie-choices' ),
+			'settings_label'     => __( 'Cookie settings', 'rushleigh-cookie-choices' ),
+			'policy_link_label'  => __( 'Cookie policy', 'rushleigh-cookie-choices' ),
 			'categories'         => $categories,
 		);
 	}

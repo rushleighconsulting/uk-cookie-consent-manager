@@ -189,6 +189,7 @@ final class Resource_Rules {
 		$rule = $rules[ $id ];
 
 		if ( 'script' === $rule['type'] ) {
+			// This is inert consent metadata, not executable JavaScript. Enqueuing it would activate the blocked resource before consent.
 			// phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Deliberately inert until explicit consent.
 			$placeholder = sprintf(
 				'<script type="text/plain" data-uccm-blocked="script" data-uccm-rule="%1$s" data-uccm-category="%2$s" data-uccm-src="%3$s"></script>',
@@ -210,7 +211,7 @@ final class Resource_Rules {
 		}
 
 		$title = isset( $attributes['title'] ) ? sanitize_text_field( (string) $attributes['title'] ) : $rule['title'];
-		$title = '' !== $title ? $title : __( 'Optional embedded content', 'uk-cookie-consent-manager' );
+		$title = '' !== $title ? $title : __( 'Optional embedded content', 'rushleigh-cookie-choices' );
 
 		return sprintf(
 			'<iframe data-uccm-blocked="%1$s" data-uccm-rule="%2$s" data-uccm-category="%3$s" data-uccm-src="%4$s" title="%5$s" loading="lazy"></iframe>',

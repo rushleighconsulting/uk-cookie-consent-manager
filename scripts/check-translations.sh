@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-expected="languages/uk-cookie-consent-manager.pot"
+expected="languages/rushleigh-cookie-choices.pot"
 generated="$(mktemp)"
 trap 'rm -f "${generated}"' EXIT
 

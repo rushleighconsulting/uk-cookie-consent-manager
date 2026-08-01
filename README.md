@@ -1,4 +1,4 @@
-# UK Cookie Consent Manager
+# Rushleigh Cookie Choices
 
 A privacy-by-design WordPress plugin for obtaining, recording, reviewing and
 honouring cookie consent under UK GDPR and PECR.

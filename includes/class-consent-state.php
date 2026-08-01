@@ -37,23 +37,23 @@ final class Consent_State {
 	public static function categories(): array {
 		return array(
 			'necessary'  => array(
-				'label'       => __( 'Necessary', 'uk-cookie-consent-manager' ),
-				'description' => __( 'Required for the website to function and cannot be switched off.', 'uk-cookie-consent-manager' ),
+				'label'       => __( 'Necessary', 'rushleigh-cookie-choices' ),
+				'description' => __( 'Required for the website to function and cannot be switched off.', 'rushleigh-cookie-choices' ),
 				'required'    => true,
 			),
 			'functional' => array(
-				'label'       => __( 'Functional', 'uk-cookie-consent-manager' ),
-				'description' => __( 'Remember choices and provide enhanced website features.', 'uk-cookie-consent-manager' ),
+				'label'       => __( 'Functional', 'rushleigh-cookie-choices' ),
+				'description' => __( 'Remember choices and provide enhanced website features.', 'rushleigh-cookie-choices' ),
 				'required'    => false,
 			),
 			'analytics'  => array(
-				'label'       => __( 'Analytics', 'uk-cookie-consent-manager' ),
-				'description' => __( 'Help the site owner understand how the website is used.', 'uk-cookie-consent-manager' ),
+				'label'       => __( 'Analytics', 'rushleigh-cookie-choices' ),
+				'description' => __( 'Help the site owner understand how the website is used.', 'rushleigh-cookie-choices' ),
 				'required'    => false,
 			),
 			'marketing'  => array(
-				'label'       => __( 'Marketing', 'uk-cookie-consent-manager' ),
-				'description' => __( 'Support advertising and measurement across websites.', 'uk-cookie-consent-manager' ),
+				'label'       => __( 'Marketing', 'rushleigh-cookie-choices' ),
+				'description' => __( 'Support advertising and measurement across websites.', 'rushleigh-cookie-choices' ),
 				'required'    => false,
 			),
 		);
@@ -98,9 +98,9 @@ final class Consent_State {
 			'languageContent' => Language_Content::catalog(),
 			'defaultLocale'   => (string) ( $settings['default_content_locale'] ?? 'en_GB' ),
 			'messages'        => array(
-				'available' => __( 'Cookie choices are available.', 'uk-cookie-consent-manager' ),
-				'saved'     => __( 'Your cookie choices have been saved.', 'uk-cookie-consent-manager' ),
-				'withdrawn' => __( 'Optional cookie consent has been withdrawn.', 'uk-cookie-consent-manager' ),
+				'available' => __( 'Cookie choices are available.', 'rushleigh-cookie-choices' ),
+				'saved'     => __( 'Your cookie choices have been saved.', 'rushleigh-cookie-choices' ),
+				'withdrawn' => __( 'Optional cookie consent has been withdrawn.', 'rushleigh-cookie-choices' ),
 			),
 		);
 	}

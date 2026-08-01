@@ -42,7 +42,7 @@ final class Secure_Updater {
 	/**
 	 * Expected release slug.
 	 */
-	private const SLUG = 'uk-cookie-consent-manager';
+	private const SLUG = 'rushleigh-cookie-choices';
 
 	/**
 	 * Stable external update identifier.
@@ -146,7 +146,7 @@ final class Secure_Updater {
 			self::record_error(
 				new \WP_Error(
 					'uccm_update_incompatible',
-					__( 'The latest authenticated release is not compatible with this WordPress or PHP version.', 'uk-cookie-consent-manager' )
+					__( 'The latest authenticated release is not compatible with this WordPress or PHP version.', 'rushleigh-cookie-choices' )
 				)
 			);
 			return false;
@@ -190,7 +190,7 @@ final class Secure_Updater {
 		}
 
 		return (object) array(
-			'name'          => 'UK Cookie Consent Manager',
+			'name'          => 'Rushleigh Cookie Choices',
 			'slug'          => self::SLUG,
 			'version'       => $manifest['version'],
 			'requires'      => $manifest['requires_wp'],
@@ -225,13 +225,13 @@ final class Secure_Updater {
 		$manifest = self::manifest();
 
 		if ( is_wp_error( $manifest ) || ! hash_equals( $manifest['package_url'], $package ) ) {
-			return new \WP_Error( 'uccm_update_metadata_mismatch', __( 'The update package does not match authenticated release metadata.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_metadata_mismatch', __( 'The update package does not match authenticated release metadata.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$temporary = wp_tempnam( $package );
 
 		if ( '' === $temporary ) {
-			return new \WP_Error( 'uccm_update_temp_failed', __( 'WordPress could not create a temporary update file.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_temp_failed', __( 'WordPress could not create a temporary update file.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$response = wp_safe_remote_get(
@@ -246,7 +246,7 @@ final class Secure_Updater {
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) || ! self::verify_file( $temporary, $manifest['sha256'] ) ) {
 			wp_delete_file( $temporary );
-			return new \WP_Error( 'uccm_update_integrity_failed', __( 'The update download failed authentication or checksum verification.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_integrity_failed', __( 'The update download failed authentication or checksum verification.', 'rushleigh-cookie-choices' ) );
 		}
 
 		return $temporary;
@@ -264,7 +264,7 @@ final class Secure_Updater {
 
 		foreach ( $required as $field ) {
 			if ( ! isset( $manifest[ $field ] ) || ! is_string( $manifest[ $field ] ) || '' === $manifest[ $field ] ) {
-				return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest is incomplete.', 'uk-cookie-consent-manager' ) );
+				return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest is incomplete.', 'rushleigh-cookie-choices' ) );
 			}
 		}
 
@@ -282,7 +282,7 @@ final class Secure_Updater {
 		$has_rollout_seed       = array_key_exists( 'rollout_seed', $manifest );
 
 		if ( $has_rollout_percentage !== $has_rollout_seed ) {
-			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest has incomplete staged-rollout data.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest has incomplete staged-rollout data.', 'rushleigh-cookie-choices' ) );
 		}
 
 		if ( $has_rollout_percentage ) {
@@ -299,7 +299,7 @@ final class Secure_Updater {
 			1 !== preg_match( '/^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/', $validated['requires_wp'] ) ||
 			( $has_rollout_percentage && ( 1 !== preg_match( '/^(100|[1-9]?[0-9])$/', $validated['rollout_percentage'] ) || 1 !== preg_match( '/^[0-9A-Za-z._-]{1,80}$/', $validated['rollout_seed'] ) ) )
 		) {
-			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest contains invalid release data.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest contains invalid release data.', 'rushleigh-cookie-choices' ) );
 		}
 
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding the documented signature wire format.
@@ -309,7 +309,7 @@ final class Secure_Updater {
 		$payload    = self::canonical_payload( $validated );
 
 		if ( false === $signature || 64 !== strlen( $signature ) || false === $public_key || 32 !== strlen( $public_key ) ) {
-			return new \WP_Error( 'uccm_update_signature_invalid', __( 'The update manifest signature cannot be verified.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_signature_invalid', __( 'The update manifest signature cannot be verified.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$verified = null === $verifier
@@ -317,7 +317,7 @@ final class Secure_Updater {
 			: (bool) $verifier( $signature, $payload, $public_key );
 
 		if ( ! $verified ) {
-			return new \WP_Error( 'uccm_update_signature_invalid', __( 'The update manifest signature is invalid.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_update_signature_invalid', __( 'The update manifest signature is invalid.', 'rushleigh-cookie-choices' ) );
 		}
 
 		unset( $validated['signature'] );
@@ -360,7 +360,7 @@ final class Secure_Updater {
 	 */
 	private static function valid_package_url( string $url, string $version ): bool {
 		$parts         = wp_parse_url( $url );
-		$expected_path = '/rushleighconsulting/uk-cookie-consent-manager/releases/download/v' . $version . '/uk-cookie-consent-manager-' . $version . '.zip';
+		$expected_path = '/rushleighconsulting/uk-cookie-consent-manager/releases/download/v' . $version . '/rushleigh-cookie-choices-' . $version . '.zip';
 
 		return is_array( $parts )
 			&& 'https' === strtolower( (string) ( $parts['scheme'] ?? '' ) )
@@ -416,7 +416,7 @@ final class Secure_Updater {
 		return array_merge(
 			array(
 				'channel'                  => 'GitHub releases',
-				'channel_description'      => __( 'UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically.', 'uk-cookie-consent-manager' ),
+				'channel_description'      => __( 'UCCM checks signed releases from its official public GitHub repository. WordPress controls whether updates are installed automatically.', 'rushleigh-cookie-choices' ),
 				'installed_version'        => UCCM_VERSION,
 				'latest_version'           => '',
 				'last_checked_at'          => '',
@@ -648,11 +648,11 @@ final class Secure_Updater {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return self::record_error( new \WP_Error( 'uccm_update_manifest_unavailable', __( 'The authenticated update information could not be retrieved.', 'uk-cookie-consent-manager' ) ) );
+			return self::record_error( new \WP_Error( 'uccm_update_manifest_unavailable', __( 'The authenticated update information could not be retrieved.', 'rushleigh-cookie-choices' ) ) );
 		}
 
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
-		$result  = is_array( $decoded ) ? self::validate_manifest( $decoded ) : new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest is not valid JSON.', 'uk-cookie-consent-manager' ) );
+		$result  = is_array( $decoded ) ? self::validate_manifest( $decoded ) : new \WP_Error( 'uccm_update_manifest_invalid', __( 'The update manifest is not valid JSON.', 'rushleigh-cookie-choices' ) );
 
 		if ( is_wp_error( $result ) ) {
 			return self::record_error( $result );

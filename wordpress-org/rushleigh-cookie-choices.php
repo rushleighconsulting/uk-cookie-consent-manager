@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: UK Cookie Consent Manager
+ * Plugin Name: Rushleigh Cookie Choices
  * Plugin URI:  https://github.com/rushleighconsulting/uk-cookie-consent-manager
  * Description: Privacy-by-design cookie consent and management for UK WordPress sites.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Requires at least: 6.8
  * Requires PHP: 8.2
  * Author:      Rushleigh Consulting
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: uk-cookie-consent-manager
+ * Text Domain: rushleigh-cookie-choices
  * Domain Path: /languages
  *
  * @package UCCM
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UCCM_VERSION', '1.0.1' );
+define( 'UCCM_VERSION', '1.0.2' );
 define( 'UCCM_PLUGIN_FILE', __FILE__ );
 define( 'UCCM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UCCM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

@@ -64,7 +64,7 @@ final class Secure_Updater {
 		return array_merge(
 			array(
 				'channel'                  => 'WordPress.org Plugin Directory',
-				'channel_description'      => __( 'WordPress.org supplies UCCM updates through WordPress’s normal plugin-update service.', 'uk-cookie-consent-manager' ),
+				'channel_description'      => __( 'WordPress.org supplies UCCM updates through WordPress’s normal plugin-update service.', 'rushleigh-cookie-choices' ),
 				'installed_version'        => UCCM_VERSION,
 				'latest_version'           => $latest,
 				'last_checked_at'          => $last_checked,
@@ -81,7 +81,7 @@ final class Secure_Updater {
 			$status,
 			array(
 				'channel'                  => 'WordPress.org Plugin Directory',
-				'channel_description'      => __( 'WordPress.org supplies UCCM updates through WordPress’s normal plugin-update service.', 'uk-cookie-consent-manager' ),
+				'channel_description'      => __( 'WordPress.org supplies UCCM updates through WordPress’s normal plugin-update service.', 'rushleigh-cookie-choices' ),
 				'installed_version'        => UCCM_VERSION,
 				'latest_version'           => $latest,
 				'last_checked_at'          => $last_checked,
@@ -161,7 +161,7 @@ final class Secure_Updater {
 		foreach ( $plugins as $entry ) {
 			$item = is_object( $entry ) && is_object( $entry->item ?? null ) ? $entry->item : null;
 
-			if ( ! is_object( $item ) || 'uk-cookie-consent-manager' !== (string) ( $item->slug ?? '' ) ) {
+			if ( ! is_object( $item ) || 'rushleigh-cookie-choices' !== (string) ( $item->slug ?? '' ) ) {
 				continue;
 			}
 

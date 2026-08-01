@@ -1,10 +1,10 @@
-=== UK Cookie Consent Manager ===
+=== Rushleigh Cookie Choices ===
 Contributors: rushleighconsulting
 Tags: cookies, consent, privacy, gdpr, pecr
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Privacy-by-design cookie consent and management for UK WordPress sites.
 
 == Description ==
 
-UK Cookie Consent Manager 1.0.1 is the reviewed stable release following
+Rushleigh Cookie Choices 1.0.2 is the reviewed stable release following
 controlled release-candidate and WordPress.org submission-package acceptance.
 
 Release 1 provides an accessible consent banner, granular preferences, prior
@@ -50,6 +50,11 @@ addresses, credentials, access tokens, database exports and unrelated personal
 data. See the repository SECURITY.md for the coordinated-disclosure process.
 
 == Changelog ==
+
+= 1.0.2 =
+* Renames the plugin and WordPress.org identity to Rushleigh Cookie Choices with the distinctive `rushleigh-cookie-choices` slug.
+* Documents the reviewer-requested nonce, capability, sanitisation, licensing and functionality audit.
+* Clarifies that the inert `type="text/plain"` resource marker is consent metadata and cannot be enqueued without defeating prior blocking.
 
 = 1.0.1 =
 * Removes obsolete manual text-domain loading so modern WordPress can use just-in-time language packs without the discouraged call.

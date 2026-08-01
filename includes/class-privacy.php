@@ -36,7 +36,7 @@ final class Privacy {
 	 */
 	public static function register_exporter( array $exporters ): array {
 		$exporters['uccm-consent-receipts'] = array(
-			'exporter_friendly_name' => __( 'UK Cookie Consent Manager receipts', 'uk-cookie-consent-manager' ),
+			'exporter_friendly_name' => __( 'Rushleigh Cookie Choices receipts', 'rushleigh-cookie-choices' ),
 			'callback'               => array( self::class, 'export_personal_data' ),
 		);
 
@@ -51,7 +51,7 @@ final class Privacy {
 	 */
 	public static function register_eraser( array $erasers ): array {
 		$erasers['uccm-consent-receipts'] = array(
-			'eraser_friendly_name' => __( 'UK Cookie Consent Manager receipts', 'uk-cookie-consent-manager' ),
+			'eraser_friendly_name' => __( 'Rushleigh Cookie Choices receipts', 'rushleigh-cookie-choices' ),
 			'callback'             => array( self::class, 'erase_personal_data' ),
 		);
 
@@ -97,39 +97,39 @@ final class Privacy {
 		foreach ( $rows as $row ) {
 			$data[] = array(
 				'group_id'    => 'uccm-consent-receipts',
-				'group_label' => __( 'Cookie consent receipts', 'uk-cookie-consent-manager' ),
+				'group_label' => __( 'Cookie consent receipts', 'rushleigh-cookie-choices' ),
 				'item_id'     => 'uccm-consent-' . (int) $row['id'],
 				'data'        => array(
 					array(
-						'name'  => __( 'Receipt ID', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Receipt ID', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['receipt_id'],
 					),
 					array(
-						'name'  => __( 'Time (UTC)', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Time (UTC)', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['occurred_at'],
 					),
 					array(
-						'name'  => __( 'Action', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Action', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['action'],
 					),
 					array(
-						'name'  => __( 'Category choices', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Category choices', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['choices'],
 					),
 					array(
-						'name'  => __( 'Policy version', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Policy version', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['policy_version'],
 					),
 					array(
-						'name'  => __( 'Plugin version', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Plugin version', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['plugin_version'],
 					),
 					array(
-						'name'  => __( 'Site identifier', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Site identifier', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['site_identifier'],
 					),
 					array(
-						'name'  => __( 'Masked IP address', 'uk-cookie-consent-manager' ),
+						'name'  => __( 'Masked IP address', 'rushleigh-cookie-choices' ),
 						'value' => (string) $row['ip_masked'],
 					),
 				),
@@ -201,7 +201,7 @@ final class Privacy {
 			'items_retained' => array() !== $rows,
 			'messages'       => array() === $rows
 				? array()
-				: array( __( 'Direct identifiers were removed. Non-attributable consent evidence remains until the configured retention period expires.', 'uk-cookie-consent-manager' ) ),
+				: array( __( 'Direct identifiers were removed. Non-attributable consent evidence remains until the configured retention period expires.', 'rushleigh-cookie-choices' ) ),
 			'done'           => count( $rows ) < self::PAGE_SIZE,
 		);
 	}
@@ -211,7 +211,7 @@ final class Privacy {
 	 */
 	public static function add_policy_content(): void {
 		wp_add_privacy_policy_content(
-			__( 'UK Cookie Consent Manager', 'uk-cookie-consent-manager' ),
+			__( 'Rushleigh Cookie Choices', 'rushleigh-cookie-choices' ),
 			wp_kses_post( wpautop( self::policy_text() ) )
 		);
 	}
@@ -220,7 +220,7 @@ final class Privacy {
 	 * Return the suggested privacy-policy text.
 	 */
 	public static function policy_text(): string {
-		return __( 'This site uses UK Cookie Consent Manager to record cookie choices. Each decision may include a random receipt identifier, UTC time, selected categories, policy and plugin versions, a site identifier, an optional WordPress user ID, a masked IP address and a keyed non-reversible IP fingerprint. Complete IP storage is disabled by default; if enabled by the site operator it is encrypted at rest. Consent records remain on this WordPress site, are not sent to Rushleigh Consulting by default, and are retained for the period configured by the site operator (365 days by default). Logged-in users may request export or erasure through the WordPress privacy tools. Erasure removes account and IP identifiers while non-attributable consent evidence remains until retention cleanup.', 'uk-cookie-consent-manager' );
+		return __( 'This site uses Rushleigh Cookie Choices to record cookie choices. Each decision may include a random receipt identifier, UTC time, selected categories, policy and plugin versions, a site identifier, an optional WordPress user ID, a masked IP address and a keyed non-reversible IP fingerprint. Complete IP storage is disabled by default; if enabled by the site operator it is encrypted at rest. Consent records remain on this WordPress site, are not sent to Rushleigh Consulting by default, and are retained for the period configured by the site operator (365 days by default). Logged-in users may request export or erasure through the WordPress privacy tools. Erasure removes account and IP identifiers while non-attributable consent evidence remains until retention cleanup.', 'rushleigh-cookie-choices' );
 	}
 
 	/**
