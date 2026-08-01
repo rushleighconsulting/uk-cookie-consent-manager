@@ -1,13 +1,13 @@
-# Translating UK Cookie Consent Manager
+# Translating Rushleigh Cookie Choices
 
 UCCM uses WordPress’s native gettext and JavaScript translation APIs with the
-`uk-cookie-consent-manager` text domain. It does not require or contact a
+`rushleigh-cookie-choices` text domain. It does not require or contact a
 proprietary translation service.
 
 ## For translators
 
 The canonical template is
-`languages/uk-cookie-consent-manager.pot`. WordPress.org translations should be
+`languages/rushleigh-cookie-choices.pot`. WordPress.org translations should be
 contributed through the plugin’s Translate WordPress.org project once the
 directory listing exists. WordPress installs approved language packs under
 `wp-content/languages/plugins`; UCCM also recognises development translations

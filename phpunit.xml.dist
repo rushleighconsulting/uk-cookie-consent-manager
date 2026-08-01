@@ -5,7 +5,7 @@
 	cacheDirectory=".phpunit.cache"
 >
 	<testsuites>
-		<testsuite name="UK Cookie Consent Manager">
+		<testsuite name="Rushleigh Cookie Choices">
 			<directory>tests</directory>
 		</testsuite>
 	</testsuites>

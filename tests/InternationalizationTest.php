@@ -50,7 +50,7 @@ final class InternationalizationTest extends TestCase {
 		self::assertContains( 'wp-i18n', $GLOBALS['uccm_test_enqueued_scripts']['uccm-scan-progress']['dependencies'] );
 		self::assertSame(
 			array(
-				'domain' => 'uk-cookie-consent-manager',
+				'domain' => 'rushleigh-cookie-choices',
 				'path'   => plugin_dir_path( UCCM_PLUGIN_FILE ) . 'languages',
 			),
 			$GLOBALS['uccm_test_script_translations']['uccm-scan-progress']
@@ -58,11 +58,11 @@ final class InternationalizationTest extends TestCase {
 
 		$runner = file_get_contents( dirname( __DIR__ ) . '/assets/js/scan-runner.js' );
 		self::assertIsString( $runner );
-		self::assertStringContainsString( "__( 'Checking page %1\$d of %2\$d (%3\$s)…', 'uk-cookie-consent-manager' )", $runner );
+		self::assertStringContainsString( "__( 'Checking page %1\$d of %2\$d (%3\$s)…', 'rushleigh-cookie-choices' )", $runner );
 	}
 
 	public function test_welsh_translation_renders_without_changing_consent_semantics(): void {
-		$GLOBALS['uccm_test_translations']['uk-cookie-consent-manager'] = array(
+		$GLOBALS['uccm_test_translations']['rushleigh-cookie-choices'] = array(
 			'Your cookie choices'  => 'Eich dewisiadau cwcis',
 			'Accept all'           => 'Derbyn pob un',
 			'Reject non-essential' => 'Gwrthod cwcis nad ydynt yn hanfodol',
@@ -81,7 +81,7 @@ final class InternationalizationTest extends TestCase {
 	}
 
 	public function test_translated_markup_is_escaped_before_output(): void {
-		$GLOBALS['uccm_test_translations']['uk-cookie-consent-manager'] = array(
+		$GLOBALS['uccm_test_translations']['rushleigh-cookie-choices'] = array(
 			'Your cookie choices' => '<script>window.compromised=true</script>',
 			'Cookie settings'     => '" onclick="window.compromised=true',
 		);
@@ -97,7 +97,7 @@ final class InternationalizationTest extends TestCase {
 	}
 
 	public function test_pot_template_contains_php_and_javascript_messages(): void {
-		$pot = file_get_contents( dirname( __DIR__ ) . '/languages/uk-cookie-consent-manager.pot' );
+		$pot = file_get_contents( dirname( __DIR__ ) . '/languages/rushleigh-cookie-choices.pot' );
 
 		self::assertIsString( $pot );
 		self::assertStringContainsString( 'msgid "Your cookie choices"', $pot );

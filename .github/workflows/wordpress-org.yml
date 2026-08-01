@@ -52,26 +52,26 @@ jobs:
           test "$(git describe --tags --exact-match HEAD)" = "${{ inputs.tag }}"
           version="${{ inputs.tag }}"
           version="${version#v}"
-          test "$(sed -n 's/^ \* Version:[[:space:]]*//p' uk-cookie-consent-manager.php)" = "${version}"
+          test "$(sed -n 's/^ \* Version:[[:space:]]*//p' rushleigh-cookie-choices.php)" = "${version}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
       - name: Build directory-safe package from tagged files
         run: bash scripts/build-wordpress-org-package.sh "${{ steps.version.outputs.version }}"
 
       - name: Verify package and directory assets
-        run: bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+        run: bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/rushleigh-cookie-choices
 
       - name: Run WordPress Plugin Check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: dist/wordpress-org/uk-cookie-consent-manager
+          build-dir: dist/wordpress-org/rushleigh-cookie-choices
 
       - name: Upload reviewed publication material
         uses: actions/upload-artifact@v4
         with:
           name: wordpress-org-${{ steps.version.outputs.version }}
           path: |
-            dist/wordpress-org/uk-cookie-consent-manager
+            dist/wordpress-org/rushleigh-cookie-choices
             dist/wordpress-org/SOURCE-MANIFEST.sha256
             wordpress-org/assets
           if-no-files-found: error
@@ -110,10 +110,10 @@ jobs:
       - name: Rebuild and verify exact tagged material
         run: |
           bash scripts/build-wordpress-org-package.sh "${{ steps.version.outputs.version }}"
-          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/uk-cookie-consent-manager
+          bash scripts/verify-wordpress-org-package.sh dist/wordpress-org/rushleigh-cookie-choices
 
       - name: Check out provisioned WordPress.org SVN repository
-        run: svn checkout --depth immediates https://plugins.svn.wordpress.org/uk-cookie-consent-manager "${RUNNER_TEMP}/wordpress-org-svn"
+        run: svn checkout --depth immediates https://plugins.svn.wordpress.org/rushleigh-cookie-choices "${RUNNER_TEMP}/wordpress-org-svn"
 
       - name: Stage trunk, immutable tag and directory assets
         shell: bash
@@ -121,13 +121,13 @@ jobs:
           set -euo pipefail
           svn update --set-depth infinity "${RUNNER_TEMP}/wordpress-org-svn/trunk"
           svn update --set-depth infinity "${RUNNER_TEMP}/wordpress-org-svn/assets"
-          if svn info "https://plugins.svn.wordpress.org/uk-cookie-consent-manager/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+          if svn info "https://plugins.svn.wordpress.org/rushleigh-cookie-choices/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
             echo "WordPress.org tag ${{ steps.version.outputs.version }} already exists; refusing to replace it." >&2
             exit 1
           fi
           mkdir -p "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}"
-          rsync -a --delete dist/wordpress-org/uk-cookie-consent-manager/ "${RUNNER_TEMP}/wordpress-org-svn/trunk/"
-          rsync -a dist/wordpress-org/uk-cookie-consent-manager/ "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}/"
+          rsync -a --delete dist/wordpress-org/rushleigh-cookie-choices/ "${RUNNER_TEMP}/wordpress-org-svn/trunk/"
+          rsync -a dist/wordpress-org/rushleigh-cookie-choices/ "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}/"
           rsync -a --delete wordpress-org/assets/ "${RUNNER_TEMP}/wordpress-org-svn/assets/"
           svn add --force "${RUNNER_TEMP}/wordpress-org-svn/trunk" "${RUNNER_TEMP}/wordpress-org-svn/tags/${{ steps.version.outputs.version }}" "${RUNNER_TEMP}/wordpress-org-svn/assets"
           svn status "${RUNNER_TEMP}/wordpress-org-svn" | awk '/^!/ { print substr($0, 9) }' | while IFS= read -r missing; do

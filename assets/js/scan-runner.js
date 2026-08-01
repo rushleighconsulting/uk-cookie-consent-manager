@@ -16,12 +16,12 @@
 	var status = document.getElementById( 'uccm-browser-observation-status' );
 	var optionalCategories = [ 'functional', 'analytics', 'marketing' ];
 	var scenarios = [
-		{ name: 'pre-consent', label: __( 'Before a choice', 'uk-cookie-consent-manager' ), action: '', allowed: [] },
-		{ name: 'reject', label: __( 'Reject non-essential', 'uk-cookie-consent-manager' ), action: 'reject', allowed: [] },
-		{ name: 'accept-all', label: __( 'Accept all', 'uk-cookie-consent-manager' ), action: 'grant', allowed: optionalCategories },
-		{ name: 'functional', label: __( 'Functional only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'functional' ] },
-		{ name: 'analytics', label: __( 'Analytics only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'analytics' ] },
-		{ name: 'marketing', label: __( 'Marketing only', 'uk-cookie-consent-manager' ), action: 'grant', allowed: [ 'marketing' ] }
+		{ name: 'pre-consent', label: __( 'Before a choice', 'rushleigh-cookie-choices' ), action: '', allowed: [] },
+		{ name: 'reject', label: __( 'Reject non-essential', 'rushleigh-cookie-choices' ), action: 'reject', allowed: [] },
+		{ name: 'accept-all', label: __( 'Accept all', 'rushleigh-cookie-choices' ), action: 'grant', allowed: optionalCategories },
+		{ name: 'functional', label: __( 'Functional only', 'rushleigh-cookie-choices' ), action: 'grant', allowed: [ 'functional' ] },
+		{ name: 'analytics', label: __( 'Analytics only', 'rushleigh-cookie-choices' ), action: 'grant', allowed: [ 'analytics' ] },
+		{ name: 'marketing', label: __( 'Marketing only', 'rushleigh-cookie-choices' ), action: 'grant', allowed: [ 'marketing' ] }
 	];
 	var sourceLimit = 20;
 	var stepDelayMs = Math.max( 250, Math.min( 5000, Number( config.stepDelayMs ) || 3000 ) );
@@ -29,7 +29,7 @@
 	var submitRetryAttempts = Math.max( 1, Math.min( 3, Number( config.submitRetryAttempts ) || 2 ) );
 	var protectedLookup = {};
 	var isolatedContextAvailable = 'credentialless' in HTMLIFrameElement.prototype;
-	var browserRequirement = __( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'uk-cookie-consent-manager' );
+	var browserRequirement = __( 'For your privacy, this check needs a current Chrome, Edge or other Chromium browser. Safari and Firefox are not supported yet.', 'rushleigh-cookie-choices' );
 
 	if ( ! button || ! status || ! Array.isArray( config.targets ) ) {
 		return;
@@ -302,7 +302,7 @@
 				form.submit();
 			}
 
-			frame.setAttribute( 'title', __( 'Cookie scan temporary visitor frame', 'uk-cookie-consent-manager' ) );
+			frame.setAttribute( 'title', __( 'Cookie scan temporary visitor frame', 'rushleigh-cookie-choices' ) );
 			frame.credentialless = true;
 			frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:800px;opacity:0;pointer-events:none;';
 			timer = window.setTimeout( function () {
@@ -317,7 +317,7 @@
 
 				frame.name = 'uccm-post-password-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
 				frame.addEventListener( 'load', submitProtectedBootstrap );
-				frame.srcdoc = '<!doctype html><title>' + __( 'Cookie scan preparation', 'uk-cookie-consent-manager' ).replace( /[&<>"']/g, function ( character ) {
+				frame.srcdoc = '<!doctype html><title>' + __( 'Cookie scan preparation', 'rushleigh-cookie-choices' ).replace( /[&<>"']/g, function ( character ) {
 					return {
 						'&': '&amp;',
 						'<': '&lt;',
@@ -362,7 +362,7 @@
 				var result = await response.json();
 
 				if ( ! response.ok || ! result.success ) {
-					throw new Error( result.data && result.data.message ? result.data.message : __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
+					throw new Error( result.data && result.data.message ? result.data.message : __( 'The browser check could not be saved.', 'rushleigh-cookie-choices' ) );
 				}
 
 				return;
@@ -379,7 +379,7 @@
 			}
 		}
 
-		throw lastError instanceof Error ? lastError : new Error( __( 'The browser check could not be saved.', 'uk-cookie-consent-manager' ) );
+		throw lastError instanceof Error ? lastError : new Error( __( 'The browser check could not be saved.', 'rushleigh-cookie-choices' ) );
 	}
 
 	button.addEventListener( 'click', async function () {
@@ -400,7 +400,7 @@
 				for ( var scenarioIndex = 0; scenarioIndex < scenarios.length; scenarioIndex += 1 ) {
 					announce( sprintf(
 						/* translators: 1: current page number, 2: total pages, 3: consent scenario. */
-						__( 'Checking page %1$d of %2$d (%3$s)…', 'uk-cookie-consent-manager' ),
+						__( 'Checking page %1$d of %2$d (%3$s)…', 'rushleigh-cookie-choices' ),
 						targetIndex + 1,
 						targets.length,
 						scenarios[ scenarioIndex ].label
@@ -447,8 +447,8 @@
 			} );
 
 			announce( 'completed' === finalStatus
-				? __( 'Browser check saved. Reload this scan to review the results.', 'uk-cookie-consent-manager' )
-				: __( 'Browser check saved, but some pages could not be checked. Reload this scan for details.', 'uk-cookie-consent-manager' ) );
+				? __( 'Browser check saved. Reload this scan to review the results.', 'rushleigh-cookie-choices' )
+				: __( 'Browser check saved, but some pages could not be checked. Reload this scan for details.', 'rushleigh-cookie-choices' ) );
 		} catch ( error ) {
 			try {
 				await submit( {
@@ -463,7 +463,7 @@
 			} catch ( submitError ) {
 				// Do not replace the original failure message.
 			}
-			announce( error instanceof Error ? error.message : __( 'The browser check could not be completed.', 'uk-cookie-consent-manager' ) );
+			announce( error instanceof Error ? error.message : __( 'The browser check could not be completed.', 'rushleigh-cookie-choices' ) );
 		} finally {
 			button.disabled = false;
 		}

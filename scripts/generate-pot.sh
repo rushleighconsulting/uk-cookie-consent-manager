@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-output="${1:-languages/uk-cookie-consent-manager.pot}"
-domain="uk-cookie-consent-manager"
+output="${1:-languages/rushleigh-cookie-choices.pot}"
+domain="rushleigh-cookie-choices"
 
 if ! command -v wp >/dev/null 2>&1; then
   echo "WP-CLI with the i18n command is required." >&2

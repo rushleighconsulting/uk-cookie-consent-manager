@@ -23,13 +23,13 @@ jobs:
         run: bash scripts/build-package.sh 0.1.0-ci
 
       - name: Verify package
-        run: bash tests/package-verification.sh dist/uk-cookie-consent-manager-0.1.0-ci.zip
+        run: bash tests/package-verification.sh dist/rushleigh-cookie-choices-0.1.0-ci.zip
 
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
           name: uccm-multisite-package
-          path: dist/uk-cookie-consent-manager-0.1.0-ci.zip
+          path: dist/rushleigh-cookie-choices-0.1.0-ci.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -79,4 +79,4 @@ jobs:
           tools: wp-cli
 
       - name: Run Multisite package acceptance
-        run: bash tests/multisite-package-acceptance.sh dist/uk-cookie-consent-manager-0.1.0-ci.zip "${{ matrix.topology }}"
+        run: bash tests/multisite-package-acceptance.sh dist/rushleigh-cookie-choices-0.1.0-ci.zip "${{ matrix.topology }}"

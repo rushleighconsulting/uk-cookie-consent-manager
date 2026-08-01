@@ -1,5 +1,5 @@
 {
-  "name": "uk-cookie-consent-manager",
+  "name": "rushleigh-cookie-choices",
   "private": true,
   "scripts": {
     "test:browser": "playwright test"

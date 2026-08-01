@@ -73,7 +73,7 @@ test( 'worker stops and shows a recoverable message when the request fails', asy
 			i18n: {
 				__( text, domain ) {
 					if (
-						'uk-cookie-consent-manager' === domain &&
+						'rushleigh-cookie-choices' === domain &&
 						'The scan could not continue in this browser. Its saved progress is safe; review the dashboard problem or use Resume.' === text
 					) {
 						return 'Saved progress is safe.';

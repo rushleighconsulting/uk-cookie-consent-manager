@@ -182,7 +182,7 @@ final class Scan_Findings {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'run_uccm_scans' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to view scan findings.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to view scan findings.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$table = Database::table_names()['scan_findings'];
@@ -217,13 +217,13 @@ final class Scan_Findings {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'manage_uccm_inventory' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to review scan findings.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to review scan findings.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$status = sanitize_key( $status );
 
 		if ( 1 > $finding_id || ! in_array( $status, self::REVIEW_STATUSES, true ) ) {
-			return new \WP_Error( 'uccm_invalid_finding_review', __( 'The scan finding review request is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_invalid_finding_review', __( 'The scan finding review request is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		$table = Database::table_names()['scan_findings'];
@@ -238,11 +238,11 @@ final class Scan_Findings {
 		$updated = $wpdb->query( $sql );
 
 		if ( false === $updated ) {
-			return new \WP_Error( 'uccm_finding_not_reviewed', __( 'The scan finding could not be reviewed.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_finding_not_reviewed', __( 'The scan finding could not be reviewed.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		if ( 0 === $updated ) {
-			return new \WP_Error( 'uccm_finding_not_pending', __( 'The scan finding is no longer pending review.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'uccm_finding_not_pending', __( 'The scan finding is no longer pending review.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) );
 		}
 
 		return true;
@@ -424,12 +424,12 @@ final class Scan_Findings {
 		$link    = admin_url( 'admin.php?page=uccm-scans&scan_id=' . $run_id );
 		$subject = sprintf(
 			/* translators: %d: actionable finding count. */
-			__( 'Cookie scan found %d item(s) requiring review', 'uk-cookie-consent-manager' ),
+			__( 'Cookie scan found %d item(s) requiring review', 'rushleigh-cookie-choices' ),
 			$counts['actionable']
 		);
 		$message = sprintf(
 			/* translators: 1: scan ID, 2: new count, 3: changed count, 4: administration URL. */
-			__( "Scan %1\$d created %2\$d new and %3\$d changed finding(s).\n\nReview summary: %4\$s", 'uk-cookie-consent-manager' ),
+			__( "Scan %1\$d created %2\$d new and %3\$d changed finding(s).\n\nReview summary: %4\$s", 'rushleigh-cookie-choices' ),
 			$run_id,
 			$counts['new'],
 			$counts['changed'],

@@ -23,7 +23,7 @@ for ( const file of files ) {
 	}
 
 	for ( const match of source.matchAll( /\b__\(\s*(['"`])([\s\S]*?)\1\s*(?:,\s*(['"`])([^'"`]+)\3)?\s*\)/g ) ) {
-		if ( 'uk-cookie-consent-manager' !== match[4] ) {
+		if ( 'rushleigh-cookie-choices' !== match[4] ) {
 			failures.push( `${ file }: gettext call has a missing or incorrect text domain: ${ match[0] }` );
 		}
 	}

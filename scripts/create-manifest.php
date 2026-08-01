@@ -53,7 +53,7 @@ if ( 1 !== preg_match( '/^(100|[1-9]?[0-9])$/', $rollout ) || 1 !== preg_match( 
 }
 
 $manifest = array(
-	'slug'               => 'uk-cookie-consent-manager',
+	'slug'               => 'rushleigh-cookie-choices',
 	'version'            => $version,
 	'package_url'        => $package_url,
 	'sha256'             => $sha256,

@@ -57,14 +57,14 @@ esac
 unzip -q "${archive}" -d "${wp_path}/wp-content/plugins"
 
 # Individual-site activation must initialize only the selected site.
-wp plugin activate uk-cookie-consent-manager --path="${wp_path}" --url="${root_url}"
+wp plugin activate rushleigh-cookie-choices --path="${wp_path}" --url="${root_url}"
 table_exists "wp_uccm_consents"
 table_absent "wp_2_uccm_consents"
-wp plugin deactivate uk-cookie-consent-manager --path="${wp_path}" --url="${root_url}"
+wp plugin deactivate rushleigh-cookie-choices --path="${wp_path}" --url="${root_url}"
 
 # Network Activation must initialize all existing sites.
-wp plugin activate uk-cookie-consent-manager --network --path="${wp_path}"
-wp plugin is-active uk-cookie-consent-manager --network --path="${wp_path}"
+wp plugin activate rushleigh-cookie-choices --network --path="${wp_path}"
+wp plugin is-active rushleigh-cookie-choices --network --path="${wp_path}"
 
 # The real WordPress style loader must register, enqueue and emit the inline-only visitor stylesheet.
 wp eval '
@@ -188,7 +188,7 @@ for site_id in 1 2 3; do
   test "$(scalar "SELECT COUNT(*) FROM ${prefix}uccm_cookie_inventory WHERE storage_key='network-marker-${site_id}';")" = "1"
 done
 
-wp plugin deactivate uk-cookie-consent-manager --network --path="${wp_path}"
+wp plugin deactivate rushleigh-cookie-choices --network --path="${wp_path}"
 for site_id in 1 2 3; do
   prefix="wp_"
   if test "${site_id}" != "1"; then
@@ -197,7 +197,7 @@ for site_id in 1 2 3; do
   test "$(scalar "SELECT COUNT(*) FROM ${prefix}uccm_cookie_inventory WHERE storage_key='network-marker-${site_id}';")" = "1"
 done
 
-wp plugin activate uk-cookie-consent-manager --network --path="${wp_path}"
+wp plugin activate rushleigh-cookie-choices --network --path="${wp_path}"
 for site_id in 1 2 3; do
   prefix="wp_"
   if test "${site_id}" != "1"; then

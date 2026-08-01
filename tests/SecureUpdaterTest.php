@@ -50,7 +50,7 @@ final class SecureUpdaterTest extends TestCase {
 
 	public function test_package_outside_the_official_immutable_release_path_is_blocked(): void {
 		$manifest                = $this->manifest();
-		$manifest['package_url'] = 'https://example.test/uk-cookie-consent-manager-0.2.0.zip';
+		$manifest['package_url'] = 'https://example.test/rushleigh-cookie-choices-0.2.0.zip';
 		$result                  = Secure_Updater::validate_manifest( $manifest, static fn (): bool => true );
 
 		self::assertInstanceOf( WP_Error::class, $result );
@@ -119,7 +119,7 @@ final class SecureUpdaterTest extends TestCase {
 		$GLOBALS['uccm_test_capabilities']['update_plugins']    = true;
 		$GLOBALS['uccm_test_site_transients']['update_plugins'] = (object) array(
 			'no_update' => array(
-				'uk-cookie-consent-manager/uk-cookie-consent-manager.php' => (object) array(),
+				'rushleigh-cookie-choices/rushleigh-cookie-choices.php' => (object) array(),
 			),
 		);
 
@@ -133,7 +133,7 @@ final class SecureUpdaterTest extends TestCase {
 		$GLOBALS['uccm_test_capabilities']['update_plugins']    = true;
 		$GLOBALS['uccm_test_site_transients']['update_plugins'] = (object) array(
 			'response' => array(
-				'uk-cookie-consent-manager/uk-cookie-consent-manager.php' => (object) array(),
+				'rushleigh-cookie-choices/rushleigh-cookie-choices.php' => (object) array(),
 			),
 		);
 
@@ -152,7 +152,7 @@ final class SecureUpdaterTest extends TestCase {
 		$result = Secure_Updater::update_offer(
 			false,
 			array(),
-			'uk-cookie-consent-manager/uk-cookie-consent-manager.php',
+			'rushleigh-cookie-choices/rushleigh-cookie-choices.php',
 			array( 'en_GB' )
 		);
 
@@ -205,9 +205,9 @@ final class SecureUpdaterTest extends TestCase {
 	 */
 	private function manifest(): array {
 		return array(
-			'slug'         => 'uk-cookie-consent-manager',
+			'slug'         => 'rushleigh-cookie-choices',
 			'version'      => '0.2.0',
-			'package_url'  => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/download/v0.2.0/uk-cookie-consent-manager-0.2.0.zip',
+			'package_url'  => 'https://github.com/rushleighconsulting/uk-cookie-consent-manager/releases/download/v0.2.0/rushleigh-cookie-choices-0.2.0.zip',
 			'sha256'       => str_repeat( 'a', 64 ),
 			'requires_php' => '8.2',
 			'requires_wp'  => '6.8',

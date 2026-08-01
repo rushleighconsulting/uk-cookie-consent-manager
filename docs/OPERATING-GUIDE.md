@@ -1,4 +1,4 @@
-# UK Cookie Consent Manager operating guide
+# Rushleigh Cookie Choices operating guide
 
 This guide is for site owners and administrators operating a Release 1 package.
 The plugin supports compliance work; it does not replace legal advice or a
@@ -16,7 +16,7 @@ WP-Cron runner and a database backup process.
 2. Download the versioned ZIP and `SHA256SUMS` from the matching GitHub Release.
 3. Verify the ZIP checksum before upload.
 4. In WordPress, open **Plugins → Add New → Upload Plugin**, select the ZIP and
-   activate **UK Cookie Consent Manager**.
+   activate **Rushleigh Cookie Choices**.
 5. Open **Cookie Consent → Overview** and complete every setup item.
 6. Clear page/CDN caches and test a first visit in a private browser window.
 

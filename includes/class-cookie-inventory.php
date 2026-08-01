@@ -61,23 +61,23 @@ final class Cookie_Inventory {
 		$status       = sanitize_key( (string) ( $input['status'] ?? '' ) );
 
 		if ( '' === $storage_key ) {
-			return new \WP_Error( 'uccm_inventory_key_required', __( 'A cookie or storage key name is required.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_inventory_key_required', __( 'A cookie or storage key name is required.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $party, self::PARTIES, true ) ) {
-			return new \WP_Error( 'uccm_inventory_invalid_party', __( 'The party classification is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_inventory_invalid_party', __( 'The party classification is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $storage_type, self::STORAGE_TYPES, true ) ) {
-			return new \WP_Error( 'uccm_inventory_invalid_storage_type', __( 'The storage type is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_inventory_invalid_storage_type', __( 'The storage type is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $category, self::CATEGORIES, true ) ) {
-			return new \WP_Error( 'uccm_inventory_invalid_category', __( 'The consent category is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_inventory_invalid_category', __( 'The consent category is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $status, self::STATUSES, true ) ) {
-			return new \WP_Error( 'uccm_inventory_invalid_status', __( 'The review status is invalid.', 'uk-cookie-consent-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'uccm_inventory_invalid_status', __( 'The review status is invalid.', 'rushleigh-cookie-choices' ), array( 'status' => 400 ) );
 		}
 
 		return array(
@@ -106,7 +106,7 @@ final class Cookie_Inventory {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'manage_uccm_inventory' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to manage the cookie inventory.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to manage the cookie inventory.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$validated = self::validate( $input );
@@ -125,7 +125,7 @@ final class Cookie_Inventory {
 			$updated = $wpdb->update( $table, $validated, array( 'id' => $id ) );
 
 			return false === $updated
-				? new \WP_Error( 'uccm_inventory_not_saved', __( 'The inventory item could not be updated.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) )
+				? new \WP_Error( 'uccm_inventory_not_saved', __( 'The inventory item could not be updated.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) )
 				: $id;
 		}
 
@@ -136,7 +136,7 @@ final class Cookie_Inventory {
 		$inserted = $wpdb->insert( $table, $validated );
 
 		return false === $inserted
-			? new \WP_Error( 'uccm_inventory_not_saved', __( 'The inventory item could not be created.', 'uk-cookie-consent-manager' ), array( 'status' => 409 ) )
+			? new \WP_Error( 'uccm_inventory_not_saved', __( 'The inventory item could not be created.', 'rushleigh-cookie-choices' ), array( 'status' => 409 ) )
 			: (int) $wpdb->insert_id;
 	}
 
@@ -153,7 +153,7 @@ final class Cookie_Inventory {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'manage_uccm_inventory' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to view the cookie inventory.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to view the cookie inventory.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		$page                  = max( 1, $page );
@@ -194,7 +194,7 @@ final class Cookie_Inventory {
 
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- Custom capability granted by UCCM.
 		if ( ! current_user_can( 'manage_uccm_inventory' ) ) {
-			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to export the cookie inventory.', 'uk-cookie-consent-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'uccm_forbidden', __( 'You are not allowed to export the cookie inventory.', 'rushleigh-cookie-choices' ), array( 'status' => 403 ) );
 		}
 
 		[ $where, $arguments ] = self::where_clause( $filters, $wpdb );

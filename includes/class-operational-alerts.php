@@ -217,12 +217,12 @@ final class Operational_Alerts {
 
 		foreach ( self::current() as $record ) {
 			$id = (string) $record['id'];
-			echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'UK Cookie Consent Manager needs attention', 'uk-cookie-consent-manager' ) . '</strong></p>';
-			echo '<p>' . esc_html( (string) $record['message'] ) . ' ' . esc_html__( 'Code:', 'uk-cookie-consent-manager' ) . ' <code>' . esc_html( (string) $record['code'] ) . '</code>. ' . esc_html__( 'Last seen (UTC):', 'uk-cookie-consent-manager' ) . ' ' . esc_html( (string) $record['last_seen_at'] ) . '.</p>';
-			echo '<p><a class="button button-primary" href="' . esc_url( self::review_url( $record ) ) . '">' . esc_html__( 'Review and recover', 'uk-cookie-consent-manager' ) . '</a></p>';
+			echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'Rushleigh Cookie Choices needs attention', 'rushleigh-cookie-choices' ) . '</strong></p>';
+			echo '<p>' . esc_html( (string) $record['message'] ) . ' ' . esc_html__( 'Code:', 'rushleigh-cookie-choices' ) . ' <code>' . esc_html( (string) $record['code'] ) . '</code>. ' . esc_html__( 'Last seen (UTC):', 'rushleigh-cookie-choices' ) . ' ' . esc_html( (string) $record['last_seen_at'] ) . '.</p>';
+			echo '<p><a class="button button-primary" href="' . esc_url( self::review_url( $record ) ) . '">' . esc_html__( 'Review and recover', 'rushleigh-cookie-choices' ) . '</a></p>';
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="uccm_dismiss_operational_alert"><input type="hidden" name="alert_id" value="' . esc_attr( $id ) . '">';
 			wp_nonce_field( 'uccm_dismiss_operational_alert_' . $id );
-			echo '<button type="submit" class="button-link">' . esc_html__( 'Dismiss this occurrence', 'uk-cookie-consent-manager' ) . '</button></form></div>';
+			echo '<button type="submit" class="button-link">' . esc_html__( 'Dismiss this occurrence', 'rushleigh-cookie-choices' ) . '</button></form></div>';
 		}
 	}
 
@@ -285,38 +285,38 @@ final class Operational_Alerts {
 	 */
 	private static function message( string $code, string $component ): string {
 		if ( 'uccm_scan_stalled' === $code ) {
-			return __( 'A background cookie scan has stopped progressing.', 'uk-cookie-consent-manager' );
+			return __( 'A background cookie scan has stopped progressing.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'uccm_scan_dispatch_deferred' === $code ) {
-			return __( 'WordPress could not start a cookie scan in the background. Keep the Scans page open to continue it, or review the site scheduler.', 'uk-cookie-consent-manager' );
+			return __( 'WordPress could not start a cookie scan in the background. Keep the Scans page open to continue it, or review the site scheduler.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'uccm_update_rollback_failed' === $code ) {
-			return __( 'A plugin update failed and WordPress could not restore the previous UCCM version.', 'uk-cookie-consent-manager' );
+			return __( 'A plugin update failed and WordPress could not restore the previous UCCM version.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'uccm_update_rolled_back' === $code ) {
-			return __( 'WordPress restored the previous UCCM version after an update caused a fatal error.', 'uk-cookie-consent-manager' );
+			return __( 'WordPress restored the previous UCCM version after an update caused a fatal error.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'uccm_update_failed' === $code ) {
-			return __( 'An attempted UCCM update did not complete successfully.', 'uk-cookie-consent-manager' );
+			return __( 'An attempted UCCM update did not complete successfully.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'updater' === $component ) {
-			return __( 'UCCM could not verify or retrieve its update information.', 'uk-cookie-consent-manager' );
+			return __( 'UCCM could not verify or retrieve its update information.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'browser-check' === $component ) {
-			return __( 'The administrator browser check did not complete successfully.', 'uk-cookie-consent-manager' );
+			return __( 'The administrator browser check did not complete successfully.', 'rushleigh-cookie-choices' );
 		}
 
 		if ( 'scanner' === $component ) {
-			return __( 'A cookie scan could not complete successfully.', 'uk-cookie-consent-manager' );
+			return __( 'A cookie scan could not complete successfully.', 'rushleigh-cookie-choices' );
 		}
 
-		return __( 'The plugin handled an operational problem.', 'uk-cookie-consent-manager' );
+		return __( 'The plugin handled an operational problem.', 'rushleigh-cookie-choices' );
 	}
 
 	/**
@@ -359,12 +359,12 @@ final class Operational_Alerts {
 			return $record;
 		}
 
-		$subject  = __( 'UK Cookie Consent Manager needs attention', 'uk-cookie-consent-manager' );
+		$subject  = __( 'Rushleigh Cookie Choices needs attention', 'rushleigh-cookie-choices' );
 		$message  = (string) $record['message'] . "\n\n";
-		$message .= __( 'Error code:', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['code'] . "\n";
-		$message .= __( 'Component:', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['component'] . "\n";
-		$message .= __( 'Time (UTC):', 'uk-cookie-consent-manager' ) . ' ' . (string) $record['last_seen_at'] . "\n";
-		$message .= __( 'Review:', 'uk-cookie-consent-manager' ) . ' ' . self::review_url( $record );
+		$message .= __( 'Error code:', 'rushleigh-cookie-choices' ) . ' ' . (string) $record['code'] . "\n";
+		$message .= __( 'Component:', 'rushleigh-cookie-choices' ) . ' ' . (string) $record['component'] . "\n";
+		$message .= __( 'Time (UTC):', 'rushleigh-cookie-choices' ) . ' ' . (string) $record['last_seen_at'] . "\n";
+		$message .= __( 'Review:', 'rushleigh-cookie-choices' ) . ' ' . self::review_url( $record );
 
 		$sent = wp_mail( $recipient, $subject, $message );
 

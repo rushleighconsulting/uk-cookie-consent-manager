@@ -81,7 +81,7 @@ final class PrivacyTest extends TestCase {
 	public function test_adds_complete_suggested_privacy_policy_text(): void {
 		Privacy::add_policy_content();
 
-		$text = $GLOBALS['uccm_test_privacy_content']['UK Cookie Consent Manager'];
+		$text = $GLOBALS['uccm_test_privacy_content']['Rushleigh Cookie Choices'];
 		self::assertStringContainsString( 'masked IP address', $text );
 		self::assertStringContainsString( '365 days', $text );
 		self::assertStringContainsString( 'not sent to Rushleigh Consulting', $text );

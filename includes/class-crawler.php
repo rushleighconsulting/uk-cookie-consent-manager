@@ -119,13 +119,13 @@ final class Crawler {
 		$href = trim( html_entity_decode( $href, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 
 		if ( '' === $href || '#' === $href[0] || preg_match( '#^(?:mailto|tel|javascript|data):#i', $href ) ) {
-			return new \WP_Error( 'uccm_crawl_unsupported_link', __( 'The discovered link is not crawlable.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_crawl_unsupported_link', __( 'The discovered link is not crawlable.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$base = wp_parse_url( $base_url );
 
 		if ( ! is_array( $base ) || empty( $base['scheme'] ) || empty( $base['host'] ) ) {
-			return new \WP_Error( 'uccm_crawl_invalid_base', __( 'The crawl base URL is invalid.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_crawl_invalid_base', __( 'The crawl base URL is invalid.', 'rushleigh-cookie-choices' ) );
 		}
 
 		if ( str_starts_with( $href, '//' ) ) {
@@ -136,7 +136,7 @@ final class Crawler {
 			$relative = wp_parse_url( $href );
 
 			if ( false === $relative ) {
-				return new \WP_Error( 'uccm_crawl_invalid_link', __( 'The discovered link is invalid.', 'uk-cookie-consent-manager' ) );
+				return new \WP_Error( 'uccm_crawl_invalid_link', __( 'The discovered link is invalid.', 'rushleigh-cookie-choices' ) );
 			}
 
 			$base_path = (string) ( $base['path'] ?? '/' );
@@ -167,7 +167,7 @@ final class Crawler {
 		$parts = wp_parse_url( $candidate );
 
 		if ( ! is_array( $parts ) ) {
-			return new \WP_Error( 'uccm_crawl_invalid_link', __( 'The discovered link is invalid.', 'uk-cookie-consent-manager' ) );
+			return new \WP_Error( 'uccm_crawl_invalid_link', __( 'The discovered link is invalid.', 'rushleigh-cookie-choices' ) );
 		}
 
 		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );

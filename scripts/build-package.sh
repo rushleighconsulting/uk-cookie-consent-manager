@@ -10,9 +10,9 @@ if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
 fi
 
 mkdir -p "${output_directory}"
-archive="${output_directory}/uk-cookie-consent-manager-${version}.zip"
+archive="${output_directory}/rushleigh-cookie-choices-${version}.zip"
 
-git archive --format=zip --prefix=uk-cookie-consent-manager/ --output="${archive}" HEAD
+git archive --format=zip --prefix=rushleigh-cookie-choices/ --output="${archive}" HEAD
 (
   cd "${output_directory}"
   sha256sum "$(basename "${archive}")" > SHA256SUMS

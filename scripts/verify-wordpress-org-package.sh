@@ -9,10 +9,10 @@ if [[ -z "${package_directory}" || ! -d "${package_directory}" ]]; then
   exit 2
 fi
 
-plugin_file="${package_directory}/uk-cookie-consent-manager.php"
+plugin_file="${package_directory}/rushleigh-cookie-choices.php"
 readme="${package_directory}/readme.txt"
 updater="${package_directory}/includes/class-secure-updater.php"
-source_plugin_file="uk-cookie-consent-manager.php"
+source_plugin_file="rushleigh-cookie-choices.php"
 
 for required in "${plugin_file}" "${readme}" "${updater}"; do
   if [[ ! -f "${required}" ]]; then

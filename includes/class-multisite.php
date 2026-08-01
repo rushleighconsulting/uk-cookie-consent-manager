@@ -252,8 +252,8 @@ final class Multisite {
 	 */
 	public static function register_menu(): void {
 		add_menu_page(
-			__( 'UK Cookie Consent Manager Network', 'uk-cookie-consent-manager' ),
-			__( 'Cookie Consent', 'uk-cookie-consent-manager' ),
+			__( 'Rushleigh Cookie Choices Network', 'rushleigh-cookie-choices' ),
+			__( 'Cookie Consent', 'rushleigh-cookie-choices' ),
 			'manage_network_options',
 			'uccm-network',
 			array( self::class, 'render_page' ),
@@ -327,40 +327,40 @@ final class Multisite {
 		$values        = array_merge( $defaults, $configuration['defaults'] );
 		$labels        = self::setting_labels();
 		$state_labels  = array(
-			'idle'      => __( 'Not started', 'uk-cookie-consent-manager' ),
-			'running'   => __( 'Running', 'uk-cookie-consent-manager' ),
-			'completed' => __( 'Completed', 'uk-cookie-consent-manager' ),
+			'idle'      => __( 'Not started', 'rushleigh-cookie-choices' ),
+			'running'   => __( 'Running', 'rushleigh-cookie-choices' ),
+			'completed' => __( 'Completed', 'rushleigh-cookie-choices' ),
 		);
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only bounded notice state.
 		$notice = isset( $_GET['uccm_notice'] ) ? sanitize_key( (string) wp_unslash( $_GET['uccm_notice'] ) ) : '';
 
-		echo '<div class="wrap"><h1>' . esc_html__( 'Cookie Consent Network', 'uk-cookie-consent-manager' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Manage shared operational defaults while each site keeps its own consent evidence, cookie inventory, scans, policy and privacy-sensitive settings.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<div class="wrap"><h1>' . esc_html__( 'Cookie Consent Network', 'rushleigh-cookie-choices' ) . '</h1>';
+		echo '<p>' . esc_html__( 'Manage shared operational defaults while each site keeps its own consent evidence, cookie inventory, scans, policy and privacy-sensitive settings.', 'rushleigh-cookie-choices' ) . '</p>';
 
 		if ( 'saved' === $notice ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Network settings saved.', 'uk-cookie-consent-manager' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Network settings saved.', 'rushleigh-cookie-choices' ) . '</p></div>';
 		}
 
-		echo '<h2>' . esc_html__( 'Network status', 'uk-cookie-consent-manager' ) . '</h2><table class="widefat striped" style="max-width:900px"><tbody>';
-		echo '<tr><th scope="row">' . esc_html__( 'Sites', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( (string) $site_count ) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Install or upgrade batch', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html(
+		echo '<h2>' . esc_html__( 'Network status', 'rushleigh-cookie-choices' ) . '</h2><table class="widefat striped" style="max-width:900px"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Sites', 'rushleigh-cookie-choices' ) . '</th><td>' . esc_html( (string) $site_count ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Install or upgrade batch', 'rushleigh-cookie-choices' ) . '</th><td>' . esc_html(
 			sprintf(
 				/* translators: 1: Network batch status. 2: Number of processed sites. */
-				__( '%1$s — %2$d sites processed', 'uk-cookie-consent-manager' ),
+				__( '%1$s — %2$d sites processed', 'rushleigh-cookie-choices' ),
 				$state_labels[ $state['status'] ],
 				$state['processed']
 			)
 		) . '</td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Network schema version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) get_site_option( self::VERSION_OPTION, '' ) ) . '</code></td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Installed plugin version', 'uk-cookie-consent-manager' ) . '</th><td><code>' . esc_html( (string) $status['installed_version'] ) . '</code></td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Latest available version', 'uk-cookie-consent-manager' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'uk-cookie-consent-manager' ) ) . '</td></tr>';
-		echo '</tbody></table><p><a class="button" href="' . esc_url( network_admin_url( 'plugins.php' ) ) . '">' . esc_html__( 'Manage network plugins and updates', 'uk-cookie-consent-manager' ) . '</a></p>';
+		echo '<tr><th scope="row">' . esc_html__( 'Network schema version', 'rushleigh-cookie-choices' ) . '</th><td><code>' . esc_html( (string) get_site_option( self::VERSION_OPTION, '' ) ) . '</code></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Installed plugin version', 'rushleigh-cookie-choices' ) . '</th><td><code>' . esc_html( (string) $status['installed_version'] ) . '</code></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Latest available version', 'rushleigh-cookie-choices' ) . '</th><td>' . esc_html( '' !== (string) $status['latest_version'] ? (string) $status['latest_version'] : __( 'Not checked yet', 'rushleigh-cookie-choices' ) ) . '</td></tr>';
+		echo '</tbody></table><p><a class="button" href="' . esc_url( network_admin_url( 'plugins.php' ) ) . '">' . esc_html__( 'Manage network plugins and updates', 'rushleigh-cookie-choices' ) . '</a></p>';
 
-		echo '<h2>' . esc_html__( 'Network defaults', 'uk-cookie-consent-manager' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Enable a default to offer it to sites that inherit the setting. Lock only operational values that every site must use. Consent policy versions, scan URLs, passwords, complete-IP storage and trusted proxies always remain site-specific.', 'uk-cookie-consent-manager' ) . '</p>';
+		echo '<h2>' . esc_html__( 'Network defaults', 'rushleigh-cookie-choices' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Enable a default to offer it to sites that inherit the setting. Lock only operational values that every site must use. Consent policy versions, scan URLs, passwords, complete-IP storage and trusted proxies always remain site-specific.', 'rushleigh-cookie-choices' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="uccm_save_network_settings">';
 		wp_nonce_field( 'uccm_save_network_settings' );
-		echo '<table class="widefat striped" style="max-width:1100px"><thead><tr><th>' . esc_html__( 'Setting', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Use network default', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Value', 'uk-cookie-consent-manager' ) . '</th><th>' . esc_html__( 'Lock for sites', 'uk-cookie-consent-manager' ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat striped" style="max-width:1100px"><thead><tr><th>' . esc_html__( 'Setting', 'rushleigh-cookie-choices' ) . '</th><th>' . esc_html__( 'Use network default', 'rushleigh-cookie-choices' ) . '</th><th>' . esc_html__( 'Value', 'rushleigh-cookie-choices' ) . '</th><th>' . esc_html__( 'Lock for sites', 'rushleigh-cookie-choices' ) . '</th></tr></thead><tbody>';
 
 		foreach ( self::manageable_settings() as $name ) {
 			$enabled = array_key_exists( $name, $configuration['defaults'] );
@@ -372,8 +372,8 @@ final class Multisite {
 		}
 
 		echo '</tbody></table>';
-		echo '<p><label><input type="checkbox" name="uccm_network[delete_data_on_uninstall]" value="1" ' . checked( (bool) get_site_option( self::DELETE_OPTION, false ), true, false ) . '> <strong>' . esc_html__( 'Delete UCCM data from every site when the plugin is uninstalled', 'uk-cookie-consent-manager' ) . '</strong></label><br><span class="description">' . esc_html__( 'Destructive and disabled by default. A single site’s uninstall setting can never enable network-wide deletion.', 'uk-cookie-consent-manager' ) . '</span></p>';
-		submit_button( __( 'Save network settings', 'uk-cookie-consent-manager' ) );
+		echo '<p><label><input type="checkbox" name="uccm_network[delete_data_on_uninstall]" value="1" ' . checked( (bool) get_site_option( self::DELETE_OPTION, false ), true, false ) . '> <strong>' . esc_html__( 'Delete UCCM data from every site when the plugin is uninstalled', 'rushleigh-cookie-choices' ) . '</strong></label><br><span class="description">' . esc_html__( 'Destructive and disabled by default. A single site’s uninstall setting can never enable network-wide deletion.', 'rushleigh-cookie-choices' ) . '</span></p>';
+		submit_button( __( 'Save network settings', 'rushleigh-cookie-choices' ) );
 		echo '</form></div>';
 	}
 
@@ -460,7 +460,7 @@ final class Multisite {
 	 */
 	private static function require_network_capability(): void {
 		if ( ! current_user_can( 'manage_network_options' ) ) {
-			wp_die( esc_html__( 'You are not allowed to manage Cookie Consent network settings.', 'uk-cookie-consent-manager' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You are not allowed to manage Cookie Consent network settings.', 'rushleigh-cookie-choices' ), '', array( 'response' => 403 ) );
 		}
 	}
 
@@ -471,12 +471,12 @@ final class Multisite {
 	 */
 	private static function setting_labels(): array {
 		return array(
-			'consent_lifetime_days'           => __( 'Consent lifetime (days)', 'uk-cookie-consent-manager' ),
-			'retention_days'                  => __( 'Consent retention (days)', 'uk-cookie-consent-manager' ),
-			'scan_page_limit'                 => __( 'Maximum pages per scan', 'uk-cookie-consent-manager' ),
-			'scan_batch_size'                 => __( 'Pages checked at a time', 'uk-cookie-consent-manager' ),
-			'error_email_enabled'             => __( 'Email operational errors', 'uk-cookie-consent-manager' ),
-			'error_email_suppression_minutes' => __( 'Repeat email suppression (minutes)', 'uk-cookie-consent-manager' ),
+			'consent_lifetime_days'           => __( 'Consent lifetime (days)', 'rushleigh-cookie-choices' ),
+			'retention_days'                  => __( 'Consent retention (days)', 'rushleigh-cookie-choices' ),
+			'scan_page_limit'                 => __( 'Maximum pages per scan', 'rushleigh-cookie-choices' ),
+			'scan_batch_size'                 => __( 'Pages checked at a time', 'rushleigh-cookie-choices' ),
+			'error_email_enabled'             => __( 'Email operational errors', 'rushleigh-cookie-choices' ),
+			'error_email_suppression_minutes' => __( 'Repeat email suppression (minutes)', 'rushleigh-cookie-choices' ),
 		);
 	}
 
@@ -488,7 +488,7 @@ final class Multisite {
 	 */
 	private static function render_value_field( string $name, mixed $value ): void {
 		if ( 'error_email_enabled' === $name ) {
-			echo '<label><input type="checkbox" name="uccm_network[values][' . esc_attr( $name ) . ']" value="1" ' . checked( ! empty( $value ), true, false ) . '> ' . esc_html__( 'Enabled', 'uk-cookie-consent-manager' ) . '</label>';
+			echo '<label><input type="checkbox" name="uccm_network[values][' . esc_attr( $name ) . ']" value="1" ' . checked( ! empty( $value ), true, false ) . '> ' . esc_html__( 'Enabled', 'rushleigh-cookie-choices' ) . '</label>';
 			return;
 		}
 
