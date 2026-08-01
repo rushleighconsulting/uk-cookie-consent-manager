@@ -1574,7 +1574,7 @@ msgstr ""
 msgid "This site uses Rushleigh Cookie Choices to record cookie choices. Each decision may include a random receipt identifier, UTC time, selected categories, policy and plugin versions, a site identifier, an optional WordPress user ID, a masked IP address and a keyed non-reversible IP fingerprint. Complete IP storage is disabled by default; if enabled by the site operator it is encrypted at rest. Consent records remain on this WordPress site, are not sent to Rushleigh Consulting by default, and are retained for the period configured by the site operator (365 days by default). Logged-in users may request export or erasure through the WordPress privacy tools. Erasure removes account and IP identifiers while non-attributable consent evidence remains until retention cleanup."
 msgstr ""
 
-#: includes/class-resource-rules.php:213
+#: includes/class-resource-rules.php:214
 msgid "Optional embedded content"
 msgstr ""
 
